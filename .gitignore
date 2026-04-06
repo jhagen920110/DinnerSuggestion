@@ -1,0 +1,8 @@
+api/local.settings.json
+node_modules/
+dist/
+build/
+bin/
+obj/
+.vs/
+.vscode/

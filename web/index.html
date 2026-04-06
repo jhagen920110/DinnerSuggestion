@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dinner Suggestion App</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>🍚 Dinner Suggestion App</h1>
+    <p class="subtitle">Pantry first. Korean-first. Simple and fun.</p>
+
+    <section class="card">
+      <div class="row between title-row">
+        <h2>Pantry</h2>
+        <span class="small-note">Add what you have at home</span>
+      </div>
+
+      <div class="form-grid">
+        <input id="ingredientName" type="text" placeholder="Ingredient name (e.g. kimchi)" />
+        <select id="ingredientStockLevel">
+          <option value="Plenty">Plenty</option>
+          <option value="Some" selected>Some</option>
+          <option value="Low">Low</option>
+          <option value="Out">Out</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <button type="button" id="saveButton">Add Ingredient</button>
+        <button type="button" id="cancelEditButton" class="secondary hidden">Cancel Edit</button>
+      </div>
+
+      <ul id="ingredientsList"></ul>
+    </section>
+
+    <section class="card">
+      <div class="row between title-row">
+        <h2>Dinner Suggestions</h2>
+        <button type="button" id="suggestButton">Suggest Dinner</button>
+      </div>
+      <div id="suggestions"></div>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

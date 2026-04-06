@@ -1,53 +1,76 @@
 const apiBase = "http://localhost:7071/api";
 
-const ingredientNameInput = document.getElementById("ingredientName");
-const ingredientStockLevelInput = document.getElementById("ingredientStockLevel");
-const saveButton = document.getElementById("saveButton");
-const cancelEditButton = document.getElementById("cancelEditButton");
-const ingredientsList = document.getElementById("ingredientsList");
-const suggestButton = document.getElementById("suggestButton");
-const suggestionsDiv = document.getElementById("suggestions");
-
 let editingIngredientId = null;
 let currentIngredients = [];
 
-console.log("app.js loaded", {
-  ingredientNameInput,
-  ingredientStockLevelInput,
-  saveButton,
-  cancelEditButton,
-  ingredientsList,
-  suggestButton,
-  suggestionsDiv
-});
+function byId(id) {
+  return document.getElementById(id);
+}
+
+function getEls() {
+  return {
+    ingredientNameInput: byId("ingredientName"),
+    ingredientStockLevelInput: byId("ingredientStockLevel"),
+    saveButton: byId("saveButton"),
+    cancelEditButton: byId("cancelEditButton"),
+    ingredientsList: byId("ingredientsList"),
+    suggestButton: byId("suggestButton"),
+    suggestionsDiv: byId("suggestions")
+  };
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function setBusy(button, isBusy, textWhenBusy) {
+  if (!button) return;
+  button.disabled = isBusy;
+  if (isBusy) {
+    button.dataset.originalText = button.textContent;
+    button.textContent = textWhenBusy;
+  } else if (button.dataset.originalText) {
+    button.textContent = button.dataset.originalText;
+    delete button.dataset.originalText;
+  }
+}
 
 async function loadIngredients() {
-  try {
-    console.log("Loading ingredients...");
-    const response = await fetch(`${apiBase}/ingredients`);
+  const { ingredientsList } = getEls();
+  if (!ingredientsList) return;
 
+  try {
+    const response = await fetch(`${apiBase}/ingredients`);
     if (!response.ok) {
       throw new Error(`Failed to load ingredients: ${response.status}`);
     }
 
     const items = await response.json();
-    console.log("Ingredients loaded:", items);
-
-    currentIngredients = items;
-    renderIngredients(items);
+    currentIngredients = Array.isArray(items) ? items : [];
+    renderIngredients(currentIngredients);
   } catch (error) {
     console.error("loadIngredients failed:", error);
-    ingredientsList.innerHTML = `<li class="empty-state">Failed to load ingredients.</li>`;
+    ingredientsList.innerHTML = `<li>Failed to load ingredients.</li>`;
   }
 }
 
 function renderIngredients(items) {
+  const { ingredientsList } = getEls();
+  if (!ingredientsList) return;
+
   ingredientsList.innerHTML = "";
 
   if (!items.length) {
-    ingredientsList.innerHTML = `<li class="empty-state">No ingredients yet.</li>`;
+    ingredientsList.innerHTML = `<li>No ingredients yet.</li>`;
     return;
   }
+
+  const fragment = document.createDocumentFragment();
 
   for (const item of items) {
     const id = item.id ?? item.Id;
@@ -66,15 +89,17 @@ function renderIngredients(items) {
     const metaDiv = document.createElement("div");
     metaDiv.className = "item-meta";
 
-    const badgeClass =
-      stockLevel.toLowerCase() === "low"
+    const badge = document.createElement("span");
+    const normalized = String(stockLevel).toLowerCase();
+    badge.className =
+      normalized === "low"
         ? "badge low"
-        : stockLevel.toLowerCase() === "out"
-          ? "badge out"
-          : "badge";
+        : normalized === "out"
+        ? "badge out"
+        : "badge";
+    badge.textContent = stockLevel;
 
-    metaDiv.innerHTML = `<span class="${badgeClass}">${escapeHtml(stockLevel)}</span>`;
-
+    metaDiv.appendChild(badge);
     mainDiv.appendChild(nameDiv);
     mainDiv.appendChild(metaDiv);
 
@@ -100,48 +125,52 @@ function renderIngredients(items) {
 
     li.appendChild(mainDiv);
     li.appendChild(actionsDiv);
-
-    ingredientsList.appendChild(li);
+    fragment.appendChild(li);
   }
+
+  ingredientsList.appendChild(fragment);
 }
 
 async function saveIngredient() {
-  console.log("saveIngredient clicked");
+  const {
+    ingredientNameInput,
+    ingredientStockLevelInput,
+    saveButton
+  } = getEls();
 
-  const name = ingredientNameInput?.value?.trim() ?? "";
-  const stockLevel = ingredientStockLevelInput?.value ?? "Some";
+  if (!ingredientNameInput || !ingredientStockLevelInput) {
+    console.error("Missing pantry form elements.");
+    alert("Pantry form is not loaded correctly.");
+    return;
+  }
 
-  console.log("saveIngredient payload preview:", { name, stockLevel, editingIngredientId });
+  const name = ingredientNameInput.value.trim();
+  const stockLevel = ingredientStockLevelInput.value || "Some";
 
   if (!name) {
     alert("Ingredient name is required.");
+    ingredientNameInput.focus();
     return;
   }
 
   const payload = { name, stockLevel };
 
   try {
-    let response;
+    setBusy(saveButton, true, editingIngredientId ? "Saving..." : "Adding...");
 
-    if (editingIngredientId) {
-      response = await fetch(`${apiBase}/ingredients/${editingIngredientId}`, {
-        method: "PUT",
+    const response = await fetch(
+      editingIngredientId
+        ? `${apiBase}/ingredients/${editingIngredientId}`
+        : `${apiBase}/ingredients`,
+      {
+        method: editingIngredientId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
-      });
-    } else {
-      response = await fetch(`${apiBase}/ingredients`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-    }
-
-    console.log("saveIngredient response status:", response.status);
+      }
+    );
 
     if (!response.ok) {
       const text = await response.text();
-      console.error("saveIngredient failed response:", text);
       throw new Error(`Failed to save ingredient: ${response.status} ${text}`);
     }
 
@@ -149,31 +178,47 @@ async function saveIngredient() {
     await loadIngredients();
   } catch (error) {
     console.error("saveIngredient failed:", error);
-    alert(`Failed to save ingredient. Check browser console.`);
+    alert("Failed to save ingredient. Check browser console.");
+  } finally {
+    setBusy(saveButton, false);
   }
 }
 
 function startEditIngredient(id) {
-  const item = currentIngredients.find(x => (x.id ?? x.Id) === id);
-  if (!item) return;
+  const {
+    ingredientNameInput,
+    ingredientStockLevelInput,
+    saveButton,
+    cancelEditButton
+  } = getEls();
 
-  const name = item.name ?? item.Name ?? "";
-  const stockLevel = item.stockLevel ?? item.StockLevel ?? "Some";
+  const item = currentIngredients.find(x => (x.id ?? x.Id) === id);
+  if (!item || !ingredientNameInput || !ingredientStockLevelInput) return;
 
   editingIngredientId = id;
-  ingredientNameInput.value = name;
-  ingredientStockLevelInput.value = stockLevel;
-  saveButton.textContent = "Save Changes";
-  cancelEditButton.classList.remove("hidden");
+  ingredientNameInput.value = item.name ?? item.Name ?? "";
+  ingredientStockLevelInput.value = item.stockLevel ?? item.StockLevel ?? "Some";
+
+  if (saveButton) saveButton.textContent = "Save Changes";
+  if (cancelEditButton) cancelEditButton.classList.remove("hidden");
+
   ingredientNameInput.focus();
 }
 
 function resetForm() {
+  const {
+    ingredientNameInput,
+    ingredientStockLevelInput,
+    saveButton,
+    cancelEditButton
+  } = getEls();
+
   editingIngredientId = null;
-  ingredientNameInput.value = "";
-  ingredientStockLevelInput.value = "Some";
-  saveButton.textContent = "Add Ingredient";
-  cancelEditButton.classList.add("hidden");
+
+  if (ingredientNameInput) ingredientNameInput.value = "";
+  if (ingredientStockLevelInput) ingredientStockLevelInput.value = "Some";
+  if (saveButton) saveButton.textContent = "Add Ingredient";
+  if (cancelEditButton) cancelEditButton.classList.add("hidden");
 }
 
 async function deleteIngredient(id) {
@@ -198,7 +243,12 @@ async function deleteIngredient(id) {
 }
 
 async function loadSuggestions() {
+  const { suggestionsDiv, suggestButton } = getEls();
+  if (!suggestionsDiv) return;
+
   try {
+    setBusy(suggestButton, true, "Loading...");
+
     const response = await fetch(`${apiBase}/suggestions`, {
       method: "POST"
     });
@@ -208,20 +258,27 @@ async function loadSuggestions() {
     }
 
     const items = await response.json();
-    renderSuggestions(items);
+    renderSuggestions(Array.isArray(items) ? items : []);
   } catch (error) {
     console.error("loadSuggestions failed:", error);
-    suggestionsDiv.innerHTML = `<p class="empty-state">Failed to load suggestions.</p>`;
+    suggestionsDiv.innerHTML = `<p>Failed to load suggestions.</p>`;
+  } finally {
+    setBusy(suggestButton, false);
   }
 }
 
 function renderSuggestions(items) {
+  const { suggestionsDiv } = getEls();
+  if (!suggestionsDiv) return;
+
   suggestionsDiv.innerHTML = "";
 
   if (!items.length) {
-    suggestionsDiv.innerHTML = `<p class="empty-state">No suggestions available.</p>`;
+    suggestionsDiv.innerHTML = `<p>No suggestions available.</p>`;
     return;
   }
+
+  const fragment = document.createDocumentFragment();
 
   for (const item of items) {
     const name = item.name ?? item.Name ?? "";
@@ -240,22 +297,17 @@ function renderSuggestions(items) {
     title.textContent = name;
 
     const info = document.createElement("p");
-    let infoHtml = `<span class="badge">${escapeHtml(cuisine)}</span>`;
-
-    if (canMakeNow) {
-      infoHtml += `<span class="badge good">Can make now</span>`;
-    } else {
-      infoHtml += `<span class="badge warn">Missing: ${escapeHtml(missingIngredients.join(", "))}</span>`;
-    }
-
+    let infoHtml = cuisine ? `${escapeHtml(cuisine)}<br>` : "";
+    infoHtml += canMakeNow
+      ? "Can make now"
+      : `Missing: ${escapeHtml(missingIngredients.join(", "))}`;
     if (lowStockIngredients.length > 0) {
-      infoHtml += `<span class="badge low">Low stock: ${escapeHtml(lowStockIngredients.join(", "))}</span>`;
+      infoHtml += `<br>Low stock: ${escapeHtml(lowStockIngredients.join(", "))}`;
     }
-
     info.innerHTML = infoHtml;
 
     const usesP = document.createElement("p");
-    usesP.innerHTML = `<strong>Uses:</strong> ${escapeHtml(uses.join(", "))}`;
+    usesP.innerHTML = `Uses: ${escapeHtml(uses.join(", "))}`;
 
     const recipeLink = document.createElement("a");
     recipeLink.className = recipeUrl ? "recipe-link" : "recipe-link disabled";
@@ -266,26 +318,32 @@ function renderSuggestions(items) {
     recipeLink.target = "_blank";
     recipeLink.rel = "noreferrer";
 
+    if (!recipeUrl) {
+      recipeLink.addEventListener("click", e => e.preventDefault());
+    }
+
     div.appendChild(title);
     div.appendChild(info);
     div.appendChild(usesP);
     div.appendChild(recipeLink);
-
-    suggestionsDiv.appendChild(div);
+    fragment.appendChild(div);
   }
+
+  suggestionsDiv.appendChild(fragment);
 }
 
-function escapeHtml(value) {
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+function wireUp() {
+  const { saveButton, cancelEditButton, suggestButton } = getEls();
+
+  if (saveButton) saveButton.addEventListener("click", saveIngredient);
+  if (cancelEditButton) cancelEditButton.addEventListener("click", resetForm);
+  if (suggestButton) suggestButton.addEventListener("click", loadSuggestions);
+
+  loadIngredients();
 }
 
-saveButton.addEventListener("click", saveIngredient);
-cancelEditButton.addEventListener("click", resetForm);
-suggestButton.addEventListener("click", loadSuggestions);
-
-loadIngredients();
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", wireUp);
+} else {
+  wireUp();
+}

@@ -1,64 +1,102 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dinner Suggestion App</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-    rel="stylesheet"
-  />
+  <title>🍙 오늘 뭐 먹지?</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="page-shell">
+  <main class="app-shell">
     <header class="hero">
-      <div>
-        <p class="eyebrow">Dinner Suggestion App</p>
-        <h1>Pantry first. Korean-first. Simple and fun.</h1>
-        <p class="hero-subtitle">
-          Keep your pantry organized and get meal ideas from what you already have.
-        </p>
+      <div class="hero-copy">
+        <h1 class="app-title">🍙 오늘 뭐 먹지?</h1>
+        <p class="subtitle">우리 집 재료로 저녁 메뉴 고르기</p>
       </div>
     </header>
 
-    <main class="dashboard">
-      <section class="card pantry-card">
-        <div class="section-header">
-          <div>
-            <h2>Pantry <span id="pantryCount" class="count-pill">0</span></h2>
-            <p class="section-subtitle">Add what you have at home</p>
+    <section class="card pantry-card">
+      <div class="section-head">
+        <div>
+          <h2>🥕 Pantry </h2>
+        </div>
+        <div id="pantryStatus" class="status-text" aria-live="polite"></div>
+      </div>
+
+      <div class="ingredient-form">
+        <div class="form-grid">
+          <div class="field field-name">
+            <label for="ingredientName">재료명</label>
+            <input id="ingredientName" type="text" placeholder="예: 김치, 양파, 계란" />
           </div>
-          <div id="pantryStatus" class="status-message" aria-live="polite"></div>
+
+          <div class="field">
+            <label for="ingredientStockLevel">수량</label>
+            <select id="ingredientStockLevel">
+              <option value="많음">많음</option>
+              <option value="보통" selected>보통</option>
+              <option value="적음">적음</option>
+              <option value="없음">없음</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="ingredientType">종류</label>
+            <select id="ingredientType">
+              <option value="야채">야채</option>
+              <option value="탄수화물">탄수화물</option>
+              <option value="고기/단백질">고기/단백질</option>
+              <option value="유제품">유제품</option>
+              <option value="과일">과일</option>
+              <option value="소스/조미료">소스/조미료</option>
+              <option value="냉동식품">냉동식품</option>
+              <option value="기타" selected>기타</option>
+            </select>
+          </div>
         </div>
 
-        <div class="form-card">
-          <div class="form-grid">
-            <label class="field">
-              <span>재료명</span>
-              <input
-                id="ingredientName"
-                type="text"
-                placeholder="예: 김치, 양파, 쌀"
-                autocomplete="off"
-              />
-            </label>
+        <div class="form-actions">
+          <button id="saveButton" type="button" class="primary-btn">재료 추가</button>
+          <button id="cancelEditButton" type="button" class="secondary-btn" hidden>취소</button>
+        </div>
+      </div>
 
-            <label class="field">
-              <span>수량</span>
-              <select id="ingredientStockLevel">
-                <option value="많음">많음</option>
-                <option value="보통" selected>보통</option>
+      <div class="filters-wrap">
+        <button id="filtersToggle" type="button" class="filters-toggle" aria-expanded="false">
+          Filters ▸
+        </button>
+
+        <div id="filtersPanel" class="filters-panel" hidden>
+          <div class="filter-grid">
+            <div class="field">
+              <label for="filterSearch">검색</label>
+              <input id="filterSearch" type="text" placeholder="재료 검색" />
+            </div>
+
+            <div class="field">
+              <label for="filterAmount">수량</label>
+              <select id="filterAmount">
+                <option value="all" selected>전체</option>
                 <option value="적음">적음</option>
+                <option value="보통">보통</option>
+                <option value="많음">많음</option>
                 <option value="없음">없음</option>
               </select>
-            </label>
+            </div>
 
-            <label class="field">
-              <span>종류</span>
-              <select id="ingredientType">
+            <div class="field">
+              <label for="filterSort">정렬</label>
+              <select id="filterSort">
+                <option value="hangul-asc" selected>가나다순</option>
+                <option value="latin-asc">ABC순</option>
+                <option value="recent-desc">최근추가</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="filterType">종류</label>
+              <select id="filterType">
+                <option value="all" selected>전체</option>
                 <option value="야채">야채</option>
                 <option value="탄수화물">탄수화물</option>
                 <option value="고기/단백질">고기/단백질</option>
@@ -66,146 +104,32 @@
                 <option value="과일">과일</option>
                 <option value="소스/조미료">소스/조미료</option>
                 <option value="냉동식품">냉동식품</option>
-                <option value="기타" selected>기타</option>
+                <option value="기타">기타</option>
               </select>
-            </label>
-          </div>
-
-          <div class="form-actions">
-            <button id="saveButton" class="btn btn-primary" type="button">재료 추가</button>
-          </div>
-        </div>
-
-        <div class="filters-card">
-          <button
-            id="toggleFiltersButton"
-            class="collapse-toggle"
-            type="button"
-            aria-expanded="false"
-            aria-controls="filtersContent"
-          >
-            <span>Filters</span>
-            <span id="filtersCaret" class="collapse-caret">▸</span>
-          </button>
-
-          <div id="filtersContent" class="filters-content hidden">
-            <div class="filters-stack">
-              <label class="field">
-                <span>검색</span>
-                <input id="filterSearch" type="text" placeholder="재료 검색..." />
-              </label>
-
-              <div class="filter-group">
-                <div class="filter-label">수량</div>
-                <div class="radio-chip-row">
-                  <label class="radio-chip">
-                    <input type="radio" name="filterAmount" value="all" checked />
-                    <span>전체</span>
-                  </label>
-                  <label class="radio-chip">
-                    <input type="radio" name="filterAmount" value="적음" />
-                    <span>적음</span>
-                  </label>
-                  <label class="radio-chip">
-                    <input type="radio" name="filterAmount" value="보통" />
-                    <span>보통</span>
-                  </label>
-                  <label class="radio-chip">
-                    <input type="radio" name="filterAmount" value="많음" />
-                    <span>많음</span>
-                  </label>
-                  <label class="radio-chip">
-                    <input type="radio" name="filterAmount" value="없음" />
-                    <span>없음</span>
-                  </label>
-                </div>
-              </div>
-
-              <div class="filter-group">
-                <div class="filter-label">정렬</div>
-                <div class="radio-chip-row">
-                  <label class="radio-chip">
-                    <input type="radio" name="filterSort" value="hangul-asc" checked />
-                    <span>가나다순</span>
-                  </label>
-                  <label class="radio-chip">
-                    <input type="radio" name="filterSort" value="latin-asc" />
-                    <span>ABC</span>
-                  </label>
-                  <label class="radio-chip">
-                    <input type="radio" name="filterSort" value="recent" />
-                    <span>최근추가</span>
-                  </label>
-                </div>
-              </div>
-
-              <div class="filter-group">
-                <div class="filter-label">종류</div>
-                <div class="radio-chip-row">
-                  <label class="radio-chip">
-                    <input type="radio" name="filterType" value="all" checked />
-                    <span>전체</span>
-                  </label>
-                  <label class="radio-chip">
-                    <input type="radio" name="filterType" value="야채" />
-                    <span>야채</span>
-                  </label>
-                  <label class="radio-chip">
-                    <input type="radio" name="filterType" value="탄수화물" />
-                    <span>탄수화물</span>
-                  </label>
-                  <label class="radio-chip">
-                    <input type="radio" name="filterType" value="고기/단백질" />
-                    <span>고기/단백질</span>
-                  </label>
-                  <label class="radio-chip">
-                    <input type="radio" name="filterType" value="유제품" />
-                    <span>유제품</span>
-                  </label>
-                  <label class="radio-chip">
-                    <input type="radio" name="filterType" value="과일" />
-                    <span>과일</span>
-                  </label>
-                  <label class="radio-chip">
-                    <input type="radio" name="filterType" value="소스/조미료" />
-                    <span>소스/조미료</span>
-                  </label>
-                  <label class="radio-chip">
-                    <input type="radio" name="filterType" value="냉동식품" />
-                    <span>냉동식품</span>
-                  </label>
-                  <label class="radio-chip">
-                    <input type="radio" name="filterType" value="기타" />
-                    <span>기타</span>
-                  </label>
-                </div>
-              </div>
-
-              <div class="filters-actions">
-                <button id="clearFiltersButton" class="btn btn-ghost" type="button">Clear</button>
-              </div>
             </div>
           </div>
-        </div>
 
-        <div class="summary-row" id="pantrySummary"></div>
-
-        <div id="ingredientsSections" class="ingredient-sections"></div>
-      </section>
-
-      <section class="card suggestions-card">
-        <div class="section-header">
-          <div>
-            <h2>Dinner Suggestions <span id="suggestionCount" class="count-pill">0</span></h2>
-            <p class="section-subtitle">AI-powered ideas from your pantry</p>
+          <div class="filters-actions">
+            <button id="clearFiltersButton" type="button" class="secondary-btn">초기화</button>
           </div>
-          <button id="suggestButton" class="btn btn-primary" type="button">Suggest Dinner</button>
         </div>
+      </div>
 
-        <div id="suggestions" class="suggestions-grid"></div>
-      </section>
-    </main>
-  </div>
+      <div id="pantrySummary" class="pantry-summary"></div>
+      <div id="ingredientsSections"></div>
+    </section>
+
+    <section class="card suggestion-card">
+      <div class="section-head">
+        <div>
+          <h2>🍽️ 저녁 메뉴 추천 </h2>
+        </div>
+        <button id="suggestButton" type="button" class="primary-btn">추천 받기</button>
+      </div>
+
+      <div id="suggestions"></div>
+    </section>
+  </main>
 
   <script src="app.js"></script>
 </body>

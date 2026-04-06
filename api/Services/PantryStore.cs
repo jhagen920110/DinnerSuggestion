@@ -8,10 +8,12 @@ public class PantryStore
 {
     private static readonly HashSet<string> ValidStockLevels =
     [
-        "Plenty",
-        "Some",
-        "Low",
-        "Out"
+        "많음", "보통", "적음", "없음"
+    ];
+
+    private static readonly HashSet<string> ValidTypes =
+    [
+        "야채", "탄수화물", "고기/단백질", "유제품", "과일", "소스/조미료", "냉동식품", "기타"
     ];
 
     private readonly Container _container;
@@ -20,13 +22,6 @@ public class PantryStore
     public PantryStore(CosmosClient cosmosClient, IOptions<CosmosDbOptions> options)
     {
         var settings = options.Value;
-
-        if (string.IsNullOrWhiteSpace(settings.DatabaseName))
-            throw new InvalidOperationException("CosmosDb:DatabaseName is missing.");
-
-        if (string.IsNullOrWhiteSpace(settings.ContainerName))
-            throw new InvalidOperationException("CosmosDb:ContainerName is missing.");
-
         _userId = string.IsNullOrWhiteSpace(settings.UserId) ? "jonathan" : settings.UserId;
         _container = cosmosClient.GetContainer(settings.DatabaseName, settings.ContainerName);
     }
@@ -61,6 +56,7 @@ public class PantryStore
         ingredient.UserId = _userId;
         ingredient.Name = ingredient.Name.Trim();
         ingredient.StockLevel = NormalizeStockLevel(ingredient.StockLevel);
+        ingredient.Type = NormalizeType(ingredient.Type);
 
         var response = await _container.CreateItemAsync(
             ingredient,
@@ -80,6 +76,7 @@ public class PantryStore
             var existing = existingResponse.Resource;
             existing.Name = updatedIngredient.Name.Trim();
             existing.StockLevel = NormalizeStockLevel(updatedIngredient.StockLevel);
+            existing.Type = NormalizeType(updatedIngredient.Type);
             existing.UserId = _userId;
 
             var response = await _container.ReplaceItemAsync(
@@ -99,10 +96,7 @@ public class PantryStore
     {
         try
         {
-            await _container.DeleteItemAsync<Ingredient>(
-                id,
-                new PartitionKey(_userId));
-
+            await _container.DeleteItemAsync(id, new PartitionKey(_userId));
             return true;
         }
         catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
@@ -111,40 +105,25 @@ public class PantryStore
         }
     }
 
-    public async Task<List<string>> GetAvailableIngredientNamesAsync()
-    {
-        var items = await GetAllAsync();
-
-        return items
-            .Where(x => !string.Equals(x.StockLevel, "Out", StringComparison.OrdinalIgnoreCase))
-            .Select(x => x.Name.Trim().ToLowerInvariant())
-            .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Distinct()
-            .ToList();
-    }
-
-    public async Task<List<string>> GetLowStockIngredientNamesAsync()
-    {
-        var items = await GetAllAsync();
-
-        return items
-            .Where(x => string.Equals(x.StockLevel, "Low", StringComparison.OrdinalIgnoreCase))
-            .Select(x => x.Name.Trim().ToLowerInvariant())
-            .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Distinct()
-            .ToList();
-    }
-
     private static string NormalizeStockLevel(string? stockLevel)
     {
         if (string.IsNullOrWhiteSpace(stockLevel))
-        {
-            return "Some";
-        }
+            return "보통";
 
         var match = ValidStockLevels.FirstOrDefault(x =>
             string.Equals(x, stockLevel.Trim(), StringComparison.OrdinalIgnoreCase));
 
-        return match ?? "Some";
+        return match ?? "보통";
+    }
+
+    private static string NormalizeType(string? type)
+    {
+        if (string.IsNullOrWhiteSpace(type))
+            return "기타";
+
+        var match = ValidTypes.FirstOrDefault(x =>
+            string.Equals(x, type.Trim(), StringComparison.OrdinalIgnoreCase));
+
+        return match ?? "기타";
     }
 }

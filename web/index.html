@@ -13,12 +13,20 @@
 
     <section class="card">
       <div class="row between title-row">
-        <h2>Pantry</h2>
+        <h2>
+          Pantry
+          <span id="pantryCount" class="count-pill">0</span>
+        </h2>
         <span class="small-note">Add what you have at home</span>
       </div>
 
       <div class="form-grid">
-        <input id="ingredientName" type="text" placeholder="Ingredient name (e.g. kimchi)" />
+        <input
+          id="ingredientName"
+          type="text"
+          placeholder="Ingredient name (e.g. kimchi)"
+          autocomplete="off"
+        />
         <select id="ingredientStockLevel">
           <option value="Plenty">Plenty</option>
           <option value="Some" selected>Some</option>
@@ -32,18 +40,24 @@
         <button type="button" id="cancelEditButton" class="secondary hidden">Cancel Edit</button>
       </div>
 
+      <div id="pantryStatus" class="status-text" aria-live="polite"></div>
+
       <ul id="ingredientsList"></ul>
     </section>
 
     <section class="card">
       <div class="row between title-row">
-        <h2>Dinner Suggestions</h2>
+        <h2>
+          Dinner Suggestions
+          <span id="suggestionCount" class="count-pill">0</span>
+        </h2>
         <button type="button" id="suggestButton">Suggest Dinner</button>
       </div>
+
       <div id="suggestions"></div>
     </section>
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>

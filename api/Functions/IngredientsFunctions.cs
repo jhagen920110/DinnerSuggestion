@@ -17,10 +17,10 @@ public class IngredientsFunction
         [
             "onion", "green onion", "scallion", "garlic", "ginger", "potato", "sweet potato",
             "carrot", "cucumber", "zucchini", "broccoli", "cabbage", "lettuce", "spinach",
-            "pepper", "paprika", "tomato", "mushroom", "corn", "radish",
+            "pepper", "paprika", "tomato", "mushroom", "corn", "radish", "kimchi",
             "양파", "대파", "쪽파", "마늘", "생강", "감자", "고구마", "당근", "오이", "호박",
             "애호박", "브로콜리", "양배추", "배추", "상추", "시금치", "고추", "파프리카",
-            "토마토", "버섯", "옥수수", "무", "콩나물", "숙주", "깻잎", "부추"
+            "토마토", "버섯", "옥수수", "무", "콩나물", "숙주", "깻잎", "부추", "김치"
         ],
         ["carb"] =
         [
@@ -94,7 +94,8 @@ public class IngredientsFunction
         }
 
         ingredient.StockLevel = NormalizeStockLevel(ingredient.StockLevel);
-        ingredient.Type = NormalizeType(ingredient.Type);
+        ingredient.Name = ingredient.Name.Trim();
+        ingredient.Type = DetectIngredientType(ingredient.Name);
 
         var created = await _pantryStore.AddAsync(ingredient);
 
@@ -120,7 +121,8 @@ public class IngredientsFunction
         }
 
         ingredient.StockLevel = NormalizeStockLevel(ingredient.StockLevel);
-        ingredient.Type = NormalizeType(ingredient.Type);
+        ingredient.Name = ingredient.Name.Trim();
+        ingredient.Type = DetectIngredientType(ingredient.Name);
 
         var updated = await _pantryStore.UpdateAsync(id, ingredient);
 

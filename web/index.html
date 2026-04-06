@@ -40,24 +40,6 @@
             </select>
           </div>
 
-          <div class="field">
-            <label for="ingredientType">종류</label>
-            <div id="typePreview" class="auto-type-preview">
-              자동 분류: <strong id="typePreviewValue">other</strong>
-            </div>
-            <select id="ingredientType" hidden>
-              <option value="vegetable">vegetable</option>
-              <option value="carb">carb</option>
-              <option value="protein">protein</option>
-              <option value="dairy">dairy</option>
-              <option value="fruit">fruit</option>
-              <option value="sauce">sauce</option>
-              <option value="frozen">frozen</option>
-              <option value="other" selected>other</option>
-            </select>
-          </div>
-        </div>
-
         <div class="form-actions">
           <button id="saveButton" type="button" class="primary-btn">재료 추가</button>
           <button id="cancelEditButton" type="button" class="secondary-btn" hidden>취소</button>
@@ -79,35 +61,35 @@
             <div class="field">
               <label>수량</label>
               <div class="radio-group">
-                <label><input type="radio" name="filterAmount" value="all" checked> 전체</label>
-                <label><input type="radio" name="filterAmount" value="적음"> 적음</label>
-                <label><input type="radio" name="filterAmount" value="보통"> 보통</label>
-                <label><input type="radio" name="filterAmount" value="많음"> 많음</label>
-                <label><input type="radio" name="filterAmount" value="없음"> 없음</label>
+                <label><input type="radio" name="stockFilter" value="all" checked><span>전체</span></label>
+                <label><input type="radio" name="stockFilter" value="low"><span>적음</span></label>
+                <label><input type="radio" name="stockFilter" value="some"><span>보통</span></label>
+                <label><input type="radio" name="stockFilter" value="plenty"><span>많음</span></label>
+                <label><input type="radio" name="stockFilter" value="out"><span>없음</span></label>
               </div>
             </div>
 
             <div class="field">
               <label>정렬</label>
               <div class="radio-group">
-                <label><input type="radio" name="filterSort" value="hangul-asc" checked> 가나다순</label>
-                <label><input type="radio" name="filterSort" value="latin-asc"> ABC순</label>
-                <label><input type="radio" name="filterSort" value="recent-desc"> 최근추가</label>
+                <label><input type="radio" name="sortFilter" value="korean" checked><span>가나다순</span></label>
+                <label><input type="radio" name="sortFilter" value="abc"><span>ABC순</span></label>
+                <label><input type="radio" name="sortFilter" value="recent"><span>최근추가</span></label>
               </div>
             </div>
 
             <div class="field">
               <label>종류</label>
               <div class="radio-group">
-                <label><input type="radio" name="filterType" value="all" checked> 전체</label>
-                <label><input type="radio" name="filterType" value="vegetable"> vegetable</label>
-                <label><input type="radio" name="filterType" value="carb"> carb</label>
-                <label><input type="radio" name="filterType" value="protein"> protein</label>
-                <label><input type="radio" name="filterType" value="dairy"> dairy</label>
-                <label><input type="radio" name="filterType" value="fruit"> fruit</label>
-                <label><input type="radio" name="filterType" value="sauce"> sauce</label>
-                <label><input type="radio" name="filterType" value="frozen"> frozen</label>
-                <label><input type="radio" name="filterType" value="other"> other</label>
+                <label><input type="radio" name="typeFilter" value="all" checked><span>전체</span></label>
+                <label><input type="radio" name="typeFilter" value="vegetable"><span>야채</span></label>
+                <label><input type="radio" name="typeFilter" value="carb"><span>탄수화물</span></label>
+                <label><input type="radio" name="typeFilter" value="protein"><span>고기/단백질</span></label>
+                <label><input type="radio" name="typeFilter" value="dairy"><span>유제품</span></label>
+                <label><input type="radio" name="typeFilter" value="fruit"><span>과일</span></label>
+                <label><input type="radio" name="typeFilter" value="sauce"><span>소스/조미료</span></label>
+                <label><input type="radio" name="typeFilter" value="frozen"><span>냉동식품</span></label>
+                <label><input type="radio" name="typeFilter" value="other"><span>기타</span></label>
               </div>
             </div>
           </div>

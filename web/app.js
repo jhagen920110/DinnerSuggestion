@@ -28,7 +28,6 @@ function getEls() {
   return {
     ingredientNameInput: byId("ingredientName"),
     ingredientStockLevelInput: byId("ingredientStockLevel"),
-    ingredientTypeInput: byId("ingredientType"),
     typePreview: byId("typePreview"),
     typePreviewValue: byId("typePreviewValue"),
     saveButton: byId("saveButton"),
@@ -206,13 +205,12 @@ async function classifyIngredientType(name) {
 }
 
 async function updateTypePreviewFromName() {
-  const { ingredientNameInput, ingredientTypeInput, typePreviewValue } = getEls();
-  if (!ingredientNameInput || !ingredientTypeInput || !typePreviewValue) return;
+  const { ingredientNameInput, typePreviewValue } = getEls();
+  if (!ingredientNameInput || !typePreviewValue) return;
   if (editingRowId) return;
 
   const name = ingredientNameInput.value.trim();
   if (!name) {
-    ingredientTypeInput.value = "other";
     typePreviewValue.textContent = "기타";
     return;
   }
@@ -220,11 +218,9 @@ async function updateTypePreviewFromName() {
   try {
     const result = await classifyIngredientType(name);
     const detectedType = normalizeType(result.type);
-    ingredientTypeInput.value = detectedType;
     typePreviewValue.textContent = typeDisplay(detectedType);
   } catch (error) {
     console.error("classifyIngredientType failed:", error);
-    ingredientTypeInput.value = "other";
     typePreviewValue.textContent = "기타";
   }
 }
@@ -406,33 +402,24 @@ function renderIngredients() {
   }
 }
 
-function startEditIngredient(item) {
-  const {
-    ingredientNameInput,
-    ingredientStockLevelInput,
-    ingredientTypeInput,
-    typePreview,
-    saveButton,
-    cancelEditButton,
-  } = getEls();
+function resetForm() {
+  const { ingredientNameInput, ingredientStockLevelInput, typePreview, typePreviewValue, saveButton, cancelEditButton } = getEls();
 
-  editingRowId = ingredientIdOf(item);
+  editingRowId = null;
+  ingredientNameInput.value = "";
+  ingredientStockLevelInput.value = "보통";
 
-  ingredientNameInput.value = ingredientNameOf(item);
-  ingredientStockLevelInput.value = ingredientStockOf(item);
-  ingredientTypeInput.hidden = false;
-  ingredientTypeInput.value = ingredientTypeOf(item);
-  if (typePreview) typePreview.hidden = true;
+  if (typePreview) typePreview.hidden = false;
+  if (typePreviewValue) typePreviewValue.textContent = "기타";
 
-  saveButton.textContent = "수정 저장";
-  cancelEditButton.hidden = false;
+  saveButton.textContent = "재료 추가";
+  cancelEditButton.hidden = true;
 }
 
 function resetForm() {
   const {
     ingredientNameInput,
     ingredientStockLevelInput,
-    ingredientTypeInput,
     typePreview,
     typePreviewValue,
     saveButton,
@@ -442,8 +429,7 @@ function resetForm() {
   editingRowId = null;
   ingredientNameInput.value = "";
   ingredientStockLevelInput.value = "보통";
-  ingredientTypeInput.value = "other";
-  ingredientTypeInput.hidden = true;
+
   if (typePreview) typePreview.hidden = false;
   if (typePreviewValue) typePreviewValue.textContent = "기타";
 
@@ -452,12 +438,7 @@ function resetForm() {
 }
 
 async function saveIngredient() {
-  const {
-    ingredientNameInput,
-    ingredientStockLevelInput,
-    ingredientTypeInput,
-    saveButton,
-  } = getEls();
+  const { ingredientNameInput, ingredientStockLevelInput, saveButton } = getEls();
 
   const name = ingredientNameInput.value.trim();
   if (!name) {
@@ -469,12 +450,10 @@ async function saveIngredient() {
   const payload = {
     name,
     stockLevel: ingredientStockLevelInput.value,
-    type: normalizeType(ingredientTypeInput.value),
   };
 
   try {
     setBusy(saveButton, true, editingRowId ? "저장 중..." : "추가 중...");
-
     const response = await fetch(
       editingRowId ? `${apiBase}/ingredients/${editingRowId}` : `${apiBase}/ingredients`,
       {

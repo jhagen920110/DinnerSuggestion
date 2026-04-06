@@ -1,7 +1,7 @@
 :root {
   --bg-1: #f4f7fb;
   --bg-2: #e9eef7;
-  --card: rgba(255, 255, 255, 0.88);
+  --card: rgba(255, 255, 255, 0.9);
   --card-border: rgba(148, 163, 184, 0.18);
   --text: #1f2937;
   --muted: #667085;
@@ -38,14 +38,9 @@ html,
 body {
   margin: 0;
   padding: 0;
-  font-family:
-    "Segoe UI",
-    "Apple SD Gothic Neo",
-    "Malgun Gothic",
-    sans-serif;
+  font-family: "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   color: var(--text);
-  background:
-    radial-gradient(circle at top left, #ffffff 0%, #eef3fb 36%, #e4eaf5 100%);
+  background: radial-gradient(circle at top left, #ffffff 0%, #eef3fb 36%, #e4eaf5 100%);
   min-height: 100%;
 }
 
@@ -169,6 +164,18 @@ select {
   box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.12);
 }
 
+.auto-type-preview {
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid #d7deea;
+  border-radius: 14px;
+  background: #fff;
+  color: #334155;
+  font-weight: 600;
+}
+
 .form-actions {
   display: flex;
   gap: 10px;
@@ -182,10 +189,7 @@ select {
   border: none;
   border-radius: 12px;
   cursor: pointer;
-  transition:
-    transform 0.12s ease,
-    opacity 0.12s ease,
-    background 0.15s ease;
+  transition: transform 0.12s ease, opacity 0.12s ease, background 0.15s ease;
 }
 
 .primary-btn:hover,
@@ -241,8 +245,22 @@ select {
 
 .filter-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: 1fr;
   gap: 14px;
+}
+
+.radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.radio-group label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: #475467;
 }
 
 .filters-actions {
@@ -327,8 +345,8 @@ select {
 }
 
 .ingredient-list {
-  list-style: none;
-  margin: 0;
+  display: grid;
+  gap: 8px;
   padding: 8px 10px 10px;
 }
 
@@ -339,13 +357,6 @@ select {
   gap: 12px;
   padding: 12px;
   border-radius: 14px;
-}
-
-.ingredient-row + .ingredient-row {
-  margin-top: 8px;
-}
-
-.ingredient-row:nth-child(odd) {
   background: #f8fafc;
 }
 
@@ -426,10 +437,6 @@ select {
 .icon-button.delete:hover {
   background: #ffe4e6;
   color: #be123c;
-}
-
-.suggestion-card .section-head {
-  align-items: center;
 }
 
 #suggestions {
@@ -516,8 +523,7 @@ select {
     font-size: 1.55rem;
   }
 
-  .form-grid,
-  .filter-grid {
+  .form-grid {
     grid-template-columns: 1fr;
   }
 
@@ -543,17 +549,5 @@ select {
   .suggestion-top {
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  .auto-type-preview {
-  min-height: 48px;
-  display: flex;
-  align-items: center;
-  padding: 14px 14px;
-  border: 1px solid #d7deea;
-  background: #f8fafc;
-  border-radius: 14px;
-  color: #334155;
-  font-weight: 600;
   }
 }

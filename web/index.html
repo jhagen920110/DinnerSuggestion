@@ -11,14 +11,14 @@
     <header class="hero">
       <div class="hero-copy">
         <h1 class="app-title">🍙 오늘 뭐 먹지?</h1>
-        <p class="subtitle">우리 집 재료로 저녁 메뉴 고르기</p>
       </div>
     </header>
 
     <section class="card pantry-card">
       <div class="section-head">
         <div>
-          <h2>🥕 Pantry </h2>
+          <h2>🥕 Pantry</h2>
+          <p class="section-subtitle">Pantry 정리</p>
         </div>
         <div id="pantryStatus" class="status-text" aria-live="polite"></div>
       </div>
@@ -33,24 +33,27 @@
           <div class="field">
             <label for="ingredientStockLevel">수량</label>
             <select id="ingredientStockLevel">
-              <option value="많음">많음</option>
               <option value="보통" selected>보통</option>
               <option value="적음">적음</option>
+              <option value="많음">많음</option>
               <option value="없음">없음</option>
             </select>
           </div>
 
           <div class="field">
             <label for="ingredientType">종류</label>
-            <select id="ingredientType">
-              <option value="야채">야채</option>
-              <option value="탄수화물">탄수화물</option>
-              <option value="고기/단백질">고기/단백질</option>
-              <option value="유제품">유제품</option>
-              <option value="과일">과일</option>
-              <option value="소스/조미료">소스/조미료</option>
-              <option value="냉동식품">냉동식품</option>
-              <option value="기타" selected>기타</option>
+            <div id="typePreview" class="auto-type-preview">
+              자동 분류: <strong id="typePreviewValue">other</strong>
+            </div>
+            <select id="ingredientType" hidden>
+              <option value="vegetable">vegetable</option>
+              <option value="carb">carb</option>
+              <option value="protein">protein</option>
+              <option value="dairy">dairy</option>
+              <option value="fruit">fruit</option>
+              <option value="sauce">sauce</option>
+              <option value="frozen">frozen</option>
+              <option value="other" selected>other</option>
             </select>
           </div>
         </div>
@@ -62,11 +65,11 @@
       </div>
 
       <div class="filters-wrap">
-        <button id="filtersToggle" type="button" class="filters-toggle" aria-expanded="false">
-          Filters ▸
+        <button id="toggleFiltersButton" type="button" class="filters-toggle">
+          Filters <span id="filtersCaret">▸</span>
         </button>
 
-        <div id="filtersPanel" class="filters-panel" hidden>
+        <div id="filtersContent" class="filters-panel" hidden>
           <div class="filter-grid">
             <div class="field">
               <label for="filterSearch">검색</label>
@@ -74,38 +77,38 @@
             </div>
 
             <div class="field">
-              <label for="filterAmount">수량</label>
-              <select id="filterAmount">
-                <option value="all" selected>전체</option>
-                <option value="적음">적음</option>
-                <option value="보통">보통</option>
-                <option value="많음">많음</option>
-                <option value="없음">없음</option>
-              </select>
+              <label>수량</label>
+              <div class="radio-group">
+                <label><input type="radio" name="filterAmount" value="all" checked> 전체</label>
+                <label><input type="radio" name="filterAmount" value="적음"> 적음</label>
+                <label><input type="radio" name="filterAmount" value="보통"> 보통</label>
+                <label><input type="radio" name="filterAmount" value="많음"> 많음</label>
+                <label><input type="radio" name="filterAmount" value="없음"> 없음</label>
+              </div>
             </div>
 
             <div class="field">
-              <label for="filterSort">정렬</label>
-              <select id="filterSort">
-                <option value="hangul-asc" selected>가나다순</option>
-                <option value="latin-asc">ABC순</option>
-                <option value="recent-desc">최근추가</option>
-              </select>
+              <label>정렬</label>
+              <div class="radio-group">
+                <label><input type="radio" name="filterSort" value="hangul-asc" checked> 가나다순</label>
+                <label><input type="radio" name="filterSort" value="latin-asc"> ABC순</label>
+                <label><input type="radio" name="filterSort" value="recent-desc"> 최근추가</label>
+              </div>
             </div>
 
             <div class="field">
-              <label for="filterType">종류</label>
-              <select id="filterType">
-                <option value="all" selected>전체</option>
-                <option value="야채">야채</option>
-                <option value="탄수화물">탄수화물</option>
-                <option value="고기/단백질">고기/단백질</option>
-                <option value="유제품">유제품</option>
-                <option value="과일">과일</option>
-                <option value="소스/조미료">소스/조미료</option>
-                <option value="냉동식품">냉동식품</option>
-                <option value="기타">기타</option>
-              </select>
+              <label>종류</label>
+              <div class="radio-group">
+                <label><input type="radio" name="filterType" value="all" checked> 전체</label>
+                <label><input type="radio" name="filterType" value="vegetable"> vegetable</label>
+                <label><input type="radio" name="filterType" value="carb"> carb</label>
+                <label><input type="radio" name="filterType" value="protein"> protein</label>
+                <label><input type="radio" name="filterType" value="dairy"> dairy</label>
+                <label><input type="radio" name="filterType" value="fruit"> fruit</label>
+                <label><input type="radio" name="filterType" value="sauce"> sauce</label>
+                <label><input type="radio" name="filterType" value="frozen"> frozen</label>
+                <label><input type="radio" name="filterType" value="other"> other</label>
+              </div>
             </div>
           </div>
 
@@ -122,7 +125,7 @@
     <section class="card suggestion-card">
       <div class="section-head">
         <div>
-          <h2>🍽️ 저녁 메뉴 추천 </h2>
+          <h2>🍽️ 저녁 메뉴 추천</h2>
         </div>
         <button id="suggestButton" type="button" class="primary-btn">추천 받기</button>
       </div>

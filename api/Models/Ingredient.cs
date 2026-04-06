@@ -19,9 +19,9 @@ public class Ingredient
 
     [JsonProperty("stockLevel")]
     [JsonPropertyName("stockLevel")]
-    public string StockLevel { get; set; } = "보통";
+    public string StockLevel { get; set; } = "Some";
 
     [JsonProperty("type")]
     [JsonPropertyName("type")]
-    public string Type { get; set; } = "기타";
+    public string Type { get; set; } = "other";
 }

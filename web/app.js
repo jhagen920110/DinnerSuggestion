@@ -2,6 +2,18 @@ const apiBase = "http://localhost:7071/api";
 
 let editingIngredientId = null;
 let currentIngredients = [];
+let pantryUiState = {
+  search: "",
+  amount: "all",
+  sort: "hangul-asc",
+  type: "all",
+};
+let collapsedSections = {
+  Low: false,
+  Some: true,
+  Plenty: true,
+  Out: true,
+};
 
 function byId(id) {
   return document.getElementById(id);
@@ -13,12 +25,18 @@ function getEls() {
     ingredientStockLevelInput: byId("ingredientStockLevel"),
     saveButton: byId("saveButton"),
     cancelEditButton: byId("cancelEditButton"),
-    ingredientsList: byId("ingredientsList"),
     suggestButton: byId("suggestButton"),
     suggestionsDiv: byId("suggestions"),
     pantryCount: byId("pantryCount"),
     suggestionCount: byId("suggestionCount"),
-    pantryStatus: byId("pantryStatus")
+    pantryStatus: byId("pantryStatus"),
+    ingredientsSections: byId("ingredientsSections"),
+    pantrySummary: byId("pantrySummary"),
+    filterSearch: byId("filterSearch"),
+    filterAmount: byId("filterAmount"),
+    filterSort: byId("filterSort"),
+    filterType: byId("filterType"),
+    clearFiltersButton: byId("clearFiltersButton"),
   };
 }
 
@@ -33,7 +51,6 @@ function escapeHtml(value) {
 
 function setBusy(button, isBusy, textWhenBusy) {
   if (!button) return;
-
   button.disabled = isBusy;
 
   if (isBusy) {
@@ -50,16 +67,145 @@ function showStatus(message) {
   if (!pantryStatus) return;
 
   pantryStatus.textContent = message;
-
   window.clearTimeout(showStatus._timer);
   showStatus._timer = window.setTimeout(() => {
     pantryStatus.textContent = "";
   }, 1800);
 }
 
+function stockLabel(stockLevel) {
+  const normalized = String(stockLevel || "").toLowerCase();
+
+  if (normalized === "low") return "Low";
+  if (normalized === "plenty") return "Plenty";
+  if (normalized === "out") return "Out";
+  return "Some";
+}
+
+function stockDisplayText(stockLevel) {
+  const normalized = stockLabel(stockLevel);
+  if (normalized === "Some") return "Enough";
+  return normalized;
+}
+
+function stockBadgeClass(stockLevel) {
+  const normalized = stockLabel(stockLevel).toLowerCase();
+  return `badge ${normalized}`;
+}
+
+function normalizeName(value) {
+  return String(value || "").trim();
+}
+
+function ingredientNameOf(item) {
+  return normalizeName(item.name ?? item.Name ?? "");
+}
+
+function ingredientIdOf(item) {
+  return item.id ?? item.Id;
+}
+
+function ingredientStockOf(item) {
+  return stockLabel(item.stockLevel ?? item.StockLevel ?? "Some");
+}
+
+function hasKoreanChar(text) {
+  return /[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(String(text || ""));
+}
+
+function compareKo(a, b) {
+  return String(a).localeCompare(String(b), "ko");
+}
+
+function compareEn(a, b) {
+  return String(a).localeCompare(String(b), "en", { sensitivity: "base" });
+}
+
+function getIngredientType(name) {
+  const raw = String(name || "").trim().toLowerCase();
+
+  const typeMap = {
+    vegetable: [
+      "onion", "green onion", "scallion", "garlic", "carrot", "potato", "cabbage", "lettuce",
+      "spinach", "broccoli", "zucchini", "cucumber", "pepper", "bell pepper", "jalapeno",
+      "mushroom", "tomato", "radish", "daikon", "bean sprout", "sprout", "corn", "kimchi",
+      "양파", "대파", "파", "마늘", "감자", "배추", "상추", "시금치", "브로콜리", "오이",
+      "고추", "버섯", "토마토", "무", "숙주", "옥수수", "김치"
+    ],
+    carb: [
+      "rice", "pasta", "noodle", "ramen", "udon", "bread", "tortilla", "flour", "oat", "cereal",
+      "떡", "rice cake", "면", "라면", "국수", "쌀", "밥", "파스타", "빵", "토르티야", "밀가루"
+    ],
+    protein: [
+      "egg", "spam", "beef", "pork", "chicken", "tuna", "shrimp", "fish", "tofu", "sausage",
+      "bacon", "ham", "meatball", "ground beef", "ground pork", "ground chicken",
+      "계란", "달걀", "스팸", "소고기", "돼지고기", "닭고기", "참치", "새우", "생선", "두부", "소시지", "베이컨", "햄"
+    ],
+    dairy: [
+      "milk", "cheese", "butter", "yogurt", "cream", "mozzarella", "parmesan",
+      "우유", "치즈", "버터", "요거트", "생크림"
+    ],
+    fruit: [
+      "apple", "banana", "pear", "orange", "grape", "strawberry", "blueberry", "lemon", "lime",
+      "사과", "바나나", "배", "오렌지", "포도", "딸기", "블루베리", "레몬", "라임"
+    ],
+    sauce: [
+      "soy sauce", "gochujang", "doenjang", "vinegar", "sesame oil", "oil", "ketchup", "mayo",
+      "mayonnaise", "mustard", "hot sauce", "sauce", "salt", "sugar", "pepper", "gochugaru",
+      "간장", "고추장", "된장", "식초", "참기름", "기름", "케첩", "마요네즈", "머스타드", "소금", "설탕", "후추", "고춧가루"
+    ],
+    frozen: [
+      "frozen", "dumpling", "mandu", "gyoza", "ice cream",
+      "냉동", "만두", "아이스크림"
+    ],
+  };
+
+  for (const [type, keywords] of Object.entries(typeMap)) {
+    if (keywords.some((keyword) => raw.includes(keyword))) {
+      return type;
+    }
+  }
+
+  return "other";
+}
+
+function typeDisplay(type) {
+  const labels = {
+    vegetable: "야채",
+    carb: "탄수화물",
+    protein: "고기/단백질",
+    dairy: "유제품",
+    fruit: "과일",
+    sauce: "소스/조미료",
+    frozen: "냉동식품",
+    other: "기타",
+  };
+  return labels[type] || "기타";
+}
+
+function iconSvg(kind) {
+  if (kind === "edit") {
+    return `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 20h4l10.5-10.5a1.4 1.4 0 0 0 0-2L16.5 5a1.4 1.4 0 0 0-2 0L4 15.5V20zm11.8-13.8 2 2"></path>
+      </svg>
+    `;
+  }
+
+  return `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 7h16"></path>
+      <path d="M9 7V5h6v2"></path>
+      <path d="M7 7l1 12h8l1-12"></path>
+      <path d="M10 11v5"></path>
+      <path d="M14 11v5"></path>
+    </svg>
+  `;
+}
+
 async function loadIngredients() {
-  const { ingredientsList, pantryCount } = getEls();
-  if (!ingredientsList) return;
+  const { pantryCount, ingredientsSections } = getEls();
+  if (!ingredientsSections) return;
 
   try {
     const response = await fetch(`${apiBase}/ingredients`);
@@ -74,104 +220,208 @@ async function loadIngredients() {
       pantryCount.textContent = String(currentIngredients.length);
     }
 
-    renderIngredients(currentIngredients);
+    renderIngredients();
   } catch (error) {
     console.error("loadIngredients failed:", error);
-    ingredientsList.innerHTML = `<li>Failed to load ingredients.</li>`;
-
+    ingredientsSections.innerHTML = `<div class="empty-state">Failed to load ingredients.</div>`;
     if (pantryCount) {
       pantryCount.textContent = "0";
     }
   }
 }
 
-function renderIngredients(items) {
-  const { ingredientsList } = getEls();
-  if (!ingredientsList) return;
+function applyIngredientFilters(items) {
+  let filtered = [...items];
 
-  ingredientsList.innerHTML = "";
+  if (pantryUiState.search) {
+    const q = pantryUiState.search.toLowerCase();
+    filtered = filtered.filter((item) => ingredientNameOf(item).toLowerCase().includes(q));
+  }
 
-  if (!items.length) {
-    ingredientsList.innerHTML = `<li>No ingredients yet.</li>`;
+  if (pantryUiState.amount !== "all") {
+    filtered = filtered.filter((item) => ingredientStockOf(item) === pantryUiState.amount);
+  }
+
+  if (pantryUiState.type !== "all") {
+    filtered = filtered.filter(
+      (item) => getIngredientType(ingredientNameOf(item)) === pantryUiState.type
+    );
+  }
+
+  if (pantryUiState.sort === "hangul-asc") {
+    filtered.sort((a, b) => compareKo(ingredientNameOf(a), ingredientNameOf(b)));
+  } else if (pantryUiState.sort === "latin-asc") {
+    filtered.sort((a, b) => compareEn(ingredientNameOf(a), ingredientNameOf(b)));
+  } else {
+    filtered.sort((a, b) => {
+      const aId = String(ingredientIdOf(a) ?? "");
+      const bId = String(ingredientIdOf(b) ?? "");
+      return compareEn(bId, aId);
+    });
+  }
+
+  return filtered;
+}
+
+function buildPantrySummary(items) {
+  const { pantrySummary } = getEls();
+  if (!pantrySummary) return;
+
+  const counts = {
+    total: items.length,
+    Low: items.filter((x) => ingredientStockOf(x) === "Low").length,
+    Some: items.filter((x) => ingredientStockOf(x) === "Some").length,
+    Plenty: items.filter((x) => ingredientStockOf(x) === "Plenty").length,
+    Out: items.filter((x) => ingredientStockOf(x) === "Out").length,
+  };
+
+  pantrySummary.innerHTML = `
+    <div class="summary-pill">Total <strong>${counts.total}</strong></div>
+    <div class="summary-pill low">Low <strong>${counts.Low}</strong></div>
+    <div class="summary-pill some">Enough <strong>${counts.Some}</strong></div>
+    <div class="summary-pill plenty">Plenty <strong>${counts.Plenty}</strong></div>
+    <div class="summary-pill out">Out <strong>${counts.Out}</strong></div>
+  `;
+}
+
+function renderIngredients() {
+  const { ingredientsSections } = getEls();
+  if (!ingredientsSections) return;
+
+  const filteredItems = applyIngredientFilters(currentIngredients);
+  buildPantrySummary(filteredItems);
+
+  ingredientsSections.innerHTML = "";
+
+  if (!filteredItems.length) {
+    ingredientsSections.innerHTML = `<div class="empty-state">No ingredients match your filters.</div>`;
     return;
   }
 
+  const grouped = {
+    Low: [],
+    Some: [],
+    Plenty: [],
+    Out: [],
+  };
+
+  filteredItems.forEach((item) => {
+    grouped[ingredientStockOf(item)].push(item);
+  });
+
+  const order = ["Low", "Some", "Plenty", "Out"];
   const fragment = document.createDocumentFragment();
 
-  for (const item of items) {
-    const id = item.id ?? item.Id;
-    const name = item.name ?? item.Name ?? "";
-    const stockLevel = item.stockLevel ?? item.StockLevel ?? "Some";
+  for (const stockKey of order) {
+    const items = grouped[stockKey];
+    if (!items.length) continue;
 
-    const li = document.createElement("li");
+    const section = document.createElement("section");
+    section.className = "pantry-group";
 
-    const mainDiv = document.createElement("div");
-    mainDiv.className = "item-main";
-
-    const nameDiv = document.createElement("div");
-    nameDiv.className = "item-name";
-    nameDiv.textContent = name;
-
-    const metaDiv = document.createElement("div");
-    metaDiv.className = "item-meta";
-
-    const badge = document.createElement("span");
-    const normalized = String(stockLevel).toLowerCase();
-
-    badge.className =
-      normalized === "plenty"
-        ? "badge plenty"
-        : normalized === "some"
-        ? "badge some"
-        : normalized === "low"
-        ? "badge low"
-        : normalized === "out"
-        ? "badge out"
-        : "badge";
-
-badge.textContent = stockLevel;
-
-    metaDiv.appendChild(badge);
-    mainDiv.appendChild(nameDiv);
-    mainDiv.appendChild(metaDiv);
-
-    const actionsDiv = document.createElement("div");
-    actionsDiv.className = "item-actions";
-
-    const editBtn = document.createElement("button");
-    editBtn.type = "button";
-    editBtn.className = "edit";
-    editBtn.textContent = "Edit";
-    editBtn.addEventListener("click", () => startEditIngredient(id));
-
-    const deleteBtn = document.createElement("button");
-    deleteBtn.type = "button";
-    deleteBtn.className = "delete";
-    deleteBtn.textContent = "Delete";
-    deleteBtn.addEventListener("click", async () => {
-      await deleteIngredient(id);
+    const headerButton = document.createElement("button");
+    headerButton.type = "button";
+    headerButton.className = "group-header";
+    headerButton.setAttribute("aria-expanded", String(!collapsedSections[stockKey]));
+    headerButton.innerHTML = `
+      <div class="group-title-wrap">
+        <span class="caret">${collapsedSections[stockKey] ? "▸" : "▾"}</span>
+        <span class="${stockBadgeClass(stockKey)}">${stockDisplayText(stockKey)}</span>
+        <span class="group-title">${stockDisplayText(stockKey)}</span>
+      </div>
+      <span class="group-count">${items.length}</span>
+    `;
+    headerButton.addEventListener("click", () => {
+      collapsedSections[stockKey] = !collapsedSections[stockKey];
+      renderIngredients();
     });
 
-    actionsDiv.appendChild(editBtn);
-    actionsDiv.appendChild(deleteBtn);
+    section.appendChild(headerButton);
 
-    li.appendChild(mainDiv);
-    li.appendChild(actionsDiv);
-    fragment.appendChild(li);
+    if (!collapsedSections[stockKey]) {
+      const list = document.createElement("ul");
+      list.className = "ingredient-list";
+
+      items.forEach((item) => {
+        const id = ingredientIdOf(item);
+        const name = ingredientNameOf(item);
+        const stockLevel = ingredientStockOf(item);
+        const type = getIngredientType(name);
+
+        const li = document.createElement("li");
+        li.className = "ingredient-row";
+
+        const mainDiv = document.createElement("div");
+        mainDiv.className = "item-main";
+
+        const nameDiv = document.createElement("div");
+        nameDiv.className = "item-name";
+        nameDiv.textContent = name;
+
+        const metaDiv = document.createElement("div");
+        metaDiv.className = "item-meta";
+
+        const amountBadge = document.createElement("span");
+        amountBadge.className = stockBadgeClass(stockLevel);
+        amountBadge.textContent = stockDisplayText(stockLevel);
+
+        const typeBadge = document.createElement("span");
+        typeBadge.className = "type-badge";
+        typeBadge.textContent = typeDisplay(type);
+
+        const orderBadge = document.createElement("span");
+        orderBadge.className = "alphabet-badge";
+        orderBadge.textContent = hasKoreanChar(name) ? "가나다" : "ABC";
+
+        metaDiv.appendChild(amountBadge);
+        metaDiv.appendChild(typeBadge);
+        metaDiv.appendChild(orderBadge);
+
+        mainDiv.appendChild(nameDiv);
+        mainDiv.appendChild(metaDiv);
+
+        const actionsDiv = document.createElement("div");
+        actionsDiv.className = "item-actions";
+
+        const editBtn = document.createElement("button");
+        editBtn.type = "button";
+        editBtn.className = "icon-button edit";
+        editBtn.title = "Edit ingredient";
+        editBtn.setAttribute("aria-label", "Edit ingredient");
+        editBtn.innerHTML = iconSvg("edit");
+        editBtn.addEventListener("click", () => startEditIngredient(id));
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.type = "button";
+        deleteBtn.className = "icon-button delete";
+        deleteBtn.title = "Delete ingredient";
+        deleteBtn.setAttribute("aria-label", "Delete ingredient");
+        deleteBtn.innerHTML = iconSvg("delete");
+        deleteBtn.addEventListener("click", async () => {
+          await deleteIngredient(id);
+        });
+
+        actionsDiv.appendChild(editBtn);
+        actionsDiv.appendChild(deleteBtn);
+
+        li.appendChild(mainDiv);
+        li.appendChild(actionsDiv);
+        list.appendChild(li);
+      });
+
+      section.appendChild(list);
+    }
+
+    fragment.appendChild(section);
   }
 
-  ingredientsList.appendChild(fragment);
+  ingredientsSections.appendChild(fragment);
 }
 
 async function saveIngredient() {
-  const {
-    ingredientNameInput,
-    ingredientStockLevelInput,
-    saveButton
-  } = getEls();
+  const { ingredientNameInput, ingredientStockLevelInput, saveButton } = getEls();
 
   if (!ingredientNameInput || !ingredientStockLevelInput) {
-    console.error("Missing pantry form elements.");
     alert("Pantry form is not loaded correctly.");
     return;
   }
@@ -198,7 +448,7 @@ async function saveIngredient() {
       {
         method: wasEditing ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       }
     );
 
@@ -219,19 +469,13 @@ async function saveIngredient() {
 }
 
 function startEditIngredient(id) {
-  const {
-    ingredientNameInput,
-    ingredientStockLevelInput,
-    saveButton,
-    cancelEditButton
-  } = getEls();
-
-  const item = currentIngredients.find((x) => (x.id ?? x.Id) === id);
+  const { ingredientNameInput, ingredientStockLevelInput, saveButton, cancelEditButton } = getEls();
+  const item = currentIngredients.find((x) => ingredientIdOf(x) === id);
   if (!item || !ingredientNameInput || !ingredientStockLevelInput) return;
 
   editingIngredientId = id;
-  ingredientNameInput.value = item.name ?? item.Name ?? "";
-  ingredientStockLevelInput.value = item.stockLevel ?? item.StockLevel ?? "Some";
+  ingredientNameInput.value = ingredientNameOf(item);
+  ingredientStockLevelInput.value = ingredientStockOf(item);
 
   if (saveButton) saveButton.textContent = "Save Changes";
   if (cancelEditButton) cancelEditButton.classList.remove("hidden");
@@ -240,12 +484,7 @@ function startEditIngredient(id) {
 }
 
 function resetForm() {
-  const {
-    ingredientNameInput,
-    ingredientStockLevelInput,
-    saveButton,
-    cancelEditButton
-  } = getEls();
+  const { ingredientNameInput, ingredientStockLevelInput, saveButton, cancelEditButton } = getEls();
 
   editingIngredientId = null;
 
@@ -257,9 +496,7 @@ function resetForm() {
 
 async function deleteIngredient(id) {
   try {
-    const response = await fetch(`${apiBase}/ingredients/${id}`, {
-      method: "DELETE"
-    });
+    const response = await fetch(`${apiBase}/ingredients/${id}`, { method: "DELETE" });
 
     if (!response.ok && response.status !== 204) {
       throw new Error(`Failed to delete ingredient: ${response.status}`);
@@ -284,10 +521,7 @@ async function loadSuggestions() {
   try {
     setBusy(suggestButton, true, "Loading...");
 
-    const response = await fetch(`${apiBase}/suggestions`, {
-      method: "POST"
-    });
-
+    const response = await fetch(`${apiBase}/suggestions`, { method: "POST" });
     if (!response.ok) {
       throw new Error(`Failed to load suggestions: ${response.status}`);
     }
@@ -296,7 +530,7 @@ async function loadSuggestions() {
     renderSuggestions(Array.isArray(items) ? items : []);
   } catch (error) {
     console.error("loadSuggestions failed:", error);
-    suggestionsDiv.innerHTML = `<p class="empty-state">Failed to load suggestions.</p>`;
+    suggestionsDiv.innerHTML = `<div class="empty-state">Failed to load suggestions.</div>`;
     if (suggestionCount) {
       suggestionCount.textContent = "0";
     }
@@ -322,7 +556,7 @@ function renderSuggestions(items) {
   suggestionsDiv.innerHTML = "";
 
   if (!sortedItems.length) {
-    suggestionsDiv.innerHTML = `<p class="empty-state">No suggestions available.</p>`;
+    suggestionsDiv.innerHTML = `<div class="empty-state">No suggestions available.</div>`;
     return;
   }
 
@@ -335,12 +569,10 @@ function renderSuggestions(items) {
     const missingIngredients = item.missingIngredients ?? item.MissingIngredients ?? [];
     const lowStockIngredients = item.lowStockIngredients ?? item.LowStockIngredients ?? [];
     const uses = item.uses ?? item.Uses ?? [];
-
     const recipeUrl =
       (item.recipeUrl && item.recipeUrl.trim()) ||
       (item.RecipeUrl && item.RecipeUrl.trim()) ||
       fallbackRecipeUrl;
-
     const recipeSource =
       (item.recipeSource && item.recipeSource.trim()) ||
       (item.RecipeSource && item.RecipeSource.trim()) ||
@@ -360,17 +592,17 @@ function renderSuggestions(items) {
     metaRow.className = "suggestion-meta";
 
     if (cuisine) {
-      metaRow.innerHTML += `<span class="badge cuisine">${escapeHtml(cuisine)}</span>`;
+      metaRow.innerHTML += `<span class="meta-pill">${escapeHtml(cuisine)}</span>`;
     }
 
     if (canMakeNow) {
-      metaRow.innerHTML += `<span class="badge good">Can make now</span>`;
+      metaRow.innerHTML += `<span class="meta-pill success">Can make now</span>`;
     } else if (missingIngredients.length > 0) {
-      metaRow.innerHTML += `<span class="badge warn">Missing ${missingIngredients.length}</span>`;
+      metaRow.innerHTML += `<span class="meta-pill warn">Missing ${missingIngredients.length}</span>`;
     }
 
     if (lowStockIngredients.length > 0) {
-      metaRow.innerHTML += `<span class="badge low">Low stock ${lowStockIngredients.length}</span>`;
+      metaRow.innerHTML += `<span class="meta-pill caution">Low stock ${lowStockIngredients.length}</span>`;
     }
 
     header.appendChild(title);
@@ -402,14 +634,14 @@ function renderSuggestions(items) {
     if (!canMakeNow && missingIngredients.length > 0) {
       const missing = document.createElement("p");
       missing.className = "detail-line missing-line";
-      missing.innerHTML = `<span class="detail-label missing-label">Missing</span>${escapeHtml(missingIngredients.join(", "))}`;
+      missing.innerHTML = `<strong>Missing:</strong> ${escapeHtml(missingIngredients.join(", "))}`;
       details.appendChild(missing);
     }
 
     if (lowStockIngredients.length > 0) {
       const low = document.createElement("p");
       low.className = "detail-line low-line";
-      low.innerHTML = `<span class="detail-label low-label">Low stock</span>${escapeHtml(lowStockIngredients.join(", "))}`;
+      low.innerHTML = `<strong>Low stock:</strong> ${escapeHtml(lowStockIngredients.join(", "))}`;
       details.appendChild(low);
     }
 
@@ -418,15 +650,10 @@ function renderSuggestions(items) {
     recipeCard.href = recipeUrl;
     recipeCard.target = "_blank";
     recipeCard.rel = "noreferrer";
-
     recipeCard.innerHTML = `
-      <div class="recipe-preview-body no-thumb">
-        <div class="recipe-preview-top">
-          <span class="recipe-site">${escapeHtml(recipeSource)}</span>
-        </div>
-        <div class="recipe-preview-title">Recipe link</div>
-        <div class="recipe-preview-url">${escapeHtml(recipeUrl)}</div>
-      </div>
+      <div class="recipe-source">${escapeHtml(recipeSource)}</div>
+      <div class="recipe-title">Recipe link</div>
+      <div class="recipe-url">${escapeHtml(recipeUrl)}</div>
     `;
 
     div.appendChild(header);
@@ -438,12 +665,55 @@ function renderSuggestions(items) {
   }
 }
 
+function syncFiltersFromUi() {
+  const { filterSearch, filterAmount, filterSort, filterType } = getEls();
+
+  pantryUiState = {
+    search: filterSearch?.value.trim() ?? "",
+    amount: filterAmount?.value ?? "all",
+    sort: filterSort?.value ?? "hangul-asc",
+    type: filterType?.value ?? "all",
+  };
+}
+
+function clearFilters() {
+  const { filterSearch, filterAmount, filterSort, filterType } = getEls();
+
+  if (filterSearch) filterSearch.value = "";
+  if (filterAmount) filterAmount.value = "all";
+  if (filterSort) filterSort.value = "hangul-asc";
+  if (filterType) filterType.value = "all";
+
+  syncFiltersFromUi();
+  renderIngredients();
+}
+
+function wireUpFilters() {
+  const { filterSearch, filterAmount, filterSort, filterType, clearFiltersButton } = getEls();
+
+  [filterSearch, filterAmount, filterSort, filterType].forEach((el) => {
+    if (!el) return;
+    el.addEventListener("input", () => {
+      syncFiltersFromUi();
+      renderIngredients();
+    });
+    el.addEventListener("change", () => {
+      syncFiltersFromUi();
+      renderIngredients();
+    });
+  });
+
+  if (clearFiltersButton) {
+    clearFiltersButton.addEventListener("click", clearFilters);
+  }
+}
+
 function wireUp() {
   const {
     ingredientNameInput,
     saveButton,
     cancelEditButton,
-    suggestButton
+    suggestButton,
   } = getEls();
 
   if (saveButton) saveButton.addEventListener("click", saveIngredient);
@@ -459,6 +729,7 @@ function wireUp() {
     });
   }
 
+  wireUpFilters();
   loadIngredients();
 }
 

@@ -12,11 +12,16 @@ builder.ConfigureFunctionsWebApplication();
 builder.Services.Configure<CosmosDbOptions>(
     builder.Configuration.GetSection("CosmosDb"));
 
+builder.Services.Configure<AzureOpenAiOptions>(
+    builder.Configuration.GetSection("AzureOpenAi"));
+
 builder.Services.AddSingleton(sp =>
 {
     var config = builder.Configuration;
-    var endpoint = config["CosmosDb:Endpoint"] ?? throw new InvalidOperationException("CosmosDb:Endpoint is missing.");
-    var key = config["CosmosDb:Key"] ?? throw new InvalidOperationException("CosmosDb:Key is missing.");
+    var endpoint = config["CosmosDb:Endpoint"]
+        ?? throw new InvalidOperationException("CosmosDb:Endpoint is missing.");
+    var key = config["CosmosDb:Key"]
+        ?? throw new InvalidOperationException("CosmosDb:Key is missing.");
 
     return new CosmosClient(endpoint, key, new CosmosClientOptions
     {
@@ -25,6 +30,6 @@ builder.Services.AddSingleton(sp =>
 });
 
 builder.Services.AddSingleton<PantryStore>();
-builder.Services.AddSingleton<SuggestionService>();
+builder.Services.AddHttpClient<SuggestionService>();
 
 builder.Build().Run();

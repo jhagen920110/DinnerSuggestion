@@ -4,60 +4,135 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dinner Suggestion App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="container">
-    <h1>🍚 Dinner Suggestion App</h1>
-    <p class="subtitle">Pantry first. Korean-first. Simple and fun.</p>
-
-    <section class="card">
-      <div class="row between title-row">
-        <h2>
-          Pantry
-          <span id="pantryCount" class="count-pill">0</span>
-        </h2>
-        <span class="small-note">Add what you have at home</span>
+  <div class="page-shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Dinner Suggestion App</p>
+        <h1>Pantry first. Korean-first. Simple and fun.</h1>
+        <p class="hero-subtitle">
+          Keep your pantry organized and get meal ideas from what you already have.
+        </p>
       </div>
+    </header>
 
-      <div class="form-grid">
-        <input
-          id="ingredientName"
-          type="text"
-          placeholder="Ingredient name (e.g. kimchi)"
-          autocomplete="off"
-        />
-        <select id="ingredientStockLevel">
-          <option value="Plenty">Plenty</option>
-          <option value="Some" selected>Some</option>
-          <option value="Low">Low</option>
-          <option value="Out">Out</option>
-        </select>
-      </div>
+    <main class="dashboard">
+      <section class="card pantry-card">
+        <div class="section-header">
+          <div>
+            <h2>Pantry <span id="pantryCount" class="count-pill">0</span></h2>
+            <p class="section-subtitle">Add what you have at home</p>
+          </div>
+          <div id="pantryStatus" class="status-message" aria-live="polite"></div>
+        </div>
 
-      <div class="row">
-        <button type="button" id="saveButton">Add Ingredient</button>
-        <button type="button" id="cancelEditButton" class="secondary hidden">Cancel Edit</button>
-      </div>
+        <div class="form-card">
+          <div class="form-grid">
+            <label class="field">
+              <span>Ingredient</span>
+              <input
+                id="ingredientName"
+                type="text"
+                placeholder="e.g. 김치, rice, onion"
+                autocomplete="off"
+              />
+            </label>
 
-      <div id="pantryStatus" class="status-text" aria-live="polite"></div>
+            <label class="field">
+              <span>Amount</span>
+              <select id="ingredientStockLevel">
+                <option value="Plenty">Plenty</option>
+                <option value="Some" selected>Enough</option>
+                <option value="Low">Low</option>
+                <option value="Out">Out</option>
+              </select>
+            </label>
+          </div>
 
-      <ul id="ingredientsList"></ul>
-    </section>
+          <div class="form-actions">
+            <button id="saveButton" class="btn btn-primary" type="button">Add Ingredient</button>
+            <button id="cancelEditButton" class="btn btn-secondary hidden" type="button">
+              Cancel Edit
+            </button>
+          </div>
+        </div>
 
-    <section class="card">
-      <div class="row between title-row">
-        <h2>
-          Dinner Suggestions
-          <span id="suggestionCount" class="count-pill">0</span>
-        </h2>
-        <button type="button" id="suggestButton">Suggest Dinner</button>
-      </div>
+        <div class="filters-card">
+          <div class="filters-header">
+            <h3>Filters</h3>
+            <button id="clearFiltersButton" class="btn btn-ghost" type="button">Clear</button>
+          </div>
 
-      <div id="suggestions"></div>
-    </section>
+          <div class="filters-grid">
+            <label class="field">
+              <span>Search</span>
+              <input id="filterSearch" type="text" placeholder="Find ingredient..." />
+            </label>
+
+            <label class="field">
+              <span>Amount</span>
+              <select id="filterAmount">
+                <option value="all">All</option>
+                <option value="Low">Low</option>
+                <option value="Some">Enough</option>
+                <option value="Plenty">Plenty</option>
+                <option value="Out">Out</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>정렬 / Sort</span>
+              <select id="filterSort">
+                <option value="hangul-asc">가나다순</option>
+                <option value="latin-asc">ABC</option>
+                <option value="recent">Recently added</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Type</span>
+              <select id="filterType">
+                <option value="all">All</option>
+                <option value="vegetable">야채</option>
+                <option value="carb">탄수화물</option>
+                <option value="protein">고기/단백질</option>
+                <option value="dairy">유제품</option>
+                <option value="fruit">과일</option>
+                <option value="sauce">소스/조미료</option>
+                <option value="frozen">냉동식품</option>
+                <option value="other">기타</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div class="summary-row" id="pantrySummary"></div>
+
+        <div id="ingredientsSections" class="ingredient-sections"></div>
+      </section>
+
+      <section class="card suggestions-card">
+        <div class="section-header">
+          <div>
+            <h2>Dinner Suggestions <span id="suggestionCount" class="count-pill">0</span></h2>
+            <p class="section-subtitle">AI-powered ideas from your pantry</p>
+          </div>
+          <button id="suggestButton" class="btn btn-primary" type="button">Suggest Dinner</button>
+        </div>
+
+        <div id="suggestions" class="suggestions-grid"></div>
+      </section>
+    </main>
   </div>
 
-  <script src="app.js?v=3"></script>
+  <script src="app.js"></script>
 </body>
 </html>

@@ -274,11 +274,11 @@ function renderSuggestions(items) {
   suggestionsDiv.innerHTML = "";
 
   if (!items.length) {
-    suggestionsDiv.innerHTML = `<p>No suggestions available.</p>`;
+    suggestionsDiv.innerHTML = `<p class="empty-state">No suggestions available.</p>`;
     return;
   }
 
-  const fragment = document.createDocumentFragment();
+  const fallbackRecipeUrl = "https://www.10000recipe.com/recipe/1785098";
 
   for (const item of items) {
     const name = item.name ?? item.Name ?? "";
@@ -287,49 +287,107 @@ function renderSuggestions(items) {
     const missingIngredients = item.missingIngredients ?? item.MissingIngredients ?? [];
     const lowStockIngredients = item.lowStockIngredients ?? item.LowStockIngredients ?? [];
     const uses = item.uses ?? item.Uses ?? [];
-    const recipeUrl = item.recipeUrl ?? item.RecipeUrl ?? "";
-    const recipeSource = item.recipeSource ?? item.RecipeSource ?? "";
+
+    const recipeUrl =
+      (item.recipeUrl && item.recipeUrl.trim()) ||
+      (item.RecipeUrl && item.RecipeUrl.trim()) ||
+      fallbackRecipeUrl;
+
+    const recipeSource =
+      (item.recipeSource && item.recipeSource.trim()) ||
+      (item.RecipeSource && item.RecipeSource.trim()) ||
+      "10000recipe";
 
     const div = document.createElement("div");
     div.className = "suggestion";
 
+    const header = document.createElement("div");
+    header.className = "suggestion-header";
+
     const title = document.createElement("h3");
+    title.className = "suggestion-title";
     title.textContent = name;
 
-    const info = document.createElement("p");
-    let infoHtml = cuisine ? `${escapeHtml(cuisine)}<br>` : "";
-    infoHtml += canMakeNow
-      ? "Can make now"
-      : `Missing: ${escapeHtml(missingIngredients.join(", "))}`;
+    const metaRow = document.createElement("div");
+    metaRow.className = "suggestion-meta";
+
+    if (cuisine) {
+      metaRow.innerHTML += `<span class="badge cuisine">${escapeHtml(cuisine)}</span>`;
+    }
+
+    if (canMakeNow) {
+      metaRow.innerHTML += `<span class="badge good">Can make now</span>`;
+    } else if (missingIngredients.length > 0) {
+      metaRow.innerHTML += `<span class="badge warn">Missing ${missingIngredients.length}</span>`;
+    }
+
     if (lowStockIngredients.length > 0) {
-      infoHtml += `<br>Low stock: ${escapeHtml(lowStockIngredients.join(", "))}`;
-    }
-    info.innerHTML = infoHtml;
-
-    const usesP = document.createElement("p");
-    usesP.innerHTML = `Uses: ${escapeHtml(uses.join(", "))}`;
-
-    const recipeLink = document.createElement("a");
-    recipeLink.className = recipeUrl ? "recipe-link" : "recipe-link disabled";
-    recipeLink.textContent = recipeUrl
-      ? `Open recipe${recipeSource ? ` (${recipeSource})` : ""}`
-      : "Recipe link coming later";
-    recipeLink.href = recipeUrl || "#";
-    recipeLink.target = "_blank";
-    recipeLink.rel = "noreferrer";
-
-    if (!recipeUrl) {
-      recipeLink.addEventListener("click", e => e.preventDefault());
+      metaRow.innerHTML += `<span class="badge low">Low stock ${lowStockIngredients.length}</span>`;
     }
 
-    div.appendChild(title);
-    div.appendChild(info);
-    div.appendChild(usesP);
-    div.appendChild(recipeLink);
-    fragment.appendChild(div);
+    header.appendChild(title);
+    header.appendChild(metaRow);
+
+    const usesBlock = document.createElement("div");
+    usesBlock.className = "uses-block";
+
+    const usesLabel = document.createElement("div");
+    usesLabel.className = "detail-label standalone";
+    usesLabel.textContent = "Uses";
+
+    const usesChips = document.createElement("div");
+    usesChips.className = "chip-row";
+
+    for (const ingredient of uses) {
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      chip.textContent = ingredient;
+      usesChips.appendChild(chip);
+    }
+
+    usesBlock.appendChild(usesLabel);
+    usesBlock.appendChild(usesChips);
+
+    const details = document.createElement("div");
+    details.className = "suggestion-details";
+
+    if (!canMakeNow && missingIngredients.length > 0) {
+      const missing = document.createElement("p");
+      missing.className = "detail-line missing-line";
+      missing.innerHTML = `<span class="detail-label missing-label">Missing</span>${escapeHtml(missingIngredients.join(", "))}`;
+      details.appendChild(missing);
+    }
+
+    if (lowStockIngredients.length > 0) {
+      const low = document.createElement("p");
+      low.className = "detail-line low-line";
+      low.innerHTML = `<span class="detail-label low-label">Low stock</span>${escapeHtml(lowStockIngredients.join(", "))}`;
+      details.appendChild(low);
+    }
+
+    const recipeCard = document.createElement("a");
+    recipeCard.className = "recipe-preview";
+    recipeCard.href = recipeUrl;
+    recipeCard.target = "_blank";
+    recipeCard.rel = "noreferrer";
+
+    recipeCard.innerHTML = `
+      <div class="recipe-preview-body no-thumb">
+        <div class="recipe-preview-top">
+          <span class="recipe-site">${escapeHtml(recipeSource)}</span>
+        </div>
+        <div class="recipe-preview-title">Recipe link</div>
+        <div class="recipe-preview-url">${escapeHtml(recipeUrl)}</div>
+      </div>
+    `;
+
+    div.appendChild(header);
+    div.appendChild(usesBlock);
+    div.appendChild(details);
+    div.appendChild(recipeCard);
+
+    suggestionsDiv.appendChild(div);
   }
-
-  suggestionsDiv.appendChild(fragment);
 }
 
 function wireUp() {

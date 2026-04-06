@@ -37,80 +37,154 @@
         <div class="form-card">
           <div class="form-grid">
             <label class="field">
-              <span>Ingredient</span>
+              <span>재료명</span>
               <input
                 id="ingredientName"
                 type="text"
-                placeholder="e.g. 김치, rice, onion"
+                placeholder="예: 김치, 양파, 쌀"
                 autocomplete="off"
               />
             </label>
 
             <label class="field">
-              <span>Amount</span>
+              <span>수량</span>
               <select id="ingredientStockLevel">
-                <option value="Plenty">Plenty</option>
-                <option value="Some" selected>Enough</option>
-                <option value="Low">Low</option>
-                <option value="Out">Out</option>
+                <option value="많음">많음</option>
+                <option value="보통" selected>보통</option>
+                <option value="적음">적음</option>
+                <option value="없음">없음</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>종류</span>
+              <select id="ingredientType">
+                <option value="야채">야채</option>
+                <option value="탄수화물">탄수화물</option>
+                <option value="고기/단백질">고기/단백질</option>
+                <option value="유제품">유제품</option>
+                <option value="과일">과일</option>
+                <option value="소스/조미료">소스/조미료</option>
+                <option value="냉동식품">냉동식품</option>
+                <option value="기타" selected>기타</option>
               </select>
             </label>
           </div>
 
           <div class="form-actions">
-            <button id="saveButton" class="btn btn-primary" type="button">Add Ingredient</button>
-            <button id="cancelEditButton" class="btn btn-secondary hidden" type="button">
-              Cancel Edit
-            </button>
+            <button id="saveButton" class="btn btn-primary" type="button">재료 추가</button>
           </div>
         </div>
 
         <div class="filters-card">
-          <div class="filters-header">
-            <h3>Filters</h3>
-            <button id="clearFiltersButton" class="btn btn-ghost" type="button">Clear</button>
-          </div>
+          <button
+            id="toggleFiltersButton"
+            class="collapse-toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="filtersContent"
+          >
+            <span>Filters</span>
+            <span id="filtersCaret" class="collapse-caret">▸</span>
+          </button>
 
-          <div class="filters-grid">
-            <label class="field">
-              <span>Search</span>
-              <input id="filterSearch" type="text" placeholder="Find ingredient..." />
-            </label>
+          <div id="filtersContent" class="filters-content hidden">
+            <div class="filters-stack">
+              <label class="field">
+                <span>검색</span>
+                <input id="filterSearch" type="text" placeholder="재료 검색..." />
+              </label>
 
-            <label class="field">
-              <span>Amount</span>
-              <select id="filterAmount">
-                <option value="all">All</option>
-                <option value="Low">Low</option>
-                <option value="Some">Enough</option>
-                <option value="Plenty">Plenty</option>
-                <option value="Out">Out</option>
-              </select>
-            </label>
+              <div class="filter-group">
+                <div class="filter-label">수량</div>
+                <div class="radio-chip-row">
+                  <label class="radio-chip">
+                    <input type="radio" name="filterAmount" value="all" checked />
+                    <span>전체</span>
+                  </label>
+                  <label class="radio-chip">
+                    <input type="radio" name="filterAmount" value="적음" />
+                    <span>적음</span>
+                  </label>
+                  <label class="radio-chip">
+                    <input type="radio" name="filterAmount" value="보통" />
+                    <span>보통</span>
+                  </label>
+                  <label class="radio-chip">
+                    <input type="radio" name="filterAmount" value="많음" />
+                    <span>많음</span>
+                  </label>
+                  <label class="radio-chip">
+                    <input type="radio" name="filterAmount" value="없음" />
+                    <span>없음</span>
+                  </label>
+                </div>
+              </div>
 
-            <label class="field">
-              <span>정렬 / Sort</span>
-              <select id="filterSort">
-                <option value="hangul-asc">가나다순</option>
-                <option value="latin-asc">ABC</option>
-                <option value="recent">Recently added</option>
-              </select>
-            </label>
+              <div class="filter-group">
+                <div class="filter-label">정렬</div>
+                <div class="radio-chip-row">
+                  <label class="radio-chip">
+                    <input type="radio" name="filterSort" value="hangul-asc" checked />
+                    <span>가나다순</span>
+                  </label>
+                  <label class="radio-chip">
+                    <input type="radio" name="filterSort" value="latin-asc" />
+                    <span>ABC</span>
+                  </label>
+                  <label class="radio-chip">
+                    <input type="radio" name="filterSort" value="recent" />
+                    <span>최근추가</span>
+                  </label>
+                </div>
+              </div>
 
-            <label class="field">
-              <span>Type</span>
-              <select id="filterType">
-                <option value="all">All</option>
-                <option value="vegetable">야채</option>
-                <option value="carb">탄수화물</option>
-                <option value="protein">고기/단백질</option>
-                <option value="dairy">유제품</option>
-                <option value="fruit">과일</option>
-                <option value="sauce">소스/조미료</option>
-                <option value="frozen">냉동식품</option>
-                <option value="other">기타</option>
-              </select>
-            </label>
+              <div class="filter-group">
+                <div class="filter-label">종류</div>
+                <div class="radio-chip-row">
+                  <label class="radio-chip">
+                    <input type="radio" name="filterType" value="all" checked />
+                    <span>전체</span>
+                  </label>
+                  <label class="radio-chip">
+                    <input type="radio" name="filterType" value="야채" />
+                    <span>야채</span>
+                  </label>
+                  <label class="radio-chip">
+                    <input type="radio" name="filterType" value="탄수화물" />
+                    <span>탄수화물</span>
+                  </label>
+                  <label class="radio-chip">
+                    <input type="radio" name="filterType" value="고기/단백질" />
+                    <span>고기/단백질</span>
+                  </label>
+                  <label class="radio-chip">
+                    <input type="radio" name="filterType" value="유제품" />
+                    <span>유제품</span>
+                  </label>
+                  <label class="radio-chip">
+                    <input type="radio" name="filterType" value="과일" />
+                    <span>과일</span>
+                  </label>
+                  <label class="radio-chip">
+                    <input type="radio" name="filterType" value="소스/조미료" />
+                    <span>소스/조미료</span>
+                  </label>
+                  <label class="radio-chip">
+                    <input type="radio" name="filterType" value="냉동식품" />
+                    <span>냉동식품</span>
+                  </label>
+                  <label class="radio-chip">
+                    <input type="radio" name="filterType" value="기타" />
+                    <span>기타</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="filters-actions">
+                <button id="clearFiltersButton" class="btn btn-ghost" type="button">Clear</button>
+              </div>
+            </div>
           </div>
         </div>
 

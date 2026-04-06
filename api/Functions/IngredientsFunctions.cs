@@ -1,56 +1,44 @@
 using System.Net;
 using System.Text.Json;
 using DinnerSuggestionApi.Models;
-using DinnerSuggestionApi.Services;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 
 namespace DinnerSuggestionApi.Functions;
 
-public class IngredientsFunctions
+public class IngredientsFunction
 {
-    private readonly PantryStore _pantryStore;
-
-    public IngredientsFunctions(PantryStore pantryStore)
-    {
-        _pantryStore = pantryStore;
-    }
-
     [Function("GetIngredients")]
     public async Task<HttpResponseData> GetIngredients(
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "ingredients")] HttpRequestData req)
     {
-        var items = await _pantryStore.GetAllAsync();
-
-        var response = req.CreateResponse(HttpStatusCode.OK);
-        await response.WriteAsJsonAsync(items);
-        return response;
+        throw new NotImplementedException();
     }
 
-    [Function("AddIngredient")]
-    public async Task<HttpResponseData> AddIngredient(
+    [Function("CreateIngredient")]
+    public async Task<HttpResponseData> CreateIngredient(
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "ingredients")] HttpRequestData req)
     {
-        var request = await JsonSerializer.DeserializeAsync<Ingredient>(req.Body, new JsonSerializerOptions
+        var ingredient = await JsonSerializer.DeserializeAsync<Ingredient>(req.Body, new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true
         });
 
-        if (request is null || string.IsNullOrWhiteSpace(request.Name))
+        if (ingredient is null || string.IsNullOrWhiteSpace(ingredient.Name))
         {
-            var badResponse = req.CreateResponse(HttpStatusCode.BadRequest);
-            await badResponse.WriteStringAsync("Ingredient name is required.");
-            return badResponse;
+            var bad = req.CreateResponse(HttpStatusCode.BadRequest);
+            await bad.WriteStringAsync("name is required");
+            return bad;
         }
 
-        var added = await _pantryStore.AddAsync(new Ingredient
-        {
-            Name = request.Name,
-            StockLevel = request.StockLevel
-        });
+        ingredient.Id ??= Guid.NewGuid().ToString();
+        ingredient.StockLevel = NormalizeStockLevel(ingredient.StockLevel);
+        ingredient.Type = NormalizeType(ingredient.Type);
+
+        // await _ingredientService.CreateAsync(ingredient);
 
         var response = req.CreateResponse(HttpStatusCode.Created);
-        await response.WriteAsJsonAsync(added);
+        await response.WriteAsJsonAsync(ingredient);
         return response;
     }
 
@@ -59,46 +47,52 @@ public class IngredientsFunctions
         [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "ingredients/{id}")] HttpRequestData req,
         string id)
     {
-        var request = await JsonSerializer.DeserializeAsync<Ingredient>(req.Body, new JsonSerializerOptions
+        var ingredient = await JsonSerializer.DeserializeAsync<Ingredient>(req.Body, new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true
         });
 
-        if (request is null || string.IsNullOrWhiteSpace(request.Name))
+        if (ingredient is null || string.IsNullOrWhiteSpace(ingredient.Name))
         {
-            var badResponse = req.CreateResponse(HttpStatusCode.BadRequest);
-            await badResponse.WriteStringAsync("Ingredient name is required.");
-            return badResponse;
+            var bad = req.CreateResponse(HttpStatusCode.BadRequest);
+            await bad.WriteStringAsync("name is required");
+            return bad;
         }
 
-        var updated = await _pantryStore.UpdateAsync(id, request);
+        ingredient.Id = id;
+        ingredient.StockLevel = NormalizeStockLevel(ingredient.StockLevel);
+        ingredient.Type = NormalizeType(ingredient.Type);
 
-        if (updated is null)
-        {
-            var notFound = req.CreateResponse(HttpStatusCode.NotFound);
-            await notFound.WriteStringAsync("Ingredient not found.");
-            return notFound;
-        }
+        // await _ingredientService.UpdateAsync(id, ingredient);
 
         var response = req.CreateResponse(HttpStatusCode.OK);
-        await response.WriteAsJsonAsync(updated);
+        await response.WriteAsJsonAsync(ingredient);
         return response;
     }
 
-    [Function("DeleteIngredient")]
-    public async Task<HttpResponseData> DeleteIngredient(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "ingredients/{id}")] HttpRequestData req,
-        string id)
+    private static string NormalizeStockLevel(string? value)
     {
-        var deleted = await _pantryStore.DeleteAsync(id);
-
-        if (!deleted)
+        return value switch
         {
-            var notFound = req.CreateResponse(HttpStatusCode.NotFound);
-            await notFound.WriteStringAsync("Ingredient not found.");
-            return notFound;
-        }
+            "많음" => "많음",
+            "적음" => "적음",
+            "없음" => "없음",
+            _ => "보통"
+        };
+    }
 
-        return req.CreateResponse(HttpStatusCode.NoContent);
+    private static string NormalizeType(string? value)
+    {
+        return value switch
+        {
+            "야채" => "야채",
+            "탄수화물" => "탄수화물",
+            "고기/단백질" => "고기/단백질",
+            "유제품" => "유제품",
+            "과일" => "과일",
+            "소스/조미료" => "소스/조미료",
+            "냉동식품" => "냉동식품",
+            _ => "기타"
+        };
     }
 }

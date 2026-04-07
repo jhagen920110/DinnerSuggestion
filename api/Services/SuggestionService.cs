@@ -22,8 +22,7 @@ public class SuggestionService
 
     public async Task<List<Suggestion>> GetSuggestionsAsync(
         List<string> availablePantry,
-        List<string> lowStockIngredients,
-        List<string> canonicalIngredientNames)
+        List<string> lowStockIngredients)
     {
         if (!IsAiConfigured())
         {
@@ -34,8 +33,7 @@ public class SuggestionService
         {
             var aiSuggestions = await GetAiSuggestionsAsync(
                 availablePantry,
-                lowStockIngredients,
-                canonicalIngredientNames);
+                lowStockIngredients);
 
             var mapped = MapSuggestions(aiSuggestions, availablePantry, lowStockIngredients);
 
@@ -58,8 +56,7 @@ public class SuggestionService
 
     private async Task<List<AiMealSuggestion>> GetAiSuggestionsAsync(
         List<string> availablePantry,
-        List<string> lowStockIngredients,
-        List<string> canonicalIngredientNames)
+        List<string> lowStockIngredients)
     {
         var endpoint = _openAiOptions.Endpoint.TrimEnd('/');
         var url = $"{endpoint}/openai/v1/chat/completions";
@@ -71,8 +68,7 @@ public class SuggestionService
         var systemPrompt = MealSuggestionPrompts.SystemPrompt;
         var userPrompt = MealSuggestionPrompts.BuildUserPrompt(
             availablePantry,
-            lowStockIngredients,
-            canonicalIngredientNames);
+            lowStockIngredients);
 
         var payload = new
         {
@@ -82,7 +78,7 @@ public class SuggestionService
                 new { role = "system", content = systemPrompt },
                 new { role = "user", content = userPrompt }
             },
-            max_completion_tokens = 1100,
+            max_completion_tokens = 900,
             response_format = new
             {
                 type = "json_schema",
@@ -111,9 +107,7 @@ public class SuggestionService
                                             items = new { type = "string" }
                                         },
                                         reason = new { type = "string" },
-                                        recipeSearchQuery = new { type = "string" },
-                                        recipeUrl = new { type = "string" },
-                                        recipeSource = new { type = "string" }
+                                        recipeSearchQuery = new { type = "string" }
                                     },
                                     required = new[]
                                     {
@@ -121,9 +115,7 @@ public class SuggestionService
                                         "cuisine",
                                         "uses",
                                         "reason",
-                                        "recipeSearchQuery",
-                                        "recipeUrl",
-                                        "recipeSource"
+                                        "recipeSearchQuery"
                                     },
                                     additionalProperties = false
                                 }
@@ -205,24 +197,22 @@ public class SuggestionService
                     .Where(x => lowSet.Contains(ToComparisonKey(x)))
                     .ToList();
 
-                var safeRecipeUrl = CleanRecipeUrl(ai.RecipeUrl);
-                var safeRecipeSource = string.IsNullOrWhiteSpace(ai.RecipeSource)
-                    ? ""
-                    : ai.RecipeSource.Trim();
+                var recipeQuery = string.IsNullOrWhiteSpace(ai.RecipeSearchQuery)
+                    ? ai.Name.Trim()
+                    : ai.RecipeSearchQuery.Trim();
 
                 return new Suggestion
                 {
                     Name = ai.Name.Trim(),
-                    Cuisine = string.IsNullOrWhiteSpace(ai.Cuisine) ? "기타" : ai.Cuisine.Trim(),
+                    Cuisine = string.IsNullOrWhiteSpace(ai.Cuisine) ? "한식" : ai.Cuisine.Trim(),
                     Uses = uses,
                     MissingIngredients = missing,
                     LowStockIngredients = low,
                     CanMakeNow = missing.Count == 0,
-                    RecipeUrl = safeRecipeUrl,
-                    RecipeSource = safeRecipeSource
+                    RecipeUrl = Build10000RecipeSearchUrl(recipeQuery),
+                    RecipeSource = "만개의레시피"
                 };
             })
-            .Where(x => !string.IsNullOrWhiteSpace(x.RecipeUrl))
             .GroupBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
             .Select(g => g.First())
             .OrderByDescending(x => x.CanMakeNow)
@@ -253,41 +243,41 @@ public class SuggestionService
             {
                 Name = "김치볶음밥",
                 Cuisine = "한식",
-                Uses = ["밥", "김치", "계란", "양파"],
-                RecipeUrl = "",
-                RecipeSource = ""
+                Uses = ["김치", "밥", "양파", "대파", "간장", "참기름"],
+                RecipeUrl = Build10000RecipeSearchUrl("김치볶음밥"),
+                RecipeSource = "만개의레시피"
             },
             new()
             {
                 Name = "계란간장밥",
                 Cuisine = "한식",
                 Uses = ["밥", "계란", "간장", "참기름"],
-                RecipeUrl = "",
-                RecipeSource = ""
+                RecipeUrl = Build10000RecipeSearchUrl("계란간장밥"),
+                RecipeSource = "만개의레시피"
             },
             new()
             {
-                Name = "양파간장볶음",
+                Name = "된장찌개",
                 Cuisine = "한식",
-                Uses = ["양파", "간장"],
-                RecipeUrl = "",
-                RecipeSource = ""
+                Uses = ["된장", "두부", "양파", "대파"],
+                RecipeUrl = Build10000RecipeSearchUrl("된장찌개"),
+                RecipeSource = "만개의레시피"
             },
             new()
             {
-                Name = "김치볶음",
+                Name = "김치찌개",
                 Cuisine = "한식",
-                Uses = ["김치", "양파", "간장"],
-                RecipeUrl = "",
-                RecipeSource = ""
+                Uses = ["김치", "돼지고기", "두부", "양파", "대파"],
+                RecipeUrl = Build10000RecipeSearchUrl("김치찌개"),
+                RecipeSource = "만개의레시피"
             },
             new()
             {
-                Name = "돼지고기 양파볶음",
+                Name = "제육볶음",
                 Cuisine = "한식",
-                Uses = ["돼지고기", "양파", "간장"],
-                RecipeUrl = "",
-                RecipeSource = ""
+                Uses = ["돼지고기", "양파", "고추장", "간장", "다진마늘"],
+                RecipeUrl = Build10000RecipeSearchUrl("제육볶음"),
+                RecipeSource = "만개의레시피"
             }
         };
 
@@ -317,26 +307,10 @@ public class SuggestionService
             .ToList();
     }
 
-    private static string CleanRecipeUrl(string? value)
+    private static string Build10000RecipeSearchUrl(string query)
     {
-        var url = (value ?? string.Empty).Trim();
-
-        if (string.IsNullOrWhiteSpace(url))
-        {
-            return string.Empty;
-        }
-
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var parsed))
-        {
-            return string.Empty;
-        }
-
-        if (parsed.Scheme != Uri.UriSchemeHttp && parsed.Scheme != Uri.UriSchemeHttps)
-        {
-            return string.Empty;
-        }
-
-        return parsed.ToString();
+        var encoded = Uri.EscapeDataString(query ?? string.Empty);
+        return $"https://www.10000recipe.com/recipe/list.html?q={encoded}";
     }
 
     private static bool ContainsEnglishLetters(string value)

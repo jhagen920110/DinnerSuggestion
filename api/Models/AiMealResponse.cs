@@ -14,7 +14,7 @@ public class AiMealSuggestion
     public string Name { get; set; } = string.Empty;
 
     [JsonPropertyName("cuisine")]
-    public string Cuisine { get; set; } = "General";
+    public string Cuisine { get; set; } = "한식";
 
     [JsonPropertyName("uses")]
     public List<string> Uses { get; set; } = new();
@@ -24,10 +24,4 @@ public class AiMealSuggestion
 
     [JsonPropertyName("recipeSearchQuery")]
     public string RecipeSearchQuery { get; set; } = string.Empty;
-
-    [JsonPropertyName("recipeUrl")]
-    public string RecipeUrl { get; set; } = string.Empty;
-
-    [JsonPropertyName("recipeSource")]
-    public string RecipeSource { get; set; } = string.Empty;
 }

@@ -1,6 +1,3 @@
-using System.Threading.Tasks;
-using DinnerSuggestionApi.Helpers;
-
 namespace DinnerSuggestionApi.Services;
 
 public class IngredientTypeClassifier : IIngredientTypeClassifier

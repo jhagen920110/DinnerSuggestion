@@ -1,4 +1,4 @@
-const apiBase = "http://localhost:7071/api";
+const apiBase = window.APP_CONFIG.apiBase;
 
 let currentIngredients = [];
 let classifyTimer = null;
@@ -136,24 +136,7 @@ function ingredientTypeOf(item) {
 }
 
 function typeDisplay(type) {
-  switch (normalizeType(type)) {
-    case "vegetable":
-      return "야채";
-    case "carb":
-      return "탄수화물";
-    case "protein":
-      return "고기/단백질";
-    case "dairy":
-      return "유제품";
-    case "fruit":
-      return "과일";
-    case "sauce":
-      return "소스/조미료";
-    case "frozen":
-      return "냉동식품";
-    default:
-      return "기타";
-  }
+  return normalizeType(type);
 }
 
 function compareKo(a, b) {

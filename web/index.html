@@ -18,7 +18,6 @@
       <div class="section-head">
         <div>
           <h2>🥕 Pantry</h2>
-          <p class="section-subtitle">Pantry 정리</p>
         </div>
         <div id="pantryStatus" class="status-text" aria-live="polite"></div>
       </div>
@@ -52,50 +51,44 @@
         </button>
 
         <div id="filtersContent" class="filters-panel" hidden>
-          <div class="filter-grid">
+          <div class="filter-grid simple-filter-grid">
+            <div class="field">
+              <label>
+                <input type="checkbox" id="filterLowOnly" />
+                부족한 재료만 보기
+              </label>
+            </div>
+
+            <div class="field">
+              <label>
+                <input type="checkbox" id="filterSortKorean" checked />
+                가나다순
+              </label>
+            </div>
+
+            <div class="field">
+              <label for="filterTypeSelect">종류</label>
+              <select id="filterTypeSelect">
+                <option value="all">전체</option>
+                <option value="vegetable">야채</option>
+                <option value="carb">탄수화물</option>
+                <option value="protein">고기/단백질</option>
+                <option value="dairy">유제품</option>
+                <option value="fruit">과일</option>
+                <option value="sauce">소스/조미료</option>
+                <option value="frozen">냉동식품</option>
+                <option value="other">기타</option>
+              </select>
+            </div>
+
             <div class="field">
               <label for="filterSearch">검색</label>
               <input id="filterSearch" type="text" placeholder="재료 검색" />
             </div>
-
-            <div class="field">
-              <label>수량</label>
-              <div class="radio-group">
-                <label><input type="radio" name="stockFilter" value="all" checked><span>전체</span></label>
-                <label><input type="radio" name="stockFilter" value="low"><span>적음</span></label>
-                <label><input type="radio" name="stockFilter" value="some"><span>보통</span></label>
-                <label><input type="radio" name="stockFilter" value="plenty"><span>많음</span></label>
-                <label><input type="radio" name="stockFilter" value="out"><span>없음</span></label>
-              </div>
-            </div>
-
-            <div class="field">
-              <label>정렬</label>
-              <div class="radio-group">
-                <label><input type="radio" name="sortFilter" value="korean" checked><span>가나다순</span></label>
-                <label><input type="radio" name="sortFilter" value="abc"><span>ABC순</span></label>
-                <label><input type="radio" name="sortFilter" value="recent"><span>최근추가</span></label>
-              </div>
-            </div>
-
-            <div class="field">
-              <label>종류</label>
-              <div class="radio-group">
-                <label><input type="radio" name="typeFilter" value="all" checked><span>전체</span></label>
-                <label><input type="radio" name="typeFilter" value="vegetable"><span>야채</span></label>
-                <label><input type="radio" name="typeFilter" value="carb"><span>탄수화물</span></label>
-                <label><input type="radio" name="typeFilter" value="protein"><span>고기/단백질</span></label>
-                <label><input type="radio" name="typeFilter" value="dairy"><span>유제품</span></label>
-                <label><input type="radio" name="typeFilter" value="fruit"><span>과일</span></label>
-                <label><input type="radio" name="typeFilter" value="sauce"><span>소스/조미료</span></label>
-                <label><input type="radio" name="typeFilter" value="frozen"><span>냉동식품</span></label>
-                <label><input type="radio" name="typeFilter" value="other"><span>기타</span></label>
-              </div>
-            </div>
           </div>
 
           <div class="filters-actions">
-            <button id="clearFiltersButton" type="button" class="secondary-btn">초기화</button>
+            <button type="button" id="clearFiltersButton" class="secondary-btn">초기화</button>
           </div>
         </div>
       </div>

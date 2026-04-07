@@ -181,10 +181,10 @@ public class IngredientsFunction
 
         return raw switch
         {
-            "plenty" => "Plenty",
-            "some" => "Some",
-            "low" => "Low",
-            "out" => "Out",
+            "plenty" or "많음" => "Plenty",
+            "some" or "보통" => "Some",
+            "low" or "적음" => "Low",
+            "out" or "없음" => "Out",
             _ => "Some"
         };
     }

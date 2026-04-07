@@ -193,43 +193,77 @@ public class SuggestionService
 
     private static string NormalizeIngredient(string value)
     {
-        return value.Trim().ToLowerInvariant();
+        var v = value.Trim().ToLowerInvariant();
+
+        return v switch
+        {
+            "달걀" => "계란",
+            "egg" => "계란",
+            "eggs" => "계란",
+
+            "soy sauce" => "간장",
+            "진간장" => "간장",
+            "국간장" => "간장",
+
+            "sesame oil" => "참기름",
+            "들기름" => "참기름",
+
+            "onion" => "양파",
+            "green onion" => "대파",
+            "scallion" => "대파",
+
+            "kimchi" => "김치",
+            "rice" => "밥",
+            "pork belly" => "돼지고기",
+            "pork" => "돼지고기",
+            "chicken" => "닭고기",
+            "beef" => "소고기",
+
+            _ => v
+        };
     }
 
     private static List<Suggestion> BuildFallbackSuggestions(
         List<string> availablePantry,
         List<string> lowStockIngredients)
     {
+        var normalizedAvailable = new HashSet<string>(
+            availablePantry
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(NormalizeIngredient),
+            StringComparer.OrdinalIgnoreCase);
+
+        var normalizedLow = new HashSet<string>(
+            lowStockIngredients
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(NormalizeIngredient),
+            StringComparer.OrdinalIgnoreCase);
+
         var ideas = new List<Suggestion>
         {
-            new()
-            {
-                Name = "Kimchi Fried Rice",
-                Cuisine = "Korean",
-                Uses = ["rice", "kimchi", "egg", "spam", "onion"]
-            },
-            new()
-            {
-                Name = "Gyeran Bap",
-                Cuisine = "Korean",
-                Uses = ["rice", "egg", "soy sauce", "sesame oil"]
-            },
-            new()
-            {
-                Name = "Garlic Butter Pasta",
-                Cuisine = "Italian",
-                Uses = ["pasta", "garlic", "butter"]
-            }
+            new() { Name = "김치볶음밥", Cuisine = "한식", Uses = ["밥", "김치", "계란", "양파"] },
+            new() { Name = "계란간장밥", Cuisine = "한식", Uses = ["밥", "계란", "간장", "참기름"] },
+            new() { Name = "양파간장볶음", Cuisine = "한식", Uses = ["양파", "간장"] },
+            new() { Name = "김치볶음", Cuisine = "한식", Uses = ["김치", "양파", "간장"] },
+            new() { Name = "돼지고기 양파볶음", Cuisine = "한식", Uses = ["돼지고기", "양파", "간장"] }
         };
 
         foreach (var idea in ideas)
         {
-            idea.MissingIngredients = idea.Uses
-                .Where(x => !availablePantry.Contains(x, StringComparer.OrdinalIgnoreCase))
+            var normalizedUses = idea.Uses
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(NormalizeIngredient)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
-            idea.LowStockIngredients = idea.Uses
-                .Where(x => lowStockIngredients.Contains(x, StringComparer.OrdinalIgnoreCase))
+            idea.Uses = normalizedUses;
+
+            idea.MissingIngredients = normalizedUses
+                .Where(x => !normalizedAvailable.Contains(x))
+                .ToList();
+
+            idea.LowStockIngredients = normalizedUses
+                .Where(x => normalizedLow.Contains(x))
                 .ToList();
 
             idea.CanMakeNow = idea.MissingIngredients.Count == 0;
@@ -242,5 +276,34 @@ public class SuggestionService
             .ThenBy(x => x.MissingIngredients.Count)
             .ThenBy(x => x.Name)
             .ToList();
+    }
+
+    private static string NormalizeIngredientName(string value)
+    {
+        var v = (value ?? string.Empty).Trim().ToLowerInvariant();
+
+        return v switch
+        {
+            "달걀" => "계란",
+            "계란" => "계란",
+            "양파" => "양파",
+            "대파" => "대파",
+            "쪽파" => "대파",
+            "간장" => "간장",
+            "진간장" => "간장",
+            "국간장" => "간장",
+            "김치" => "김치",
+            "참기름" => "참기름",
+            "들기름" => "참기름",
+            "돼지고기" => "돼지고기",
+            "삼겹살" => "돼지고기",
+            "목살" => "돼지고기",
+            "소고기" => "소고기",
+            "닭고기" => "닭고기",
+            "닭" => "닭고기",
+            "밥" => "밥",
+            "쌀밥" => "밥",
+            _ => v
+        };
     }
 }

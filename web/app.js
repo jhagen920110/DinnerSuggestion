@@ -3,11 +3,15 @@ const apiBase = "http://localhost:7071/api";
 let currentIngredients = [];
 let classifyTimer = null;
 let editingRowId = null;
+let inlineDraft = {
+  name: "",
+  stockLevel: "보통",
+};
 
 let pantryUiState = {
   search: "",
-  amount: "all",
-  sort: "hangul-asc",
+  lowOnly: false,
+  sortKorean: true,
   type: "all",
 };
 
@@ -40,6 +44,9 @@ function getEls() {
     ingredientsSections: byId("ingredientsSections"),
     pantrySummary: byId("pantrySummary"),
     filterSearch: byId("filterSearch"),
+    filterLowOnly: byId("filterLowOnly"),
+    filterSortKorean: byId("filterSortKorean"),
+    filterTypeSelect: byId("filterTypeSelect"),
     clearFiltersButton: byId("clearFiltersButton"),
     toggleFiltersButton: byId("toggleFiltersButton"),
     filtersContent: byId("filtersContent"),
@@ -75,6 +82,7 @@ function showStatus(message) {
   if (!pantryStatus) return;
 
   pantryStatus.textContent = message;
+
   window.clearTimeout(showStatus._timer);
   showStatus._timer = window.setTimeout(() => {
     pantryStatus.textContent = "";
@@ -90,7 +98,7 @@ function ingredientNameOf(item) {
 }
 
 function ingredientIdOf(item) {
-  return item.id ?? item.Id;
+  return item.id ?? item.Id ?? "";
 }
 
 function normalizeStockLevel(value) {
@@ -110,6 +118,7 @@ function ingredientStockOf(item) {
 
 function normalizeType(value) {
   const raw = String(value || "").trim().toLowerCase();
+
   const allowed = [
     "vegetable",
     "carb",
@@ -130,14 +139,22 @@ function ingredientTypeOf(item) {
 
 function typeDisplay(type) {
   switch (normalizeType(type)) {
-    case "vegetable": return "야채";
-    case "carb": return "탄수화물";
-    case "protein": return "고기/단백질";
-    case "dairy": return "유제품";
-    case "fruit": return "과일";
-    case "sauce": return "소스/조미료";
-    case "frozen": return "냉동식품";
-    default: return "기타";
+    case "vegetable":
+      return "야채";
+    case "carb":
+      return "탄수화물";
+    case "protein":
+      return "고기/단백질";
+    case "dairy":
+      return "유제품";
+    case "fruit":
+      return "과일";
+    case "sauce":
+      return "소스/조미료";
+    case "frozen":
+      return "냉동식품";
+    default:
+      return "기타";
   }
 }
 
@@ -151,6 +168,7 @@ function compareEn(a, b) {
 
 function stockBadgeClass(stockLevel) {
   const value = normalizeStockLevel(stockLevel);
+
   if (value === "적음") return "badge low";
   if (value === "보통") return "badge some";
   if (value === "많음") return "badge plenty";
@@ -167,15 +185,20 @@ function groupClassName(stockLevel) {
 function iconSvg(kind) {
   if (kind === "edit") {
     return `
-      <svg viewBox="0 0 24 24" aria-hidden="true" width="16" height="16">
-        <path d="M4 20h4l10-10-4-4L4 16v4zm13.7-11.3a1 1 0 0 0 0-1.4l-1-1a1 1 0 0 0-1.4 0l-1 1 4 4 1-1z" fill="currentColor"></path>
+      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 20h9" />
+        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
       </svg>
     `;
   }
 
   return `
-    <svg viewBox="0 0 24 24" aria-hidden="true" width="16" height="16">
-      <path d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v8h-2V9zm4 0h2v8h-2V9zM7 9h2v8H7V9zm-1 11h12a2 2 0 0 0 2-2V7H4v11a2 2 0 0 0 2 2z" fill="currentColor"></path>
+    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6l-1 14H6L5 6" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+      <path d="M9 6V4h6v2" />
     </svg>
   `;
 }
@@ -188,6 +211,20 @@ function getCheckedValue(name, fallback) {
 function setCheckedValue(name, value) {
   const target = document.querySelector(`input[name="${name}"][value="${value}"]`);
   if (target) target.checked = true;
+}
+
+function getCheckedValueFromNames(names, fallback) {
+  for (const name of names) {
+    const value = getCheckedValue(name, null);
+    if (value !== null) return value;
+  }
+  return fallback;
+}
+
+function setCheckedValueForNames(names, value) {
+  for (const name of names) {
+    setCheckedValue(name, value);
+  }
 }
 
 async function classifyIngredientType(name) {
@@ -206,10 +243,12 @@ async function classifyIngredientType(name) {
 
 async function updateTypePreviewFromName() {
   const { ingredientNameInput, typePreviewValue } = getEls();
+
   if (!ingredientNameInput || !typePreviewValue) return;
   if (editingRowId) return;
 
   const name = ingredientNameInput.value.trim();
+
   if (!name) {
     typePreviewValue.textContent = "기타";
     return;
@@ -231,6 +270,7 @@ async function loadIngredients() {
 
   try {
     const response = await fetch(`${apiBase}/ingredients`);
+
     if (!response.ok) {
       throw new Error(`Failed to load ingredients: ${response.status}`);
     }
@@ -245,7 +285,10 @@ async function loadIngredients() {
     renderIngredients();
   } catch (error) {
     console.error("loadIngredients failed:", error);
-    ingredientsSections.innerHTML = `<div class="empty-state">Failed to load ingredients.</div>`;
+
+    ingredientsSections.innerHTML = `
+      <div class="empty-state">Failed to load ingredients.</div>
+    `;
 
     if (pantryCount) {
       pantryCount.textContent = "0";
@@ -258,27 +301,25 @@ function applyIngredientFilters(items) {
 
   if (pantryUiState.search) {
     const q = pantryUiState.search.toLowerCase();
-    filtered = filtered.filter((item) => ingredientNameOf(item).toLowerCase().includes(q));
+    filtered = filtered.filter((item) =>
+      ingredientNameOf(item).toLowerCase().includes(q)
+    );
   }
 
-  if (pantryUiState.amount !== "all") {
-    filtered = filtered.filter((item) => ingredientStockOf(item) === pantryUiState.amount);
+  if (pantryUiState.lowOnly) {
+    filtered = filtered.filter(
+      (item) => ingredientStockOf(item) === "적음"
+    );
   }
 
   if (pantryUiState.type !== "all") {
-    filtered = filtered.filter((item) => ingredientTypeOf(item) === pantryUiState.type);
+    filtered = filtered.filter(
+      (item) => ingredientTypeOf(item) === pantryUiState.type
+    );
   }
 
-  if (pantryUiState.sort === "hangul-asc") {
+  if (pantryUiState.sortKorean) {
     filtered.sort((a, b) => compareKo(ingredientNameOf(a), ingredientNameOf(b)));
-  } else if (pantryUiState.sort === "latin-asc") {
-    filtered.sort((a, b) => compareEn(ingredientNameOf(a), ingredientNameOf(b)));
-  } else {
-    filtered.sort((a, b) => {
-      const aId = String(ingredientIdOf(a) ?? "");
-      const bId = String(ingredientIdOf(b) ?? "");
-      return compareEn(bId, aId);
-    });
   }
 
   return filtered;
@@ -297,11 +338,11 @@ function buildPantrySummary(items) {
   };
 
   pantrySummary.innerHTML = `
-    <div class="summary-chip total">Total ${counts.total}</div>
-    <div class="summary-chip low">적음 ${counts.low}</div>
-    <div class="summary-chip some">보통 ${counts.some}</div>
-    <div class="summary-chip plenty">많음 ${counts.plenty}</div>
-    <div class="summary-chip out">없음 ${counts.out}</div>
+    <span class="summary-chip total">Total ${counts.total}</span>
+    <span class="summary-chip low">적음 ${counts.low}</span>
+    <span class="summary-chip some">보통 ${counts.some}</span>
+    <span class="summary-chip plenty">많음 ${counts.plenty}</span>
+    <span class="summary-chip out">없음 ${counts.out}</span>
   `;
 }
 
@@ -315,7 +356,9 @@ function renderIngredients() {
   ingredientsSections.innerHTML = "";
 
   if (!filtered.length) {
-    ingredientsSections.innerHTML = `<div class="empty-state">조건에 맞는 재료가 없어요.</div>`;
+    ingredientsSections.innerHTML = `
+      <div class="empty-state">조건에 맞는 재료가 없어요.</div>
+    `;
     return;
   }
 
@@ -362,9 +405,11 @@ function renderIngredients() {
         const row = document.createElement("div");
         row.className = "ingredient-row";
 
+        const id = ingredientIdOf(item);
         const name = ingredientNameOf(item);
         const stock = ingredientStockOf(item);
         const type = ingredientTypeOf(item);
+        const isEditing = editingRowId === id;
 
         row.innerHTML = `
           <div class="item-main">
@@ -373,14 +418,40 @@ function renderIngredients() {
               <span class="${stockBadgeClass(stock)}">${escapeHtml(stock)}</span>
               <span class="type-badge">${escapeHtml(typeDisplay(type))}</span>
             </div>
+            ${
+              isEditing
+                ? `
+                <div class="inline-edit-box">
+                  <div class="inline-edit-grid">
+                    <input type="text" class="inline-edit-name" value="${escapeHtml(inlineDraft.name)}" />
+                    <select class="inline-edit-stock">
+                      <option value="적음" ${inlineDraft.stockLevel === "적음" ? "selected" : ""}>적음</option>
+                      <option value="보통" ${inlineDraft.stockLevel === "보통" ? "selected" : ""}>보통</option>
+                      <option value="많음" ${inlineDraft.stockLevel === "많음" ? "selected" : ""}>많음</option>
+                      <option value="없음" ${inlineDraft.stockLevel === "없음" ? "selected" : ""}>없음</option>
+                    </select>
+                  </div>
+                  <div class="inline-edit-actions">
+                    <button type="button" class="primary-btn inline-save-btn">저장</button>
+                    <button type="button" class="secondary-btn inline-cancel-btn">취소</button>
+                  </div>
+                </div>
+              `
+                : ""
+            }
           </div>
           <div class="item-actions">
-            <button type="button" class="icon-button edit" aria-label="수정">${iconSvg("edit")}</button>
-            <button type="button" class="icon-button delete" aria-label="삭제">${iconSvg("delete")}</button>
+            <button type="button" class="icon-button edit" aria-label="수정">
+              ${iconSvg("edit")}
+            </button>
+            <button type="button" class="icon-button delete" aria-label="삭제">
+              ${iconSvg("delete")}
+            </button>
           </div>
         `;
 
-        const [editButton, deleteButton] = row.querySelectorAll("button");
+        const editButton = row.querySelector(".edit");
+        const deleteButton = row.querySelector(".delete");
 
         editButton.addEventListener("click", () => {
           startEditIngredient(item);
@@ -389,8 +460,38 @@ function renderIngredients() {
         deleteButton.addEventListener("click", async () => {
           const confirmed = window.confirm(`'${name}' 재료를 삭제할까요?`);
           if (!confirmed) return;
-          await deleteIngredient(ingredientIdOf(item));
+          await deleteIngredient(id);
         });
+
+        if (isEditing) {
+          const nameInput = row.querySelector(".inline-edit-name");
+          const stockSelect = row.querySelector(".inline-edit-stock");
+          const saveBtn = row.querySelector(".inline-save-btn");
+          const cancelBtn = row.querySelector(".inline-cancel-btn");
+
+          nameInput.addEventListener("input", (e) => {
+            inlineDraft.name = e.target.value;
+          });
+
+          stockSelect.addEventListener("change", (e) => {
+            inlineDraft.stockLevel = e.target.value;
+          });
+
+          nameInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              saveInlineEdit(id);
+            }
+          });
+
+          saveBtn.addEventListener("click", () => {
+            saveInlineEdit(id);
+          });
+
+          cancelBtn.addEventListener("click", () => {
+            cancelInlineEdit();
+          });
+        }
 
         list.appendChild(row);
       }
@@ -402,18 +503,22 @@ function renderIngredients() {
   }
 }
 
-function resetForm() {
-  const { ingredientNameInput, ingredientStockLevelInput, typePreview, typePreviewValue, saveButton, cancelEditButton } = getEls();
+function startEditIngredient(item) {
+  editingRowId = ingredientIdOf(item);
+  inlineDraft = {
+    name: ingredientNameOf(item),
+    stockLevel: ingredientStockOf(item),
+  };
+  renderIngredients();
+}
 
+function cancelInlineEdit() {
   editingRowId = null;
-  ingredientNameInput.value = "";
-  ingredientStockLevelInput.value = "보통";
-
-  if (typePreview) typePreview.hidden = false;
-  if (typePreviewValue) typePreviewValue.textContent = "기타";
-
-  saveButton.textContent = "재료 추가";
-  cancelEditButton.hidden = true;
+  inlineDraft = {
+    name: "",
+    stockLevel: "보통",
+  };
+  renderIngredients();
 }
 
 function resetForm() {
@@ -426,7 +531,6 @@ function resetForm() {
     cancelEditButton,
   } = getEls();
 
-  editingRowId = null;
   ingredientNameInput.value = "";
   ingredientStockLevelInput.value = "보통";
 
@@ -441,6 +545,7 @@ async function saveIngredient() {
   const { ingredientNameInput, ingredientStockLevelInput, saveButton } = getEls();
 
   const name = ingredientNameInput.value.trim();
+
   if (!name) {
     alert("재료명을 입력해주세요.");
     ingredientNameInput.focus();
@@ -452,12 +557,15 @@ async function saveIngredient() {
     stockLevel: ingredientStockLevelInput.value,
   };
 
+  const wasEditing = Boolean(editingRowId);
+
   try {
-    setBusy(saveButton, true, editingRowId ? "저장 중..." : "추가 중...");
+    setBusy(saveButton, true, wasEditing ? "저장 중..." : "추가 중...");
+
     const response = await fetch(
-      editingRowId ? `${apiBase}/ingredients/${editingRowId}` : `${apiBase}/ingredients`,
+      wasEditing ? `${apiBase}/ingredients/${editingRowId}` : `${apiBase}/ingredients`,
       {
-        method: editingRowId ? "PUT" : "POST",
+        method: wasEditing ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       }
@@ -470,7 +578,7 @@ async function saveIngredient() {
 
     resetForm();
     await loadIngredients();
-    showStatus(editingRowId ? "재료를 수정했어요." : "재료를 추가했어요.");
+    showStatus(wasEditing ? "재료를 수정했어요." : "재료를 추가했어요.");
   } catch (error) {
     console.error("saveIngredient failed:", error);
     alert("재료 저장에 실패했어요.");
@@ -501,12 +609,54 @@ async function deleteIngredient(id) {
   }
 }
 
+async function saveInlineEdit(id) {
+  const name = inlineDraft.name.trim();
+
+  if (!name) {
+    alert("재료명을 입력해주세요.");
+    return;
+  }
+
+  const payload = {
+    name,
+    stockLevel: inlineDraft.stockLevel,
+  };
+
+  try {
+    const response = await fetch(`${apiBase}/ingredients/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Failed to save ingredient: ${response.status} ${text}`);
+    }
+
+    editingRowId = null;
+    inlineDraft = {
+      name: "",
+      stockLevel: "보통",
+    };
+
+    await loadIngredients();
+    showStatus("재료를 수정했어요.");
+  } catch (error) {
+    console.error("saveInlineEdit failed:", error);
+    alert("재료 저장에 실패했어요.");
+  }
+}
+
 async function suggestDinner() {
   const { suggestButton, suggestionsDiv, suggestionCount } = getEls();
 
   try {
     setBusy(suggestButton, true, "추천 중...");
-    suggestionsDiv.innerHTML = `<div class="empty-state">추천 메뉴를 불러오는 중...</div>`;
+
+    suggestionsDiv.innerHTML = `
+      <div class="empty-state">추천 메뉴를 불러오는 중...</div>
+    `;
 
     const response = await fetch(`${apiBase}/suggestions`, {
       method: "POST",
@@ -517,13 +667,23 @@ async function suggestDinner() {
     }
 
     const suggestions = await response.json();
-    suggestionCount.textContent = String(Array.isArray(suggestions) ? suggestions.length : 0);
+    const safeSuggestions = Array.isArray(suggestions) ? suggestions : [];
 
-    renderSuggestions(Array.isArray(suggestions) ? suggestions : []);
+    if (suggestionCount) {
+      suggestionCount.textContent = String(safeSuggestions.length);
+    }
+
+    renderSuggestions(safeSuggestions);
   } catch (error) {
     console.error("suggestDinner failed:", error);
-    suggestionsDiv.innerHTML = `<div class="empty-state">추천을 불러오지 못했어요.</div>`;
-    suggestionCount.textContent = "0";
+
+    suggestionsDiv.innerHTML = `
+      <div class="empty-state">추천을 불러오지 못했어요.</div>
+    `;
+
+    if (suggestionCount) {
+      suggestionCount.textContent = "0";
+    }
   } finally {
     setBusy(suggestButton, false);
   }
@@ -534,7 +694,9 @@ function renderSuggestions(suggestions) {
   suggestionsDiv.innerHTML = "";
 
   if (!suggestions.length) {
-    suggestionsDiv.innerHTML = `<div class="empty-state">추천 가능한 메뉴가 아직 없어요.</div>`;
+    suggestionsDiv.innerHTML = `
+      <div class="empty-state">추천 가능한 메뉴가 아직 없어요.</div>
+    `;
     return;
   }
 
@@ -560,82 +722,171 @@ function renderSuggestions(suggestions) {
     const recipeUrl = item.recipeUrl ?? item.RecipeUrl ?? "";
     const recipeSource = item.recipeSource ?? item.RecipeSource ?? "";
 
+    const statusBadge = canMakeNow
+      ? `<span class="suggestion-pill ready">지금 가능</span>`
+      : `<span class="suggestion-pill missing">재료 필요 ${missing.length}</span>`;
+
     card.innerHTML = `
       <div class="suggestion-top">
-        <h3>${escapeHtml(name)}</h3>
-        <span class="suggestion-cuisine">${escapeHtml(cuisine || "추천")}</span>
+        <div class="suggestion-title-wrap">
+          <h3>${escapeHtml(name)}</h3>
+          <div class="suggestion-subchips">
+            <span class="suggestion-cuisine">${escapeHtml(cuisine || "추천")}</span>
+            ${statusBadge}
+          </div>
+        </div>
       </div>
-      <p class="suggestion-status">
-        ${canMakeNow ? "지금 만들 수 있어요" : `부족한 재료: ${escapeHtml(missing.join(", ") || "없음")}`}
-      </p>
-      ${low.length ? `<p class="suggestion-low">적은 재료: ${escapeHtml(low.join(", "))}</p>` : ""}
-      <p class="suggestion-uses">사용 재료: ${escapeHtml(uses.join(", ") || "-")}</p>
-      ${recipeUrl ? `<a class="recipe-link" href="${escapeHtml(recipeUrl)}" target="_blank" rel="noreferrer">레시피 보기${recipeSource ? ` (${escapeHtml(recipeSource)})` : ""}</a>` : ""}
+
+      <div class="suggestion-section">
+        <div class="suggestion-label">사용 재료</div>
+        <div class="suggestion-chip-row">
+          ${
+            uses.length
+              ? uses.map(x => `<span class="ingredient-chip use">${escapeHtml(x)}</span>`).join("")
+              : `<span class="ingredient-chip neutral">-</span>`
+          }
+        </div>
+      </div>
+
+      ${
+        missing.length
+          ? `
+          <div class="suggestion-section">
+            <div class="suggestion-label">부족한 재료</div>
+            <div class="suggestion-chip-row">
+              ${missing.map(x => `<span class="ingredient-chip missing">${escapeHtml(x)}</span>`).join("")}
+            </div>
+          </div>
+          `
+          : `
+          <div class="suggestion-section">
+            <div class="suggestion-label">상태</div>
+            <div class="suggestion-note success">지금 있는 재료로 만들 수 있어요.</div>
+          </div>
+          `
+      }
+
+      ${
+        low.length
+          ? `
+          <div class="suggestion-section">
+            <div class="suggestion-label">적은 재료</div>
+            <div class="suggestion-chip-row">
+              ${low.map(x => `<span class="ingredient-chip low">${escapeHtml(x)}</span>`).join("")}
+            </div>
+          </div>
+          `
+          : ""
+      }
+
+      ${
+        recipeUrl
+          ? `
+          <a class="recipe-link" href="${escapeHtml(recipeUrl)}" target="_blank" rel="noreferrer">
+            레시피 보기${recipeSource ? ` · ${escapeHtml(recipeSource)}` : ""}
+          </a>
+          `
+          : ""
+      }
     `;
 
     suggestionsDiv.appendChild(card);
   });
 }
 
-function wireFilters() {
-  const {
-    toggleFiltersButton,
-    filtersContent,
-    filtersCaret,
-    filterSearch,
-    clearFiltersButton,
-  } = getEls();
+function syncFilterStateFromUi() {
+  const { filterSearch, filterLowOnly, filterSortKorean, filterTypeSelect } = getEls();
 
-  toggleFiltersButton?.addEventListener("click", () => {
-    filtersCollapsed = !filtersCollapsed;
-    if (filtersContent) filtersContent.hidden = filtersCollapsed;
-    if (filtersCaret) filtersCaret.textContent = filtersCollapsed ? "▸" : "▾";
-  });
-
-  filterSearch?.addEventListener("input", (e) => {
-    pantryUiState.search = e.target.value.trim();
-    renderIngredients();
-  });
-
-  document.querySelectorAll('input[name="filterAmount"]').forEach((radio) => {
-    radio.addEventListener("change", () => {
-      pantryUiState.amount = getCheckedValue("filterAmount", "all");
-      renderIngredients();
-    });
-  });
-
-  document.querySelectorAll('input[name="filterSort"]').forEach((radio) => {
-    radio.addEventListener("change", () => {
-      pantryUiState.sort = getCheckedValue("filterSort", "hangul-asc");
-      renderIngredients();
-    });
-  });
-
-  document.querySelectorAll('input[name="filterType"]').forEach((radio) => {
-    radio.addEventListener("change", () => {
-      pantryUiState.type = getCheckedValue("filterType", "all");
-      renderIngredients();
-    });
-  });
-
-  clearFiltersButton?.addEventListener("click", () => {
-    pantryUiState = {
-      search: "",
-      amount: "all",
-      sort: "hangul-asc",
-      type: "all",
-    };
-
-    if (filterSearch) filterSearch.value = "";
-    setCheckedValue("filterAmount", "all");
-    setCheckedValue("filterSort", "hangul-asc");
-    setCheckedValue("filterType", "all");
-
-    renderIngredients();
-  });
+  pantryUiState.search = filterSearch ? filterSearch.value.trim() : "";
+  pantryUiState.lowOnly = Boolean(filterLowOnly?.checked);
+  pantryUiState.sortKorean = filterSortKorean ? filterSortKorean.checked : true;
+  pantryUiState.type = filterTypeSelect ? filterTypeSelect.value : "all";
 }
 
-function wireForm() {
+function syncUiFromFilterState() {
+  const { filterSearch, filterLowOnly, filterSortKorean, filterTypeSelect } = getEls();
+
+  if (filterSearch) filterSearch.value = pantryUiState.search;
+  if (filterLowOnly) filterLowOnly.checked = pantryUiState.lowOnly;
+  if (filterSortKorean) filterSortKorean.checked = pantryUiState.sortKorean;
+  if (filterTypeSelect) filterTypeSelect.value = pantryUiState.type;
+}
+
+function renderFiltersCollapsedState() {
+  const { filtersContent, filtersCaret } = getEls();
+
+  if (filtersContent) {
+    filtersContent.hidden = filtersCollapsed;
+  }
+
+  if (filtersCaret) {
+    filtersCaret.textContent = filtersCollapsed ? "▸" : "▾";
+  }
+}
+
+function clearFilters() {
+  pantryUiState = {
+    search: "",
+    lowOnly: false,
+    sortKorean: true,
+    type: "all",
+  };
+
+  syncUiFromFilterState();
+  renderIngredients();
+}
+
+function attachFilterEvents() {
+  const {
+    filterSearch,
+    filterLowOnly,
+    filterSortKorean,
+    filterTypeSelect,
+    clearFiltersButton,
+    toggleFiltersButton,
+  } = getEls();
+
+  if (filterSearch) {
+    filterSearch.addEventListener("input", () => {
+      syncFilterStateFromUi();
+      renderIngredients();
+    });
+  }
+
+  if (filterLowOnly) {
+    filterLowOnly.addEventListener("change", () => {
+      syncFilterStateFromUi();
+      renderIngredients();
+    });
+  }
+
+  if (filterSortKorean) {
+    filterSortKorean.addEventListener("change", () => {
+      syncFilterStateFromUi();
+      renderIngredients();
+    });
+  }
+
+  if (filterTypeSelect) {
+    filterTypeSelect.addEventListener("change", () => {
+      syncFilterStateFromUi();
+      renderIngredients();
+    });
+  }
+
+  if (clearFiltersButton) {
+    clearFiltersButton.addEventListener("click", clearFilters);
+  }
+
+  if (toggleFiltersButton) {
+    toggleFiltersButton.addEventListener("click", () => {
+      filtersCollapsed = !filtersCollapsed;
+      renderFiltersCollapsedState();
+    });
+  }
+}
+
+function attachFormEvents() {
   const {
     ingredientNameInput,
     saveButton,
@@ -643,21 +894,40 @@ function wireForm() {
     suggestButton,
   } = getEls();
 
-  ingredientNameInput?.addEventListener("input", () => {
-    if (editingRowId) return;
+  if (ingredientNameInput) {
+    ingredientNameInput.addEventListener("input", () => {
+      window.clearTimeout(classifyTimer);
+      classifyTimer = window.setTimeout(updateTypePreviewFromName, 180);
+    });
 
-    window.clearTimeout(classifyTimer);
-    classifyTimer = window.setTimeout(() => {
-      updateTypePreviewFromName();
-    }, 250);
-  });
+    ingredientNameInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        saveIngredient();
+      }
+    });
+  }
 
-  saveButton?.addEventListener("click", saveIngredient);
-  cancelEditButton?.addEventListener("click", resetForm);
-  suggestButton?.addEventListener("click", suggestDinner);
+  if (saveButton) {
+    saveButton.addEventListener("click", saveIngredient);
+  }
+
+  if (cancelEditButton) {
+    cancelEditButton.addEventListener("click", resetForm);
+  }
+
+  if (suggestButton) {
+    suggestButton.addEventListener("click", suggestDinner);
+  }
 }
 
-wireFilters();
-wireForm();
-resetForm();
-loadIngredients();
+function init() {
+  syncUiFromFilterState();
+  renderFiltersCollapsedState();
+  attachFilterEvents();
+  attachFormEvents();
+  resetForm();
+  loadIngredients();
+}
+
+document.addEventListener("DOMContentLoaded", init);

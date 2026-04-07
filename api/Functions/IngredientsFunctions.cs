@@ -4,6 +4,7 @@ using DinnerSuggestionApi.Models;
 using DinnerSuggestionApi.Services;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using System.Linq;
 
 namespace DinnerSuggestionApi.Functions;
 
@@ -93,8 +94,8 @@ public class IngredientsFunction
             return bad;
         }
 
+        ingredient.Name = IngredientNameNormalizer.Normalize(ingredient.Name);
         ingredient.StockLevel = NormalizeStockLevel(ingredient.StockLevel);
-        ingredient.Name = ingredient.Name.Trim();
         ingredient.Type = DetectIngredientType(ingredient.Name);
 
         var created = await _pantryStore.AddAsync(ingredient);
@@ -120,8 +121,8 @@ public class IngredientsFunction
             return bad;
         }
 
+        ingredient.Name = IngredientNameNormalizer.Normalize(ingredient.Name);
         ingredient.StockLevel = NormalizeStockLevel(ingredient.StockLevel);
-        ingredient.Name = ingredient.Name.Trim();
         ingredient.Type = DetectIngredientType(ingredient.Name);
 
         var updated = await _pantryStore.UpdateAsync(id, ingredient);

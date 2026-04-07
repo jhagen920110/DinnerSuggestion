@@ -4,6 +4,7 @@ using System.Text.Json;
 using DinnerSuggestionApi.Models;
 using Microsoft.Extensions.Options;
 using DinnerSuggestionApi.Prompts;
+using System.Linq;
 
 namespace DinnerSuggestionApi.Services;
 
@@ -193,50 +194,23 @@ public class SuggestionService
 
     private static string NormalizeIngredient(string value)
     {
-        var v = value.Trim().ToLowerInvariant();
-
-        return v switch
-        {
-            "달걀" => "계란",
-            "egg" => "계란",
-            "eggs" => "계란",
-
-            "soy sauce" => "간장",
-            "진간장" => "간장",
-            "국간장" => "간장",
-
-            "sesame oil" => "참기름",
-            "들기름" => "참기름",
-
-            "onion" => "양파",
-            "green onion" => "대파",
-            "scallion" => "대파",
-
-            "kimchi" => "김치",
-            "rice" => "밥",
-            "pork belly" => "돼지고기",
-            "pork" => "돼지고기",
-            "chicken" => "닭고기",
-            "beef" => "소고기",
-
-            _ => v
-        };
+        return IngredientNameNormalizer.Normalize(value);
     }
 
     private static List<Suggestion> BuildFallbackSuggestions(
         List<string> availablePantry,
         List<string> lowStockIngredients)
     {
-        var normalizedAvailable = new HashSet<string>(
+        var availableSet = new HashSet<string>(
             availablePantry
                 .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Select(NormalizeIngredient),
+                .Select(IngredientNameNormalizer.Normalize),
             StringComparer.OrdinalIgnoreCase);
 
-        var normalizedLow = new HashSet<string>(
+        var lowSet = new HashSet<string>(
             lowStockIngredients
                 .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Select(NormalizeIngredient),
+                .Select(IngredientNameNormalizer.Normalize),
             StringComparer.OrdinalIgnoreCase);
 
         var ideas = new List<Suggestion>
@@ -252,20 +226,13 @@ public class SuggestionService
         {
             var normalizedUses = idea.Uses
                 .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Select(NormalizeIngredient)
+                .Select(IngredientNameNormalizer.Normalize)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
             idea.Uses = normalizedUses;
-
-            idea.MissingIngredients = normalizedUses
-                .Where(x => !normalizedAvailable.Contains(x))
-                .ToList();
-
-            idea.LowStockIngredients = normalizedUses
-                .Where(x => normalizedLow.Contains(x))
-                .ToList();
-
+            idea.MissingIngredients = normalizedUses.Where(x => !availableSet.Contains(x)).ToList();
+            idea.LowStockIngredients = normalizedUses.Where(x => lowSet.Contains(x)).ToList();
             idea.CanMakeNow = idea.MissingIngredients.Count == 0;
             idea.RecipeUrl = "";
             idea.RecipeSource = "";

@@ -180,8 +180,8 @@ The backend is currently deployed manually.
 Run from the `api` folder:
 
 ```bash
-cd C:\Users\jhage\OneDrive\바탕 화면\Files\VSCode\DinnerSuggestionApp\api
-func azure functionapp publish func-dinnersuggestion-dev
+cd 'C:\Users\jhage\OneDrive\바탕 화면\Files\VSCode\DinnerSuggestionApp\api'
+.\deploy-dev.ps1
 ```
 
 ### Important note

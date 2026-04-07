@@ -13,14 +13,7 @@ public class PantryStore
 
     private static readonly HashSet<string> ValidTypes =
     [
-        "야채",
-        "탄수화물",
-        "고기/단백질",
-        "유제품",
-        "과일",
-        "소스/조미료",
-        "냉동식품",
-        "기타"
+        "야채", "탄수화물", "고기/단백질", "유제품", "과일", "소스/조미료", "냉동식품", "기타"
     ];
 
     private readonly Container _container;
@@ -119,15 +112,58 @@ public class PantryStore
         }
     }
 
+    public async Task<string?> GetTypeByExactIngredientNameAsync(string ingredientName)
+    {
+        var normalized = (ingredientName ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(normalized))
+            return null;
+
+        var query = new QueryDefinition(
+            "SELECT TOP 1 c.type FROM c WHERE c.userId = @userId AND LOWER(c.name) = LOWER(@name)")
+            .WithParameter("@userId", _userId)
+            .WithParameter("@name", normalized);
+
+        var iterator = _container.GetItemQueryIterator<TypeLookupResult>(
+            queryDefinition: query,
+            requestOptions: new QueryRequestOptions
+            {
+                PartitionKey = new PartitionKey(_userId)
+            });
+
+        while (iterator.HasMoreResults)
+        {
+            var response = await iterator.ReadNextAsync();
+            var match = response.FirstOrDefault();
+
+            if (match is not null && !string.IsNullOrWhiteSpace(match.Type))
+                return match.Type.Trim();
+        }
+
+        return null;
+    }
+
     public async Task<List<string>> GetAvailableIngredientNamesAsync()
     {
         var items = await GetAllAsync();
 
         return items
             .Where(x => !string.Equals(x.StockLevel, "Out", StringComparison.OrdinalIgnoreCase))
-            .Select(x => x.Name.Trim().ToLowerInvariant())
+            .Select(x => x.Name.Trim())
             .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Distinct()
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    public async Task<List<string>> GetDistinctIngredientNamesAsync()
+    {
+        var items = await GetAllAsync();
+
+        return items
+            .Select(x => x.Name.Trim())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
             .ToList();
     }
 
@@ -137,9 +173,10 @@ public class PantryStore
 
         return items
             .Where(x => string.Equals(x.StockLevel, "Low", StringComparison.OrdinalIgnoreCase))
-            .Select(x => x.Name.Trim().ToLowerInvariant())
+            .Select(x => x.Name.Trim())
             .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Distinct()
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
             .ToList();
     }
 
@@ -160,7 +197,11 @@ public class PantryStore
             return "기타";
 
         var normalized = type.Trim();
-
         return ValidTypes.Contains(normalized) ? normalized : "기타";
+    }
+
+    private sealed class TypeLookupResult
+    {
+        public string Type { get; set; } = string.Empty;
     }
 }

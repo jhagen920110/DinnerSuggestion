@@ -20,7 +20,8 @@ public class SuggestionService
 
     public async Task<List<Suggestion>> GetSuggestionsAsync(
         List<string> availablePantry,
-        List<string> lowStockIngredients)
+        List<string> lowStockIngredients,
+        List<string> canonicalIngredientNames)
     {
         if (!IsAiConfigured())
         {
@@ -29,12 +30,13 @@ public class SuggestionService
 
         try
         {
-            var aiSuggestions = await GetAiSuggestionsAsync(availablePantry, lowStockIngredients);
-            var mapped = MapSuggestions(aiSuggestions, availablePantry, lowStockIngredients);
+            var aiSuggestions = await GetAiSuggestionsAsync(
+                availablePantry,
+                lowStockIngredients,
+                canonicalIngredientNames);
 
-            return mapped.Count > 0
-                ? mapped
-                : BuildFallbackSuggestions(availablePantry, lowStockIngredients);
+            var mapped = MapSuggestions(aiSuggestions, availablePantry, lowStockIngredients);
+            return mapped.Count > 0 ? mapped : BuildFallbackSuggestions(availablePantry, lowStockIngredients);
         }
         catch
         {
@@ -49,9 +51,10 @@ public class SuggestionService
             && !string.IsNullOrWhiteSpace(_openAiOptions.DeploymentName);
     }
 
-    private async Task<List<AiSuggestion>> GetAiSuggestionsAsync(
+    private async Task<List<AiMealSuggestion>> GetAiSuggestionsAsync(
         List<string> availablePantry,
-        List<string> lowStockIngredients)
+        List<string> lowStockIngredients,
+        List<string> canonicalIngredientNames)
     {
         var endpoint = _openAiOptions.Endpoint.TrimEnd('/');
         var url = $"{endpoint}/openai/v1/chat/completions";
@@ -61,7 +64,10 @@ public class SuggestionService
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
         var systemPrompt = MealSuggestionPrompts.SystemPrompt;
-        var userPrompt = MealSuggestionPrompts.BuildUserPrompt(availablePantry, lowStockIngredients);
+        var userPrompt = MealSuggestionPrompts.BuildUserPrompt(
+            availablePantry,
+            lowStockIngredients,
+            canonicalIngredientNames);
 
         var payload = new
         {
@@ -71,7 +77,7 @@ public class SuggestionService
                 new { role = "system", content = systemPrompt },
                 new { role = "user", content = userPrompt }
             },
-            max_completion_tokens = 600,
+            max_completion_tokens = 700,
             response_format = new
             {
                 type = "json_schema",
@@ -131,21 +137,21 @@ public class SuggestionService
 
         if (string.IsNullOrWhiteSpace(content))
         {
-            return new List<AiSuggestion>();
+            return new List<AiMealSuggestion>();
         }
 
-        var structured = JsonSerializer.Deserialize<AiSuggestionResponse>(
+        var structured = JsonSerializer.Deserialize<AiMealResponse>(
             content,
             new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
 
-        return structured?.Suggestions ?? new List<AiSuggestion>();
+        return structured?.Suggestions ?? new List<AiMealSuggestion>();
     }
 
     private static List<Suggestion> MapSuggestions(
-        List<AiSuggestion> aiSuggestions,
+        List<AiMealSuggestion> aiSuggestions,
         List<string> availablePantry,
         List<string> lowStockIngredients)
     {
@@ -163,6 +169,8 @@ public class SuggestionService
 
         return aiSuggestions
             .Where(x => !string.IsNullOrWhiteSpace(x.Name))
+            .Where(x => x.Uses is not null && x.Uses.Count > 0)
+            .Where(x => x.Uses.All(y => !ContainsEnglishLetters(y)))
             .Select(ai =>
             {
                 var uses = ai.Uses
@@ -250,6 +258,12 @@ public class SuggestionService
             .ThenBy(x => x.MissingIngredients.Count)
             .ThenBy(x => x.Name)
             .ToList();
+    }
+
+    private static bool ContainsEnglishLetters(string value)
+    {
+        return !string.IsNullOrWhiteSpace(value)
+            && value.Any(c => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'));
     }
 
     private static string CleanIngredientForDisplay(string value)

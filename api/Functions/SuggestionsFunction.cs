@@ -22,8 +22,12 @@ public class SuggestionsFunction
     {
         var availablePantry = await _pantryStore.GetAvailableIngredientNamesAsync();
         var lowStockIngredients = await _pantryStore.GetLowStockIngredientNamesAsync();
+        var canonicalIngredientNames = await _pantryStore.GetDistinctIngredientNamesAsync();
 
-        var suggestions = await _suggestionService.GetSuggestionsAsync(availablePantry, lowStockIngredients);
+        var suggestions = await _suggestionService.GetSuggestionsAsync(
+            availablePantry,
+            lowStockIngredients,
+            canonicalIngredientNames);
 
         var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(suggestions);

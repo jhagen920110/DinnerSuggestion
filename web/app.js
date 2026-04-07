@@ -3,10 +3,7 @@ const apiBase = window.APP_CONFIG.apiBase;
 let currentIngredients = [];
 let classifyTimer = null;
 let editingRowId = null;
-let inlineDraft = {
-  name: "",
-  stockLevel: "보통",
-};
+let inlineDraft = { name: "", stockLevel: "보통", type: "기타" };
 
 let pantryUiState = {
   search: "",
@@ -17,11 +14,12 @@ let pantryUiState = {
 
 let collapsedSections = {
   적음: false,
-  보통: true,
-  많음: true,
-  없음: true,
+  보통: false,
+  많음: false,
+  없음: false,
 };
 
+let pantryCollapsed = false;
 let filtersCollapsed = true;
 
 function byId(id) {
@@ -43,6 +41,9 @@ function getEls() {
     pantryStatus: byId("pantryStatus"),
     ingredientsSections: byId("ingredientsSections"),
     pantrySummary: byId("pantrySummary"),
+    pantryToggleButton: byId("pantryToggleButton"),
+    pantryContent: byId("pantryContent"),
+    pantryCaret: byId("pantryCaret"),
     filterSearch: byId("filterSearch"),
     filterLowOnly: byId("filterLowOnly"),
     filterSortKorean: byId("filterSortKorean"),
@@ -182,30 +183,6 @@ function iconSvg(kind) {
       <path d="M9 6V4h6v2" />
     </svg>
   `;
-}
-
-function getCheckedValue(name, fallback) {
-  const checked = document.querySelector(`input[name="${name}"]:checked`);
-  return checked ? checked.value : fallback;
-}
-
-function setCheckedValue(name, value) {
-  const target = document.querySelector(`input[name="${name}"][value="${value}"]`);
-  if (target) target.checked = true;
-}
-
-function getCheckedValueFromNames(names, fallback) {
-  for (const name of names) {
-    const value = getCheckedValue(name, null);
-    if (value !== null) return value;
-  }
-  return fallback;
-}
-
-function setCheckedValueForNames(names, value) {
-  for (const name of names) {
-    setCheckedValue(name, value);
-  }
 }
 
 async function classifyIngredientType(name) {
@@ -393,42 +370,57 @@ function renderIngredients() {
         const isEditing = editingRowId === id;
 
         row.innerHTML = `
-          <div class="item-main">
-            <div class="item-name">${escapeHtml(name)}</div>
-            <div class="item-meta">
-              <span class="${stockBadgeClass(stock)}">${escapeHtml(stock)}</span>
-              <span class="type-badge">${escapeHtml(typeDisplay(type))}</span>
+          <div class="ingredient-row-top">
+            <div class="item-main">
+              <div class="item-name">${escapeHtml(name)}</div>
+              <div class="item-meta">
+                <span class="${stockBadgeClass(stock)}">${escapeHtml(stock)}</span>
+                <span class="type-badge">${escapeHtml(typeDisplay(type))}</span>
+              </div>
             </div>
-            ${
-              isEditing
-                ? `
-                <div class="inline-edit-box">
-                  <div class="inline-edit-grid">
-                    <input type="text" class="inline-edit-name" value="${escapeHtml(inlineDraft.name)}" />
-                    <select class="inline-edit-stock">
-                      <option value="적음" ${inlineDraft.stockLevel === "적음" ? "selected" : ""}>적음</option>
-                      <option value="보통" ${inlineDraft.stockLevel === "보통" ? "selected" : ""}>보통</option>
-                      <option value="많음" ${inlineDraft.stockLevel === "많음" ? "selected" : ""}>많음</option>
-                      <option value="없음" ${inlineDraft.stockLevel === "없음" ? "selected" : ""}>없음</option>
-                    </select>
-                  </div>
-                  <div class="inline-edit-actions">
-                    <button type="button" class="primary-btn inline-save-btn">저장</button>
-                    <button type="button" class="secondary-btn inline-cancel-btn">취소</button>
-                  </div>
-                </div>
-              `
-                : ""
-            }
+
+            <div class="item-actions">
+              <button type="button" class="icon-button edit" aria-label="수정">
+                ${iconSvg("edit")}
+              </button>
+              <button type="button" class="icon-button delete" aria-label="삭제">
+                ${iconSvg("delete")}
+              </button>
+            </div>
           </div>
-          <div class="item-actions">
-            <button type="button" class="icon-button edit" aria-label="수정">
-              ${iconSvg("edit")}
-            </button>
-            <button type="button" class="icon-button delete" aria-label="삭제">
-              ${iconSvg("delete")}
-            </button>
-          </div>
+
+          ${isEditing ? `
+            <div class="inline-edit-panel compact">
+              <div class="inline-edit-field">
+                <label class="inline-edit-label" for="inline-stock-${id}">수량</label>
+                <select class="inline-edit-select" id="inline-stock-${id}">
+                  <option value="적음" ${inlineDraft.stockLevel === "적음" ? "selected" : ""}>적음</option>
+                  <option value="보통" ${inlineDraft.stockLevel === "보통" ? "selected" : ""}>보통</option>
+                  <option value="많음" ${inlineDraft.stockLevel === "많음" ? "selected" : ""}>많음</option>
+                  <option value="없음" ${inlineDraft.stockLevel === "없음" ? "selected" : ""}>없음</option>
+                </select>
+              </div>
+
+              <div class="inline-edit-field">
+                <label class="inline-edit-label" for="inline-type-${id}">종류</label>
+                <select class="inline-edit-select" id="inline-type-${id}">
+                  <option value="야채" ${inlineDraft.type === "야채" ? "selected" : ""}>야채</option>
+                  <option value="탄수화물" ${inlineDraft.type === "탄수화물" ? "selected" : ""}>탄수화물</option>
+                  <option value="고기/단백질" ${inlineDraft.type === "고기/단백질" ? "selected" : ""}>고기/단백질</option>
+                  <option value="유제품" ${inlineDraft.type === "유제품" ? "selected" : ""}>유제품</option>
+                  <option value="과일" ${inlineDraft.type === "과일" ? "selected" : ""}>과일</option>
+                  <option value="소스/조미료" ${inlineDraft.type === "소스/조미료" ? "selected" : ""}>소스/조미료</option>
+                  <option value="냉동식품" ${inlineDraft.type === "냉동식품" ? "selected" : ""}>냉동식품</option>
+                  <option value="기타" ${inlineDraft.type === "기타" ? "selected" : ""}>기타</option>
+                </select>
+              </div>
+
+              <div class="inline-edit-actions compact">
+                <button type="button" class="inline-save-btn">저장</button>
+                <button type="button" class="inline-cancel-btn">취소</button>
+              </div>
+            </div>
+          ` : ""}
         `;
 
         const editButton = row.querySelector(".edit");
@@ -445,33 +437,34 @@ function renderIngredients() {
         });
 
         if (isEditing) {
-          const nameInput = row.querySelector(".inline-edit-name");
-          const stockSelect = row.querySelector(".inline-edit-stock");
+          const stockSelect = row.querySelector(`#inline-stock-${id}`);
+          const typeSelect = row.querySelector(`#inline-type-${id}`);
           const saveBtn = row.querySelector(".inline-save-btn");
           const cancelBtn = row.querySelector(".inline-cancel-btn");
 
-          nameInput.addEventListener("input", (e) => {
-            inlineDraft.name = e.target.value;
-          });
+          if (stockSelect) {
+            stockSelect.addEventListener("change", (e) => {
+              inlineDraft.stockLevel = e.target.value;
+            });
+          }
 
-          stockSelect.addEventListener("change", (e) => {
-            inlineDraft.stockLevel = e.target.value;
-          });
+          if (typeSelect) {
+            typeSelect.addEventListener("change", (e) => {
+              inlineDraft.type = normalizeType(e.target.value);
+            });
+          }
 
-          nameInput.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
+          if (saveBtn) {
+            saveBtn.addEventListener("click", () => {
               saveInlineEdit(id);
-            }
-          });
+            });
+          }
 
-          saveBtn.addEventListener("click", () => {
-            saveInlineEdit(id);
-          });
-
-          cancelBtn.addEventListener("click", () => {
-            cancelInlineEdit();
-          });
+          if (cancelBtn) {
+            cancelBtn.addEventListener("click", () => {
+              cancelInlineEdit();
+            });
+          }
         }
 
         list.appendChild(row);
@@ -489,16 +482,14 @@ function startEditIngredient(item) {
   inlineDraft = {
     name: ingredientNameOf(item),
     stockLevel: ingredientStockOf(item),
+    type: ingredientTypeOf(item),
   };
   renderIngredients();
 }
 
 function cancelInlineEdit() {
   editingRowId = null;
-  inlineDraft = {
-    name: "",
-    stockLevel: "보통",
-  };
+  inlineDraft = { name: "", stockLevel: "보통", type: "기타" };
   renderIngredients();
 }
 
@@ -592,7 +583,6 @@ async function deleteIngredient(id) {
 
 async function saveInlineEdit(id) {
   const name = inlineDraft.name.trim();
-
   if (!name) {
     alert("재료명을 입력해주세요.");
     return;
@@ -601,6 +591,7 @@ async function saveInlineEdit(id) {
   const payload = {
     name,
     stockLevel: inlineDraft.stockLevel,
+    type: normalizeType(inlineDraft.type),
   };
 
   try {
@@ -616,11 +607,7 @@ async function saveInlineEdit(id) {
     }
 
     editingRowId = null;
-    inlineDraft = {
-      name: "",
-      stockLevel: "보통",
-    };
-
+    inlineDraft = { name: "", stockLevel: "보통", type: "기타" };
     await loadIngredients();
     showStatus("재료를 수정했어요.");
   } catch (error) {
@@ -732,19 +719,14 @@ function renderSuggestions(suggestions) {
       ${
         missing.length
           ? `
-          <div class="suggestion-section">
-            <div class="suggestion-label">부족한 재료</div>
-            <div class="suggestion-chip-row">
-              ${missing.map(x => `<span class="ingredient-chip missing">${escapeHtml(x)}</span>`).join("")}
-            </div>
+        <div class="suggestion-section">
+          <div class="suggestion-label">부족한 재료</div>
+          <div class="suggestion-chip-row">
+            ${missing.map(x => `<span class="ingredient-chip missing">${escapeHtml(x)}</span>`).join("")}
           </div>
-          `
-          : `
-          <div class="suggestion-section">
-            <div class="suggestion-label">상태</div>
-            <div class="suggestion-note success">지금 있는 재료로 만들 수 있어요.</div>
-          </div>
-          `
+        </div>
+        `
+          : ""
       }
 
       ${
@@ -865,6 +847,12 @@ function attachFilterEvents() {
       renderFiltersCollapsedState();
     });
   }
+
+  if (pantryToggleButton) {
+  pantryToggleButton.addEventListener("click", () => {
+    pantryCollapsed = !pantryCollapsed;
+    renderPantryCollapsedState();
+  });
 }
 
 function attachFormEvents() {
@@ -902,8 +890,21 @@ function attachFormEvents() {
   }
 }
 
+function renderPantryCollapsedState() {
+  const { pantryContent, pantryCaret } = getEls();
+
+  if (pantryContent) {
+    pantryContent.hidden = pantryCollapsed;
+  }
+
+  if (pantryCaret) {
+    pantryCaret.textContent = pantryCollapsed ? "▸" : "▾";
+  }
+}
+
 function init() {
   syncUiFromFilterState();
+  renderPantryCollapsedState();
   renderFiltersCollapsedState();
   attachFilterEvents();
   attachFormEvents();

@@ -12,7 +12,9 @@ public class SuggestionService
     private readonly HttpClient _httpClient;
     private readonly AzureOpenAiOptions _openAiOptions;
 
-    public SuggestionService(HttpClient httpClient, IOptions<AzureOpenAiOptions> openAiOptions)
+    public SuggestionService(
+        HttpClient httpClient,
+        IOptions<AzureOpenAiOptions> openAiOptions)
     {
         _httpClient = httpClient;
         _openAiOptions = openAiOptions.Value;
@@ -36,7 +38,10 @@ public class SuggestionService
                 canonicalIngredientNames);
 
             var mapped = MapSuggestions(aiSuggestions, availablePantry, lowStockIngredients);
-            return mapped.Count > 0 ? mapped : BuildFallbackSuggestions(availablePantry, lowStockIngredients);
+
+            return mapped.Count > 0
+                ? mapped
+                : BuildFallbackSuggestions(availablePantry, lowStockIngredients);
         }
         catch
         {
@@ -77,7 +82,7 @@ public class SuggestionService
                 new { role = "system", content = systemPrompt },
                 new { role = "user", content = userPrompt }
             },
-            max_completion_tokens = 700,
+            max_completion_tokens = 1100,
             response_format = new
             {
                 type = "json_schema",
@@ -104,9 +109,22 @@ public class SuggestionService
                                         {
                                             type = "array",
                                             items = new { type = "string" }
-                                        }
+                                        },
+                                        reason = new { type = "string" },
+                                        recipeSearchQuery = new { type = "string" },
+                                        recipeUrl = new { type = "string" },
+                                        recipeSource = new { type = "string" }
                                     },
-                                    required = new[] { "name", "cuisine", "uses" },
+                                    required = new[]
+                                    {
+                                        "name",
+                                        "cuisine",
+                                        "uses",
+                                        "reason",
+                                        "recipeSearchQuery",
+                                        "recipeUrl",
+                                        "recipeSource"
+                                    },
                                     additionalProperties = false
                                 }
                             }
@@ -125,10 +143,10 @@ public class SuggestionService
 
         using var response = await _httpClient.SendAsync(request);
         var responseText = await response.Content.ReadAsStringAsync();
+
         response.EnsureSuccessStatusCode();
 
         using var doc = JsonDocument.Parse(responseText);
-
         var content = doc.RootElement
             .GetProperty("choices")[0]
             .GetProperty("message")
@@ -187,6 +205,11 @@ public class SuggestionService
                     .Where(x => lowSet.Contains(ToComparisonKey(x)))
                     .ToList();
 
+                var safeRecipeUrl = CleanRecipeUrl(ai.RecipeUrl);
+                var safeRecipeSource = string.IsNullOrWhiteSpace(ai.RecipeSource)
+                    ? ""
+                    : ai.RecipeSource.Trim();
+
                 return new Suggestion
                 {
                     Name = ai.Name.Trim(),
@@ -195,10 +218,11 @@ public class SuggestionService
                     MissingIngredients = missing,
                     LowStockIngredients = low,
                     CanMakeNow = missing.Count == 0,
-                    RecipeUrl = "",
-                    RecipeSource = ""
+                    RecipeUrl = safeRecipeUrl,
+                    RecipeSource = safeRecipeSource
                 };
             })
+            .Where(x => !string.IsNullOrWhiteSpace(x.RecipeUrl))
             .GroupBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
             .Select(g => g.First())
             .OrderByDescending(x => x.CanMakeNow)
@@ -225,11 +249,46 @@ public class SuggestionService
 
         var ideas = new List<Suggestion>
         {
-            new() { Name = "김치볶음밥", Cuisine = "한식", Uses = ["밥", "김치", "계란", "양파"] },
-            new() { Name = "계란간장밥", Cuisine = "한식", Uses = ["밥", "계란", "간장", "참기름"] },
-            new() { Name = "양파간장볶음", Cuisine = "한식", Uses = ["양파", "간장"] },
-            new() { Name = "김치볶음", Cuisine = "한식", Uses = ["김치", "양파", "간장"] },
-            new() { Name = "돼지고기 양파볶음", Cuisine = "한식", Uses = ["돼지고기", "양파", "간장"] }
+            new()
+            {
+                Name = "김치볶음밥",
+                Cuisine = "한식",
+                Uses = ["밥", "김치", "계란", "양파"],
+                RecipeUrl = "",
+                RecipeSource = ""
+            },
+            new()
+            {
+                Name = "계란간장밥",
+                Cuisine = "한식",
+                Uses = ["밥", "계란", "간장", "참기름"],
+                RecipeUrl = "",
+                RecipeSource = ""
+            },
+            new()
+            {
+                Name = "양파간장볶음",
+                Cuisine = "한식",
+                Uses = ["양파", "간장"],
+                RecipeUrl = "",
+                RecipeSource = ""
+            },
+            new()
+            {
+                Name = "김치볶음",
+                Cuisine = "한식",
+                Uses = ["김치", "양파", "간장"],
+                RecipeUrl = "",
+                RecipeSource = ""
+            },
+            new()
+            {
+                Name = "돼지고기 양파볶음",
+                Cuisine = "한식",
+                Uses = ["돼지고기", "양파", "간장"],
+                RecipeUrl = "",
+                RecipeSource = ""
+            }
         };
 
         foreach (var idea in ideas)
@@ -249,8 +308,6 @@ public class SuggestionService
                 .ToList();
 
             idea.CanMakeNow = idea.MissingIngredients.Count == 0;
-            idea.RecipeUrl = "";
-            idea.RecipeSource = "";
         }
 
         return ideas
@@ -258,6 +315,28 @@ public class SuggestionService
             .ThenBy(x => x.MissingIngredients.Count)
             .ThenBy(x => x.Name)
             .ToList();
+    }
+
+    private static string CleanRecipeUrl(string? value)
+    {
+        var url = (value ?? string.Empty).Trim();
+
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            return string.Empty;
+        }
+
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var parsed))
+        {
+            return string.Empty;
+        }
+
+        if (parsed.Scheme != Uri.UriSchemeHttp && parsed.Scheme != Uri.UriSchemeHttps)
+        {
+            return string.Empty;
+        }
+
+        return parsed.ToString();
     }
 
     private static bool ContainsEnglishLetters(string value)

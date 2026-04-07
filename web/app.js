@@ -807,6 +807,7 @@ function attachFilterEvents() {
     filterTypeSelect,
     clearFiltersButton,
     toggleFiltersButton,
+    pantryToggleButton,
   } = getEls();
 
   if (filterSearch) {
@@ -849,10 +850,11 @@ function attachFilterEvents() {
   }
 
   if (pantryToggleButton) {
-  pantryToggleButton.addEventListener("click", () => {
-    pantryCollapsed = !pantryCollapsed;
-    renderPantryCollapsedState();
-  });
+    pantryToggleButton.addEventListener("click", () => {
+      pantryCollapsed = !pantryCollapsed;
+      renderPantryCollapsedState();
+    });
+  }
 }
 
 function attachFormEvents() {

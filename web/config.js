@@ -1,3 +1,3 @@
 window.APP_CONFIG = {
-  apiBase: "http://func-dinnersuggestion-dev-dhdtcphpgthxanc4.centralus-01.azurewebsites.net/"
+  apiBase: "https://func-dinnersuggestion-dev-dhdtcphpgthxanc4.centralus-01.azurewebsites.net/api"
 };

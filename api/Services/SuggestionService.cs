@@ -2,9 +2,8 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using DinnerSuggestionApi.Models;
-using Microsoft.Extensions.Options;
 using DinnerSuggestionApi.Prompts;
-using System.Linq;
+using Microsoft.Extensions.Options;
 
 namespace DinnerSuggestionApi.Services;
 
@@ -50,7 +49,7 @@ public class SuggestionService
             && !string.IsNullOrWhiteSpace(_openAiOptions.DeploymentName);
     }
 
-    private async Task<List<AiMealSuggestion>> GetAiSuggestionsAsync(
+    private async Task<List<AiSuggestion>> GetAiSuggestionsAsync(
         List<string> availablePantry,
         List<string> lowStockIngredients)
     {
@@ -120,10 +119,10 @@ public class SuggestionService
 
         using var response = await _httpClient.SendAsync(request);
         var responseText = await response.Content.ReadAsStringAsync();
-
         response.EnsureSuccessStatusCode();
 
         using var doc = JsonDocument.Parse(responseText);
+
         var content = doc.RootElement
             .GetProperty("choices")[0]
             .GetProperty("message")
@@ -132,31 +131,34 @@ public class SuggestionService
 
         if (string.IsNullOrWhiteSpace(content))
         {
-            return new List<AiMealSuggestion>();
+            return new List<AiSuggestion>();
         }
 
-        var structured = JsonSerializer.Deserialize<AiMealResponse>(
+        var structured = JsonSerializer.Deserialize<AiSuggestionResponse>(
             content,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
 
-        return structured?.Suggestions ?? new List<AiMealSuggestion>();
+        return structured?.Suggestions ?? new List<AiSuggestion>();
     }
 
     private static List<Suggestion> MapSuggestions(
-        List<AiMealSuggestion> aiSuggestions,
+        List<AiSuggestion> aiSuggestions,
         List<string> availablePantry,
         List<string> lowStockIngredients)
     {
         var availableSet = new HashSet<string>(
             availablePantry
                 .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Select(NormalizeIngredient),
+                .Select(ToComparisonKey),
             StringComparer.OrdinalIgnoreCase);
 
         var lowSet = new HashSet<string>(
             lowStockIngredients
                 .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Select(NormalizeIngredient),
+                .Select(ToComparisonKey),
             StringComparer.OrdinalIgnoreCase);
 
         return aiSuggestions
@@ -165,17 +167,22 @@ public class SuggestionService
             {
                 var uses = ai.Uses
                     .Where(x => !string.IsNullOrWhiteSpace(x))
-                    .Select(NormalizeIngredient)
+                    .Select(CleanIngredientForDisplay)
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToList();
 
-                var missing = uses.Where(x => !availableSet.Contains(x)).ToList();
-                var low = uses.Where(x => lowSet.Contains(x)).ToList();
+                var missing = uses
+                    .Where(x => !availableSet.Contains(ToComparisonKey(x)))
+                    .ToList();
+
+                var low = uses
+                    .Where(x => lowSet.Contains(ToComparisonKey(x)))
+                    .ToList();
 
                 return new Suggestion
                 {
                     Name = ai.Name.Trim(),
-                    Cuisine = string.IsNullOrWhiteSpace(ai.Cuisine) ? "General" : ai.Cuisine.Trim(),
+                    Cuisine = string.IsNullOrWhiteSpace(ai.Cuisine) ? "기타" : ai.Cuisine.Trim(),
                     Uses = uses,
                     MissingIngredients = missing,
                     LowStockIngredients = low,
@@ -192,11 +199,6 @@ public class SuggestionService
             .ToList();
     }
 
-    private static string NormalizeIngredient(string value)
-    {
-        return IngredientNameNormalizer.Normalize(value);
-    }
-
     private static List<Suggestion> BuildFallbackSuggestions(
         List<string> availablePantry,
         List<string> lowStockIngredients)
@@ -204,13 +206,13 @@ public class SuggestionService
         var availableSet = new HashSet<string>(
             availablePantry
                 .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Select(IngredientNameNormalizer.Normalize),
+                .Select(ToComparisonKey),
             StringComparer.OrdinalIgnoreCase);
 
         var lowSet = new HashSet<string>(
             lowStockIngredients
                 .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Select(IngredientNameNormalizer.Normalize),
+                .Select(ToComparisonKey),
             StringComparer.OrdinalIgnoreCase);
 
         var ideas = new List<Suggestion>
@@ -224,15 +226,20 @@ public class SuggestionService
 
         foreach (var idea in ideas)
         {
-            var normalizedUses = idea.Uses
+            idea.Uses = idea.Uses
                 .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Select(IngredientNameNormalizer.Normalize)
+                .Select(CleanIngredientForDisplay)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
-            idea.Uses = normalizedUses;
-            idea.MissingIngredients = normalizedUses.Where(x => !availableSet.Contains(x)).ToList();
-            idea.LowStockIngredients = normalizedUses.Where(x => lowSet.Contains(x)).ToList();
+            idea.MissingIngredients = idea.Uses
+                .Where(x => !availableSet.Contains(ToComparisonKey(x)))
+                .ToList();
+
+            idea.LowStockIngredients = idea.Uses
+                .Where(x => lowSet.Contains(ToComparisonKey(x)))
+                .ToList();
+
             idea.CanMakeNow = idea.MissingIngredients.Count == 0;
             idea.RecipeUrl = "";
             idea.RecipeSource = "";
@@ -245,32 +252,16 @@ public class SuggestionService
             .ToList();
     }
 
-    private static string NormalizeIngredientName(string value)
+    private static string CleanIngredientForDisplay(string value)
     {
-        var v = (value ?? string.Empty).Trim().ToLowerInvariant();
+        return (value ?? string.Empty).Trim();
+    }
 
-        return v switch
-        {
-            "달걀" => "계란",
-            "계란" => "계란",
-            "양파" => "양파",
-            "대파" => "대파",
-            "쪽파" => "대파",
-            "간장" => "간장",
-            "진간장" => "간장",
-            "국간장" => "간장",
-            "김치" => "김치",
-            "참기름" => "참기름",
-            "들기름" => "참기름",
-            "돼지고기" => "돼지고기",
-            "삼겹살" => "돼지고기",
-            "목살" => "돼지고기",
-            "소고기" => "소고기",
-            "닭고기" => "닭고기",
-            "닭" => "닭고기",
-            "밥" => "밥",
-            "쌀밥" => "밥",
-            _ => v
-        };
+    private static string ToComparisonKey(string value)
+    {
+        return (value ?? string.Empty)
+            .Trim()
+            .Replace(" ", string.Empty)
+            .ToLowerInvariant();
     }
 }

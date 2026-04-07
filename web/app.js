@@ -117,24 +117,22 @@ function ingredientStockOf(item) {
 }
 
 function normalizeType(value) {
-  const raw = String(value || "").trim().toLowerCase();
-
+  const raw = String(value || "").trim();
   const allowed = [
-    "vegetable",
-    "carb",
-    "protein",
-    "dairy",
-    "fruit",
-    "sauce",
-    "frozen",
-    "other",
+    "야채",
+    "탄수화물",
+    "고기/단백질",
+    "유제품",
+    "과일",
+    "소스/조미료",
+    "냉동식품",
+    "기타",
   ];
-
-  return allowed.includes(raw) ? raw : "other";
+  return allowed.includes(raw) ? raw : "기타";
 }
 
 function ingredientTypeOf(item) {
-  return normalizeType(item.type ?? item.Type ?? "other");
+  return normalizeType(item.type ?? item.Type ?? "기타");
 }
 
 function typeDisplay(type) {
@@ -256,7 +254,7 @@ async function updateTypePreviewFromName() {
 
   try {
     const result = await classifyIngredientType(name);
-    const detectedType = normalizeType(result.type);
+    const detectedType = normalizeType(result.type ?? result.Type);
     typePreviewValue.textContent = typeDisplay(detectedType);
   } catch (error) {
     console.error("classifyIngredientType failed:", error);

@@ -13,7 +13,14 @@ public class PantryStore
 
     private static readonly HashSet<string> ValidTypes =
     [
-        "vegetable", "carb", "protein", "dairy", "fruit", "sauce", "frozen", "other"
+        "야채",
+        "탄수화물",
+        "고기/단백질",
+        "유제품",
+        "과일",
+        "소스/조미료",
+        "냉동식품",
+        "기타"
     ];
 
     private readonly Container _container;
@@ -150,9 +157,10 @@ public class PantryStore
     private static string NormalizeType(string? type)
     {
         if (string.IsNullOrWhiteSpace(type))
-            return "other";
+            return "기타";
 
-        var normalized = type.Trim().ToLowerInvariant();
-        return ValidTypes.Contains(normalized) ? normalized : "other";
+        var normalized = type.Trim();
+
+        return ValidTypes.Contains(normalized) ? normalized : "기타";
     }
 }

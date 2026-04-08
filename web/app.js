@@ -659,10 +659,20 @@ function renderSuggestions(suggestions) {
     const canMakeNow = item.canMakeNow ?? item.CanMakeNow ?? false;
     const recipeUrl = item.recipeUrl ?? item.RecipeUrl ?? "";
     const recipeSource = item.recipeSource ?? item.RecipeSource ?? "";
+    const difficulty = item.difficulty ?? item.Difficulty ?? "";
+    const cookTime = item.cookTime ?? item.CookTime ?? "";
 
     const statusBadge = canMakeNow
       ? `<span class="suggestion-pill ready">지금 가능</span>`
       : `<span class="suggestion-pill missing">재료 필요 ${missing.length}</span>`;
+
+    const difficultyBadge = difficulty
+      ? `<span class="suggestion-pill difficulty-${difficulty === '쉬움' ? 'easy' : difficulty === '어려움' ? 'hard' : 'medium'}">${escapeHtml(difficulty)}</span>`
+      : "";
+
+    const cookTimeBadge = cookTime
+      ? `<span class="suggestion-pill cook-time">⏱ ${escapeHtml(cookTime)}</span>`
+      : "";
 
     card.innerHTML = `
       <div class="suggestion-top">
@@ -671,6 +681,8 @@ function renderSuggestions(suggestions) {
           <div class="suggestion-subchips">
             <span class="suggestion-cuisine">${escapeHtml(cuisine || "추천")}</span>
             ${statusBadge}
+            ${difficultyBadge}
+            ${cookTimeBadge}
           </div>
         </div>
       </div>

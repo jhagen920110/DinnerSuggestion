@@ -78,7 +78,8 @@ public class SuggestionService
                 new { role = "system", content = systemPrompt },
                 new { role = "user", content = userPrompt }
             },
-            max_completion_tokens = 900,
+            max_completion_tokens = 1500,
+            temperature = 0.8,
             response_format = new
             {
                 type = "json_schema",
@@ -106,16 +107,22 @@ public class SuggestionService
                                             type = "array",
                                             items = new { type = "string" }
                                         },
-                                        reason = new { type = "string" },
-                                        recipeSearchQuery = new { type = "string" }
+                                        recipeSearchQuery = new { type = "string" },
+                                        difficulty = new
+                                        {
+                                            type = "string",
+                                            @enum = new[] { "쉬움", "보통", "어려움" }
+                                        },
+                                        cookTime = new { type = "string" }
                                     },
                                     required = new[]
                                     {
                                         "name",
                                         "cuisine",
                                         "uses",
-                                        "reason",
-                                        "recipeSearchQuery"
+                                        "recipeSearchQuery",
+                                        "difficulty",
+                                        "cookTime"
                                     },
                                     additionalProperties = false
                                 }
@@ -210,7 +217,9 @@ public class SuggestionService
                     LowStockIngredients = low,
                     CanMakeNow = missing.Count == 0,
                     RecipeUrl = Build10000RecipeSearchUrl(recipeQuery),
-                    RecipeSource = "만개의레시피"
+                    RecipeSource = "만개의레시피",
+                    Difficulty = string.IsNullOrWhiteSpace(ai.Difficulty) ? "보통" : ai.Difficulty.Trim(),
+                    CookTime = ai.CookTime?.Trim() ?? string.Empty
                 };
             })
             .GroupBy(x => x.Name, StringComparer.OrdinalIgnoreCase)

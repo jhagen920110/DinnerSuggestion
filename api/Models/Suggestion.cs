@@ -10,4 +10,6 @@ public class Suggestion
     public List<string> Uses { get; set; } = new();
     public string RecipeUrl { get; set; } = string.Empty;
     public string RecipeSource { get; set; } = string.Empty;
+    public string Difficulty { get; set; } = string.Empty;
+    public string CookTime { get; set; } = string.Empty;
 }

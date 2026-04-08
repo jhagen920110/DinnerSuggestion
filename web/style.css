@@ -130,8 +130,9 @@ select {
 
 .form-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr;
   gap: 14px;
+  align-items: end;
 }
 
 .field {
@@ -631,6 +632,26 @@ select {
 .suggestion-pill.missing {
   background: #fff1f2;
   color: #be123c;
+}
+
+.suggestion-pill.difficulty-easy {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.suggestion-pill.difficulty-medium {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.suggestion-pill.difficulty-hard {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.suggestion-pill.cook-time {
+  background: #eff6ff;
+  color: #1d4ed8;
 }
 
 .suggestion-section {

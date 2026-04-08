@@ -23,5 +23,5 @@ public class Ingredient
 
     [JsonProperty("type")]
     [JsonPropertyName("type")]
-    public string Type { get; set; } = "other";
+    public string Type { get; set; } = string.Empty;
 }

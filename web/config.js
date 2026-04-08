@@ -1,9 +1,9 @@
 // Production (Azure)
-window.APP_CONFIG = {
-  apiBase: "https://func-dinnersuggestion-dev-dhdtcphpgthxanc4.centralus-01.azurewebsites.net/api"
-};
+// window.APP_CONFIG = {
+//   apiBase: "https://func-dinnersuggestion-dev-dhdtcphpgthxanc4.centralus-01.azurewebsites.net/api"
+// };
 
 // Local development
-// window.APP_CONFIG = {
-//   apiBase: "http://localhost:7071/api"
-// };
+window.APP_CONFIG = {
+  apiBase: "http://localhost:7071/api"
+};

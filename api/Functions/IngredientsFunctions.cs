@@ -116,7 +116,7 @@ public class IngredientsFunction
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
         var name = payload?.Name?.Trim() ?? string.Empty;
-        var type = await ResolveIngredientTypeAsync(name);
+        var type = await _ingredientTypeClassifier.ClassifyAsync(name);
 
         var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(new ClassifyIngredientTypeResponse { Type = type });
@@ -127,10 +127,6 @@ public class IngredientsFunction
     {
         if (string.IsNullOrWhiteSpace(name))
             return "기타";
-
-        var exactType = await _pantryStore.GetTypeByExactIngredientNameAsync(name);
-        if (!string.IsNullOrWhiteSpace(exactType))
-            return exactType;
 
         return await _ingredientTypeClassifier.ClassifyAsync(name);
     }

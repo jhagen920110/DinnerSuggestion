@@ -32,6 +32,6 @@ builder.Services.AddSingleton(sp =>
 builder.Services.AddSingleton<PantryStore>();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<SuggestionService>();
-builder.Services.AddSingleton<IngredientTypeClassifierService>();
+builder.Services.AddSingleton<IIngredientTypeClassifier, IngredientTypeClassifierService>();
 
 builder.Build().Run();

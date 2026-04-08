@@ -6,16 +6,6 @@ namespace DinnerSuggestionApi.Services;
 
 public class PantryStore
 {
-    private static readonly HashSet<string> ValidStockLevels =
-    [
-        "Plenty", "Some", "Low", "Out"
-    ];
-
-    private static readonly HashSet<string> ValidTypes =
-    [
-        "야채", "탄수화물", "고기/단백질", "유제품", "과일", "소스/조미료", "냉동식품", "기타"
-    ];
-
     private readonly Container _container;
     private readonly string _userId;
 
@@ -61,9 +51,6 @@ public class PantryStore
     {
         ingredient.Id = Guid.NewGuid().ToString();
         ingredient.UserId = _userId;
-        ingredient.Name = ingredient.Name.Trim();
-        ingredient.StockLevel = NormalizeStockLevel(ingredient.StockLevel);
-        ingredient.Type = NormalizeType(ingredient.Type);
 
         var response = await _container.CreateItemAsync(
             ingredient,
@@ -81,9 +68,9 @@ public class PantryStore
                 new PartitionKey(_userId));
 
             var existing = existingResponse.Resource;
-            existing.Name = updatedIngredient.Name.Trim();
-            existing.StockLevel = NormalizeStockLevel(updatedIngredient.StockLevel);
-            existing.Type = NormalizeType(updatedIngredient.Type);
+            existing.Name = updatedIngredient.Name;
+            existing.StockLevel = updatedIngredient.StockLevel;
+            existing.Type = updatedIngredient.Type;
             existing.UserId = _userId;
 
             var response = await _container.ReplaceItemAsync(
@@ -155,18 +142,6 @@ public class PantryStore
             .ToList();
     }
 
-    public async Task<List<string>> GetDistinctIngredientNamesAsync()
-    {
-        var items = await GetAllAsync();
-
-        return items
-            .Select(x => x.Name.Trim())
-            .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-    }
-
     public async Task<List<string>> GetLowStockIngredientNamesAsync()
     {
         var items = await GetAllAsync();
@@ -178,26 +153,6 @@ public class PantryStore
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
             .ToList();
-    }
-
-    private static string NormalizeStockLevel(string? stockLevel)
-    {
-        if (string.IsNullOrWhiteSpace(stockLevel))
-            return "Some";
-
-        var match = ValidStockLevels.FirstOrDefault(x =>
-            string.Equals(x, stockLevel.Trim(), StringComparison.OrdinalIgnoreCase));
-
-        return match ?? "Some";
-    }
-
-    private static string NormalizeType(string? type)
-    {
-        if (string.IsNullOrWhiteSpace(type))
-            return "기타";
-
-        var normalized = type.Trim();
-        return ValidTypes.Contains(normalized) ? normalized : "기타";
     }
 
     private sealed class TypeLookupResult

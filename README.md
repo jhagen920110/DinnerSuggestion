@@ -43,30 +43,76 @@ DinnerSuggestionApp/
 
 ## Local Development
 
-### Frontend
+### Prerequisites
 
-Serve the `web` folder locally using your preferred static server.
+- [.NET 9 SDK](https://dotnet.microsoft.com/download)
+- [Azure Functions Core Tools v4](https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local)
+- A static file server (e.g., VS Code Live Server, `npx serve`, or `python -m http.server`)
 
-Example:
+### 1. Start the backend
 
-```bash
-cd web
-# use Live Server, python -m http.server, or another local server
-```
-
-### Backend
-
-Run Azure Functions locally from the `api` folder:
-
-```bash
+```powershell
 cd api
+dotnet build
 func start
 ```
 
-Default local API URL:
+The API will be available at `http://localhost:7071/api`.
 
-```text
-http://localhost:7071/api
+Make sure `api/local.settings.json` exists with your Cosmos DB and (optionally) Azure OpenAI settings:
+
+```json
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "CosmosDb__Endpoint": "<your-cosmos-endpoint>",
+    "CosmosDb__Key": "<your-cosmos-key>",
+    "CosmosDb__DatabaseName": "DinnerSuggestionDb",
+    "CosmosDb__ContainerName": "Ingredients",
+    "CosmosDb__UserId": "jonathan",
+    "AzureOpenAi__Endpoint": "<your-openai-endpoint>",
+    "AzureOpenAi__ApiKey": "<your-openai-key>",
+    "AzureOpenAi__DeploymentName": "<your-deployment-name>"
+  },
+  "Host": {
+    "CORS": "http://localhost:4280,http://127.0.0.1:4280,http://localhost:5500,http://127.0.0.1:5500,http://localhost:5173,http://127.0.0.1:5173,http://localhost:8080,http://127.0.0.1:8080",
+    "CORSCredentials": false
+  }
+}
+```
+
+> Do not commit `local.settings.json` to the repository.
+
+### 2. Switch config.js to local
+
+In `web/config.js`, use the local API URL:
+
+```js
+// Local development
+window.APP_CONFIG = {
+  apiBase: "http://localhost:7071/api"
+};
+```
+
+### 3. Start the frontend
+
+```powershell
+cd web
+npx serve -l 5500
+```
+
+Or use VS Code Live Server, or any static file server. Then open `http://localhost:5500` in your browser.
+
+### Switching back to Azure
+
+To point the frontend at the deployed Azure Function App, update `web/config.js`:
+
+```js
+window.APP_CONFIG = {
+  apiBase: "https://func-dinnersuggestion-dev-dhdtcphpgthxanc4.centralus-01.azurewebsites.net/api"
+};
 ```
 
 ---

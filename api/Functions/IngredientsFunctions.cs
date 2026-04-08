@@ -10,11 +10,11 @@ namespace DinnerSuggestionApi.Functions;
 public class IngredientsFunction
 {
     private readonly PantryStore _pantryStore;
-    private readonly IngredientTypeClassifierService _ingredientTypeClassifier;
+    private readonly IIngredientTypeClassifier _ingredientTypeClassifier;
 
     public IngredientsFunction(
         PantryStore pantryStore,
-        IngredientTypeClassifierService ingredientTypeClassifier)
+        IIngredientTypeClassifier ingredientTypeClassifier)
     {
         _pantryStore = pantryStore;
         _ingredientTypeClassifier = ingredientTypeClassifier;

@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 
 namespace DinnerSuggestionApi.Services;
 
-public class IngredientTypeClassifierService
+public class IngredientTypeClassifierService : IIngredientTypeClassifier
 {
     private static readonly HashSet<string> AllowedTypes =
     [

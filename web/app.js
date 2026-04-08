@@ -33,11 +33,8 @@ function getEls() {
     typePreview: byId("typePreview"),
     typePreviewValue: byId("typePreviewValue"),
     saveButton: byId("saveButton"),
-    cancelEditButton: byId("cancelEditButton"),
     suggestButton: byId("suggestButton"),
     suggestionsDiv: byId("suggestions"),
-    pantryCount: byId("pantryCount"),
-    suggestionCount: byId("suggestionCount"),
     pantryStatus: byId("pantryStatus"),
     ingredientsSections: byId("ingredientsSections"),
     pantrySummary: byId("pantrySummary"),
@@ -144,10 +141,6 @@ function compareKo(a, b) {
   return String(a).localeCompare(String(b), "ko");
 }
 
-function compareEn(a, b) {
-  return String(a).localeCompare(String(b), "en", { sensitivity: "base" });
-}
-
 function stockBadgeClass(stockLevel) {
   const value = normalizeStockLevel(stockLevel);
 
@@ -223,7 +216,7 @@ async function updateTypePreviewFromName() {
 }
 
 async function loadIngredients() {
-  const { pantryCount, ingredientsSections } = getEls();
+  const { ingredientsSections } = getEls();
   if (!ingredientsSections) return;
 
   try {
@@ -236,10 +229,6 @@ async function loadIngredients() {
     const items = await response.json();
     currentIngredients = Array.isArray(items) ? items : [];
 
-    if (pantryCount) {
-      pantryCount.textContent = String(currentIngredients.length);
-    }
-
     renderIngredients();
   } catch (error) {
     console.error("loadIngredients failed:", error);
@@ -247,10 +236,6 @@ async function loadIngredients() {
     ingredientsSections.innerHTML = `
       <div class="empty-state">Failed to load ingredients.</div>
     `;
-
-    if (pantryCount) {
-      pantryCount.textContent = "0";
-    }
   }
 }
 
@@ -500,7 +485,6 @@ function resetForm() {
     typePreview,
     typePreviewValue,
     saveButton,
-    cancelEditButton,
   } = getEls();
 
   ingredientNameInput.value = "";
@@ -510,7 +494,6 @@ function resetForm() {
   if (typePreviewValue) typePreviewValue.textContent = "기타";
 
   saveButton.textContent = "재료 추가";
-  cancelEditButton.hidden = true;
 }
 
 async function saveIngredient() {
@@ -529,19 +512,14 @@ async function saveIngredient() {
     stockLevel: ingredientStockLevelInput.value,
   };
 
-  const wasEditing = Boolean(editingRowId);
-
   try {
-    setBusy(saveButton, true, wasEditing ? "저장 중..." : "추가 중...");
+    setBusy(saveButton, true, "추가 중...");
 
-    const response = await fetch(
-      wasEditing ? `${apiBase}/ingredients/${editingRowId}` : `${apiBase}/ingredients`,
-      {
-        method: wasEditing ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      }
-    );
+    const response = await fetch(`${apiBase}/ingredients`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
 
     if (!response.ok) {
       const text = await response.text();
@@ -550,7 +528,7 @@ async function saveIngredient() {
 
     resetForm();
     await loadIngredients();
-    showStatus(wasEditing ? "재료를 수정했어요." : "재료를 추가했어요.");
+    showStatus("재료를 추가했어요.");
   } catch (error) {
     console.error("saveIngredient failed:", error);
     alert("재료 저장에 실패했어요.");
@@ -617,7 +595,7 @@ async function saveInlineEdit(id) {
 }
 
 async function suggestDinner() {
-  const { suggestButton, suggestionsDiv, suggestionCount } = getEls();
+  const { suggestButton, suggestionsDiv } = getEls();
 
   try {
     setBusy(suggestButton, true, "추천 중...");
@@ -637,10 +615,6 @@ async function suggestDinner() {
     const suggestions = await response.json();
     const safeSuggestions = Array.isArray(suggestions) ? suggestions : [];
 
-    if (suggestionCount) {
-      suggestionCount.textContent = String(safeSuggestions.length);
-    }
-
     renderSuggestions(safeSuggestions);
   } catch (error) {
     console.error("suggestDinner failed:", error);
@@ -648,10 +622,6 @@ async function suggestDinner() {
     suggestionsDiv.innerHTML = `
       <div class="empty-state">추천을 불러오지 못했어요.</div>
     `;
-
-    if (suggestionCount) {
-      suggestionCount.textContent = "0";
-    }
   } finally {
     setBusy(suggestButton, false);
   }
@@ -861,7 +831,6 @@ function attachFormEvents() {
   const {
     ingredientNameInput,
     saveButton,
-    cancelEditButton,
     suggestButton,
   } = getEls();
 
@@ -881,10 +850,6 @@ function attachFormEvents() {
 
   if (saveButton) {
     saveButton.addEventListener("click", saveIngredient);
-  }
-
-  if (cancelEditButton) {
-    cancelEditButton.addEventListener("click", resetForm);
   }
 
   if (suggestButton) {

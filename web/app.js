@@ -21,6 +21,7 @@ let collapsedSections = {
 
 let pantryCollapsed = false;
 let filtersCollapsed = true;
+let selectedIngredients = new Set();
 
 function byId(id) {
   return document.getElementById(id);
@@ -354,8 +355,13 @@ function renderIngredients() {
         const type = ingredientTypeOf(item);
         const isEditing = editingRowId === id;
 
+        const isSelected = selectedIngredients.has(name);
+
         row.innerHTML = `
           <div class="ingredient-row-top">
+            <label class="ingredient-select-label">
+              <input type="checkbox" class="ingredient-select-cb" ${isSelected ? "checked" : ""} />
+            </label>
             <div class="item-main">
               <div class="item-name">${escapeHtml(name)}</div>
               <div class="item-meta">
@@ -420,6 +426,18 @@ function renderIngredients() {
           if (!confirmed) return;
           await deleteIngredient(id);
         });
+
+        const checkbox = row.querySelector(".ingredient-select-cb");
+        if (checkbox) {
+          checkbox.addEventListener("change", () => {
+            if (checkbox.checked) {
+              selectedIngredients.add(name);
+            } else {
+              selectedIngredients.delete(name);
+            }
+            updateSelectedCount();
+          });
+        }
 
         if (isEditing) {
           const stockSelect = row.querySelector(`#inline-stock-${id}`);
@@ -594,6 +612,18 @@ async function saveInlineEdit(id) {
   }
 }
 
+function updateSelectedCount() {
+  const { suggestButton } = getEls();
+  if (!suggestButton) return;
+  const count = selectedIngredients.size;
+  suggestButton.textContent = count > 0
+    ? `선택 재료로 추천 (${count})`
+    : "오늘 뭐 먹지?";
+
+  const existing = document.getElementById("mustIncludeToggle");
+  if (existing) existing.remove();
+}
+
 async function suggestDinner() {
   const { suggestButton, suggestionsDiv } = getEls();
 
@@ -604,8 +634,15 @@ async function suggestDinner() {
       <div class="empty-state">추천 메뉴를 불러오는 중...</div>
     `;
 
+    const body = {};
+    if (selectedIngredients.size > 0) {
+      body.mustInclude = [...selectedIngredients];
+    }
+
     const response = await fetch(`${apiBase}/suggestions`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {

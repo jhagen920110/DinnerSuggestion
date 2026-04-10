@@ -155,6 +155,19 @@ public class PantryStore
             .ToList();
     }
 
+    public async Task<List<string>> GetPlentyIngredientNamesAsync()
+    {
+        var items = await GetAllAsync();
+
+        return items
+            .Where(x => string.Equals(x.StockLevel, "Plenty", StringComparison.OrdinalIgnoreCase))
+            .Select(x => x.Name.Trim())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
     private sealed class TypeLookupResult
     {
         public string Type { get; set; } = string.Empty;

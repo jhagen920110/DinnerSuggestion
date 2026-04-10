@@ -22,7 +22,9 @@ public class SuggestionService
 
     public async Task<List<Suggestion>> GetSuggestionsAsync(
         List<string> availablePantry,
-        List<string> lowStockIngredients)
+        List<string> lowStockIngredients,
+        List<string> plentyIngredients,
+        List<string> mustInclude)
     {
         if (!IsAiConfigured())
         {
@@ -33,9 +35,23 @@ public class SuggestionService
         {
             var aiSuggestions = await GetAiSuggestionsAsync(
                 availablePantry,
-                lowStockIngredients);
+                lowStockIngredients,
+                plentyIngredients,
+                mustInclude);
 
             var mapped = MapSuggestions(aiSuggestions, availablePantry, lowStockIngredients);
+
+            // Server-side enforcement: remove suggestions that don't use any must-include ingredient
+            if (mustInclude.Count > 0)
+            {
+                var mustIncludeKeys = new HashSet<string>(
+                    mustInclude.Select(ToComparisonKey),
+                    StringComparer.OrdinalIgnoreCase);
+
+                mapped = mapped
+                    .Where(s => s.Uses.Any(u => mustIncludeKeys.Contains(ToComparisonKey(u))))
+                    .ToList();
+            }
 
             return mapped.Count > 0
                 ? mapped
@@ -56,7 +72,9 @@ public class SuggestionService
 
     private async Task<List<AiMealSuggestion>> GetAiSuggestionsAsync(
         List<string> availablePantry,
-        List<string> lowStockIngredients)
+        List<string> lowStockIngredients,
+        List<string> plentyIngredients,
+        List<string> mustInclude)
     {
         var endpoint = _openAiOptions.Endpoint.TrimEnd('/');
         var url = $"{endpoint}/openai/v1/chat/completions";
@@ -68,7 +86,11 @@ public class SuggestionService
         var systemPrompt = MealSuggestionPrompts.SystemPrompt;
         var userPrompt = MealSuggestionPrompts.BuildUserPrompt(
             availablePantry,
-            lowStockIngredients);
+            lowStockIngredients,
+            plentyIngredients,
+            mustInclude);
+
+        var temp = mustInclude.Count > 0 ? 0.2 : 0.5;
 
         var payload = new
         {
@@ -79,7 +101,7 @@ public class SuggestionService
                 new { role = "user", content = userPrompt }
             },
             max_completion_tokens = 1500,
-            temperature = 0.8,
+            temperature = temp,
             response_format = new
             {
                 type = "json_schema",

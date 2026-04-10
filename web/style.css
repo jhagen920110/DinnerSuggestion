@@ -423,6 +423,20 @@ select {
   gap: 12px;
 }
 
+.ingredient-select-label {
+  display: flex;
+  align-items: center;
+  padding-top: 2px;
+  cursor: pointer;
+}
+
+.ingredient-select-cb {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
 .item-main {
   min-width: 0;
   flex: 1;

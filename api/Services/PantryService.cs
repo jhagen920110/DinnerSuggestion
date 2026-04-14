@@ -4,12 +4,12 @@ using Microsoft.Extensions.Options;
 
 namespace DinnerSuggestionApi.Services;
 
-public class PantryStore
+public class PantryService
 {
     private readonly Container _container;
     private readonly string _userId;
 
-    public PantryStore(CosmosClient cosmosClient, IOptions<CosmosDbOptions> options)
+    public PantryService(CosmosClient cosmosClient, IOptions<CosmosDbOptions> options)
     {
         var settings = options.Value;
 

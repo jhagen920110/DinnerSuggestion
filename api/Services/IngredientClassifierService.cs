@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 
 namespace DinnerSuggestionApi.Services;
 
-public class IngredientTypeClassifierService : IIngredientTypeClassifier
+public class IngredientClassifierService
 {
     private static readonly HashSet<string> AllowedTypes =
     [
@@ -23,7 +23,7 @@ public class IngredientTypeClassifierService : IIngredientTypeClassifier
     private readonly HttpClient _httpClient;
     private readonly AzureOpenAiOptions _openAiOptions;
 
-    public IngredientTypeClassifierService(
+    public IngredientClassifierService(
         HttpClient httpClient,
         IOptions<AzureOpenAiOptions> openAiOptions)
     {

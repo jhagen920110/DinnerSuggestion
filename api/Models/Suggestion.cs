@@ -12,4 +12,5 @@ public class Suggestion
     public string RecipeSource { get; set; } = string.Empty;
     public string Difficulty { get; set; } = string.Empty;
     public string CookTime { get; set; } = string.Empty;
+    public string Source { get; set; } = "ai";
 }

@@ -15,107 +15,202 @@
       </div>
     </header>
 
-    <section class="card pantry-card">
-      <div class="section-head">
-        <div>
-          <h2>🥕 Pantry</h2>
-        </div>
+    <nav class="tab-bar">
+      <button class="tab-btn active" data-page="suggestions">🍽️ 추천</button>
+      <button class="tab-btn" data-page="pantry">🥕 식료품</button>
+      <button class="tab-btn" data-page="meals">🍳 레시피</button>
+    </nav>
 
-        <div class="section-head-actions">
-          <div id="pantryStatus" class="status-text" aria-live="polite"></div>
-          <button id="pantryToggleButton" type="button" class="filters-toggle">
-            Pantry <span id="pantryCaret">▾</span>
-          </button>
-        </div>
-      </div>
-
-      <div id="pantryContent">
-        <div class="ingredient-form">
-          <div class="form-grid">
-            <div class="field field-name">
-              <label for="ingredientName">재료명</label>
-              <input id="ingredientName" type="text" placeholder="예: 김치, 양파, 계란" />
-            </div>
-
-            <div class="field">
-              <label for="ingredientStockLevel">수량</label>
-              <select id="ingredientStockLevel">
-                <option value="보통" selected>보통</option>
-                <option value="적음">적음</option>
-                <option value="많음">많음</option>
-                <option value="없음">없음</option>
-              </select>
-            </div>
+    <!-- PAGE: Pantry -->
+    <div id="page-pantry" class="page">
+      <section class="card pantry-card">
+        <div class="section-head">
+          <div>
+            <h2>🥕 Pantry</h2>
           </div>
 
-          <div class="form-actions">
-            <button id="saveButton" type="button" class="primary-btn">재료 추가</button>
+          <div class="section-head-actions">
+            <div id="pantryStatus" class="status-text" aria-live="polite"></div>
+            <button id="pantryToggleButton" type="button" class="filters-toggle">
+              Pantry <span id="pantryCaret">▾</span>
+            </button>
           </div>
         </div>
 
-        <div class="filters-wrap">
-          <button id="toggleFiltersButton" type="button" class="filters-toggle">
-            Filters <span id="filtersCaret">▸</span>
-          </button>
-
-          <div id="filtersContent" class="filters-panel" hidden>
-            <div class="filter-grid simple-filter-grid">
-              <div class="field">
-                <label>
-                  <input type="checkbox" id="filterLowOnly" />
-                  부족한 재료만 보기
-                </label>
+        <div id="pantryContent">
+          <div class="ingredient-form">
+            <div class="form-grid">
+              <div class="field field-name">
+                <label for="ingredientName">재료명</label>
+                <input id="ingredientName" type="text" placeholder="예: 김치, 양파, 계란" />
               </div>
 
               <div class="field">
-                <label>
-                  <input type="checkbox" id="filterSortKorean" checked />
-                  가나다순
-                </label>
+                <label for="ingredientStockLevel">수량</label>
+                <select id="ingredientStockLevel">
+                  <option value="보통" selected>보통</option>
+                  <option value="적음">적음</option>
+                  <option value="많음">많음</option>
+                  <option value="없음">없음</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button id="saveButton" type="button" class="primary-btn">재료 추가</button>
+            </div>
+          </div>
+
+          <div class="filters-wrap">
+            <button id="toggleFiltersButton" type="button" class="filters-toggle">
+              Filters <span id="filtersCaret">▸</span>
+            </button>
+
+            <div id="filtersContent" class="filters-panel" hidden>
+              <div class="filter-grid simple-filter-grid">
+                <div class="field">
+                  <label>
+                    <input type="checkbox" id="filterLowOnly" />
+                    부족한 재료만 보기
+                  </label>
+                </div>
+
+                <div class="field">
+                  <label>
+                    <input type="checkbox" id="filterSortKorean" checked />
+                    가나다순
+                  </label>
+                </div>
+
+                <div class="field">
+                  <label for="filterTypeSelect">종류</label>
+                  <select id="filterTypeSelect">
+                    <option value="all">전체</option>
+                    <option value="야채">야채</option>
+                    <option value="탄수화물">탄수화물</option>
+                    <option value="고기/단백질">고기/단백질</option>
+                    <option value="유제품">유제품</option>
+                    <option value="과일">과일</option>
+                    <option value="소스/조미료">소스/조미료</option>
+                    <option value="냉동식품">냉동식품</option>
+                    <option value="기타">기타</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label for="filterSearch">검색</label>
+                  <input id="filterSearch" type="text" placeholder="재료 검색" />
+                </div>
+              </div>
+
+              <div class="filters-actions">
+                <button type="button" id="clearFiltersButton" class="secondary-btn">초기화</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="pantrySummary" class="pantry-summary"></div>
+          <div id="ingredientsSections"></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- PAGE: Meals -->
+    <div id="page-meals" class="page">
+      <section class="card">
+        <div class="section-head">
+          <div>
+            <h2>🍳 저장된 레시피</h2>
+          </div>
+          <div class="section-head-actions">
+            <div id="mealStatus" class="status-text" aria-live="polite"></div>
+            <button id="showMealFormBtn" type="button" class="primary-btn">+ 레시피 추가</button>
+          </div>
+        </div>
+
+        <div id="mealFormWrap" class="meal-form-wrap" hidden>
+          <div class="ingredient-form">
+            <div class="meal-form-grid">
+              <div class="field">
+                <label for="mealName">요리 이름</label>
+                <input id="mealName" type="text" placeholder="예: 김치찌개" />
               </div>
 
               <div class="field">
-                <label for="filterTypeSelect">종류</label>
-                <select id="filterTypeSelect">
-                  <option value="all">전체</option>
-                  <option value="야채">야채</option>
-                  <option value="탄수화물">탄수화물</option>
-                  <option value="고기/단백질">고기/단백질</option>
-                  <option value="유제품">유제품</option>
-                  <option value="과일">과일</option>
-                  <option value="소스/조미료">소스/조미료</option>
-                  <option value="냉동식품">냉동식품</option>
+                <label for="mealCuisine">종류</label>
+                <select id="mealCuisine">
+                  <option value="한식" selected>한식</option>
+                  <option value="양식">양식</option>
+                  <option value="중식">중식</option>
+                  <option value="일식">일식</option>
+                  <option value="분식">분식</option>
                   <option value="기타">기타</option>
                 </select>
               </div>
 
               <div class="field">
-                <label for="filterSearch">검색</label>
-                <input id="filterSearch" type="text" placeholder="재료 검색" />
+                <label for="mealDifficulty">난이도</label>
+                <select id="mealDifficulty">
+                  <option value="쉬움">쉬움</option>
+                  <option value="보통" selected>보통</option>
+                  <option value="어려움">어려움</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="mealCookTime">조리 시간</label>
+                <input id="mealCookTime" type="text" placeholder="예: 30분" />
+              </div>
+
+              <div class="field field-wide">
+                <label for="mealIngredients">재료 (쉼표로 구분)</label>
+                <input id="mealIngredients" type="text" placeholder="예: 김치, 돼지고기, 두부, 대파" />
+              </div>
+
+              <div class="field field-wide">
+                <label for="mealTags">태그 (쉼표로 구분)</label>
+                <input id="mealTags" type="text" placeholder="예: 국물, 겨울, 매운맛" />
+              </div>
+
+              <div class="field field-wide">
+                <label for="mealRecipeUrl">레시피 URL (선택)</label>
+                <input id="mealRecipeUrl" type="url" placeholder="https://..." />
+              </div>
+
+              <div class="field field-wide">
+                <label for="mealNotes">메모 (선택)</label>
+                <textarea id="mealNotes" rows="2" placeholder="조리 팁이나 메모"></textarea>
               </div>
             </div>
 
-            <div class="filters-actions">
-              <button type="button" id="clearFiltersButton" class="secondary-btn">초기화</button>
+            <div class="form-actions">
+              <button id="saveMealBtn" type="button" class="primary-btn">저장</button>
+              <button id="cancelMealBtn" type="button" class="secondary-btn">취소</button>
             </div>
           </div>
         </div>
 
-        <div id="pantrySummary" class="pantry-summary"></div>
-        <div id="ingredientsSections"></div>
-      </div>
-    </section>
-
-    <section class="card suggestion-card">
-      <div class="section-head">
-        <div>
-          <h2>🍽️ 저녁 메뉴 추천</h2>
+        <div id="mealSearch" class="meal-search-wrap">
+          <input id="mealSearchInput" type="text" placeholder="레시피 검색..." class="meal-search-input" />
         </div>
-        <button id="suggestButton" type="button" class="primary-btn">추천 받기</button>
-      </div>
 
-      <div id="suggestions"></div>
-    </section>
+        <div id="mealsContainer"></div>
+      </section>
+    </div>
+
+    <!-- PAGE: Suggestions -->
+    <div id="page-suggestions" class="page active">
+      <section class="card suggestion-card">
+        <div class="section-head">
+          <div>
+            <h2>🍽️ 저녁 메뉴 추천</h2>
+          </div>
+          <button id="suggestButton" type="button" class="primary-btn">오늘 뭐 먹지?</button>
+        </div>
+
+        <div id="suggestions"></div>
+      </section>
+    </div>
   </main>
 
   <script src="config.js"></script>

@@ -9,14 +9,14 @@ namespace DinnerSuggestionApi.Functions;
 
 public class IngredientsFunction
 {
-    private readonly PantryStore _pantryStore;
-    private readonly IIngredientTypeClassifier _ingredientTypeClassifier;
+    private readonly PantryService _pantryService;
+    private readonly IngredientClassifierService _ingredientTypeClassifier;
 
     public IngredientsFunction(
-        PantryStore pantryStore,
-        IIngredientTypeClassifier ingredientTypeClassifier)
+        PantryService pantryService,
+        IngredientClassifierService ingredientTypeClassifier)
     {
-        _pantryStore = pantryStore;
+        _pantryService = pantryService;
         _ingredientTypeClassifier = ingredientTypeClassifier;
     }
 
@@ -24,7 +24,7 @@ public class IngredientsFunction
     public async Task<HttpResponseData> GetIngredients(
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "ingredients")] HttpRequestData req)
     {
-        var items = await _pantryStore.GetAllAsync();
+        var items = await _pantryService.GetAllAsync();
         var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(items);
         return response;
@@ -49,7 +49,16 @@ public class IngredientsFunction
         ingredient.Name = ingredient.Name.Trim();
         ingredient.Type = await ResolveIngredientTypeForSaveAsync(ingredient.Name, ingredient.Type);
 
-        var created = await _pantryStore.AddAsync(ingredient);
+        // Check for duplicate ingredient name
+        var existing = await _pantryService.GetAllAsync();
+        if (existing.Any(e => string.Equals(e.Name.Trim(), ingredient.Name, StringComparison.OrdinalIgnoreCase)))
+        {
+            var conflict = req.CreateResponse(HttpStatusCode.Conflict);
+            await conflict.WriteStringAsync($"'{ingredient.Name}' 이미 등록되어 있습니다.");
+            return conflict;
+        }
+
+        var created = await _pantryService.AddAsync(ingredient);
 
         var response = req.CreateResponse(HttpStatusCode.Created);
         await response.WriteAsJsonAsync(created);
@@ -76,7 +85,7 @@ public class IngredientsFunction
         ingredient.Name = ingredient.Name.Trim();
         ingredient.Type = await ResolveIngredientTypeForSaveAsync(ingredient.Name, ingredient.Type);
 
-        var updated = await _pantryStore.UpdateAsync(id, ingredient);
+        var updated = await _pantryService.UpdateAsync(id, ingredient);
 
         if (updated is null)
         {
@@ -95,7 +104,7 @@ public class IngredientsFunction
         [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "ingredients/{id}")] HttpRequestData req,
         string id)
     {
-        var deleted = await _pantryStore.DeleteAsync(id);
+        var deleted = await _pantryService.DeleteAsync(id);
 
         if (!deleted)
         {

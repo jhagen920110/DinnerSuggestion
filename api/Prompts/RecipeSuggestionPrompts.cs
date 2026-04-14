@@ -1,6 +1,6 @@
 namespace DinnerSuggestionApi.Prompts;
 
-public static class MealSuggestionPrompts
+public static class RecipeSuggestionPrompts
 {
     public const string SystemPrompt = """
 You are a Korean home-cooking dinner planner. Given a pantry list, suggest realistic home-style meals.
@@ -79,7 +79,8 @@ RETURN 7-10 suggestions when possible, but fewer is fine if constraints limit op
         List<string> availablePantry,
         List<string> lowStockIngredients,
         List<string> plentyIngredients,
-        List<string> mustInclude)
+        List<string> mustInclude,
+        List<string> exclude)
     {
         var available = availablePantry.Count == 0
             ? "(없음)"
@@ -102,6 +103,13 @@ RETURN 7-10 suggestions when possible, but fewer is fine if constraints limit op
         {
             prompt += "\n반드시 포함할 재료 (하나 이상 포함):\n" +
                       string.Join(", ", mustInclude) + "\n";
+        }
+
+        if (exclude.Count > 0)
+        {
+            prompt += "\n이미 추천한 요리 (절대 다시 추천하지 마세요):\n" +
+                      string.Join(", ", exclude) + "\n" +
+                      "위 목록에 있는 요리는 절대 포함하지 마세요. 완전히 다른 요리만 추천하세요.\n";
         }
 
         return prompt;

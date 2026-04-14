@@ -23,6 +23,11 @@ let pantryCollapsed = false;
 let filtersCollapsed = true;
 let selectedIngredients = new Set();
 
+// Meals state
+let currentMeals = [];
+let editingMealId = null;
+let mealSearchQuery = "";
+
 function byId(id) {
   return document.getElementById(id);
 }
@@ -624,6 +629,39 @@ function updateSelectedCount() {
   if (existing) existing.remove();
 }
 
+async function fetchSuggestions(exclude = []) {
+  const body = {};
+  if (selectedIngredients.size > 0) {
+    body.mustInclude = [...selectedIngredients];
+  }
+  if (exclude.length > 0) {
+    body.exclude = exclude;
+  }
+
+  const response = await fetch(`${apiBase}/suggestions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to load suggestions: ${response.status}`);
+  }
+
+  const suggestions = await response.json();
+  const safeSuggestions = Array.isArray(suggestions) ? suggestions : [];
+
+  // Keep saved (DB) suggestions on top in order, shuffle AI suggestions
+  const saved = safeSuggestions.filter(s => (s.source ?? s.Source) === "saved");
+  const ai = safeSuggestions.filter(s => (s.source ?? s.Source) !== "saved");
+  for (let i = ai.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [ai[i], ai[j]] = [ai[j], ai[i]];
+  }
+
+  return [...saved, ...ai];
+}
+
 async function suggestDinner() {
   const { suggestButton, suggestionsDiv } = getEls();
 
@@ -634,25 +672,8 @@ async function suggestDinner() {
       <div class="empty-state">추천 메뉴를 불러오는 중...</div>
     `;
 
-    const body = {};
-    if (selectedIngredients.size > 0) {
-      body.mustInclude = [...selectedIngredients];
-    }
-
-    const response = await fetch(`${apiBase}/suggestions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to load suggestions: ${response.status}`);
-    }
-
-    const suggestions = await response.json();
-    const safeSuggestions = Array.isArray(suggestions) ? suggestions : [];
-
-    renderSuggestions(safeSuggestions);
+    const results = await fetchSuggestions();
+    renderSuggestions(results);
   } catch (error) {
     console.error("suggestDinner failed:", error);
 
@@ -661,6 +682,50 @@ async function suggestDinner() {
     `;
   } finally {
     setBusy(suggestButton, false);
+  }
+}
+
+async function loadMoreSuggestions(btn) {
+  const { suggestionsDiv } = getEls();
+
+  try {
+    btn.textContent = "추천 불러오는 중...";
+    btn.disabled = true;
+
+    // Collect already-shown dish names to exclude
+    const existingNames = [...suggestionsDiv.querySelectorAll("h3")].map(h => h.textContent.trim());
+    const results = await fetchSuggestions(existingNames);
+
+    // Remove the "more" button before appending
+    const existingBtn = suggestionsDiv.querySelector(".more-suggestions-btn");
+    if (existingBtn) existingBtn.remove();
+
+    // Client-side dedup as safety net
+    const existingNamesLower = new Set(existingNames.map(n => n.toLowerCase()));
+    const newResults = results.filter(s => {
+      const name = (s.name ?? s.Name ?? "").trim().toLowerCase();
+      return !existingNamesLower.has(name);
+    });
+
+    if (newResults.length === 0) {
+      const notice = document.createElement("div");
+      notice.className = "empty-state";
+      notice.textContent = "새로운 추천이 없어요. 다시 시도해보세요!";
+      suggestionsDiv.appendChild(notice);
+    } else {
+      appendSuggestionCards(newResults, suggestionsDiv);
+    }
+
+    // Re-add the "more" button
+    const moreBtn = document.createElement("button");
+    moreBtn.className = "more-suggestions-btn";
+    moreBtn.textContent = "🔄 더 보기";
+    moreBtn.addEventListener("click", () => loadMoreSuggestions(moreBtn));
+    suggestionsDiv.appendChild(moreBtn);
+  } catch (error) {
+    console.error("loadMoreSuggestions failed:", error);
+    btn.textContent = "🔄 더 보기";
+    btn.disabled = false;
   }
 }
 
@@ -675,6 +740,17 @@ function renderSuggestions(suggestions) {
     return;
   }
 
+  appendSuggestionCards(suggestions, suggestionsDiv);
+
+  // "More suggestions" button
+  const moreBtn = document.createElement("button");
+  moreBtn.className = "more-suggestions-btn";
+  moreBtn.textContent = "🔄 더 보기";
+  moreBtn.addEventListener("click", () => loadMoreSuggestions(moreBtn));
+  suggestionsDiv.appendChild(moreBtn);
+}
+
+function appendSuggestionCards(suggestions, container) {
   suggestions.forEach((item) => {
     const card = document.createElement("article");
     card.className = "suggestion";
@@ -698,10 +774,15 @@ function renderSuggestions(suggestions) {
     const recipeSource = item.recipeSource ?? item.RecipeSource ?? "";
     const difficulty = item.difficulty ?? item.Difficulty ?? "";
     const cookTime = item.cookTime ?? item.CookTime ?? "";
+    const source = item.source ?? item.Source ?? "ai";
 
     const statusBadge = canMakeNow
       ? `<span class="suggestion-pill ready">지금 가능</span>`
       : `<span class="suggestion-pill missing">재료 필요 ${missing.length}</span>`;
+
+    const sourceBadge = source === "saved"
+      ? `<span class="suggestion-pill source-saved">📌 저장됨</span>`
+      : `<span class="suggestion-pill source-ai">🤖 AI</span>`;
 
     const difficultyBadge = difficulty
       ? `<span class="suggestion-pill difficulty-${difficulty === '쉬움' ? 'easy' : difficulty === '어려움' ? 'hard' : 'medium'}">${escapeHtml(difficulty)}</span>`
@@ -712,68 +793,127 @@ function renderSuggestions(suggestions) {
       : "";
 
     card.innerHTML = `
-      <div class="suggestion-top">
-        <div class="suggestion-title-wrap">
-          <h3>${escapeHtml(name)}</h3>
-          <div class="suggestion-subchips">
-            <span class="suggestion-cuisine">${escapeHtml(cuisine || "추천")}</span>
-            ${statusBadge}
-            ${difficultyBadge}
-            ${cookTimeBadge}
+      <div class="suggestion-img-wrap">
+        <div class="suggestion-img-placeholder">🍽️</div>
+      </div>
+      <div class="suggestion-body">
+        <div class="suggestion-top">
+          <div class="suggestion-title-wrap">
+            <h3>${escapeHtml(name)}</h3>
+            <div class="suggestion-subchips">
+              <span class="suggestion-cuisine">${escapeHtml(cuisine || "추천")}</span>
+              ${sourceBadge}
+              ${statusBadge}
+              ${difficultyBadge}
+              ${cookTimeBadge}
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="suggestion-section">
-        <div class="suggestion-label">사용 재료</div>
-        <div class="suggestion-chip-row">
-          ${
-            uses.length
-              ? uses.map(x => `<span class="ingredient-chip use">${escapeHtml(x)}</span>`).join("")
-              : `<span class="ingredient-chip neutral">-</span>`
-          }
-        </div>
-      </div>
-
-      ${
-        missing.length
-          ? `
         <div class="suggestion-section">
-          <div class="suggestion-label">부족한 재료</div>
+          <div class="suggestion-label">사용 재료</div>
           <div class="suggestion-chip-row">
-            ${missing.map(x => `<span class="ingredient-chip missing">${escapeHtml(x)}</span>`).join("")}
+            ${
+              uses.length
+                ? uses.map(x => `<span class="ingredient-chip use">${escapeHtml(x)}</span>`).join("")
+                : `<span class="ingredient-chip neutral">-</span>`
+            }
           </div>
         </div>
-        `
-          : ""
-      }
 
-      ${
-        low.length
-          ? `
+        ${
+          missing.length
+            ? `
           <div class="suggestion-section">
-            <div class="suggestion-label">적은 재료</div>
+            <div class="suggestion-label">부족한 재료</div>
             <div class="suggestion-chip-row">
-              ${low.map(x => `<span class="ingredient-chip low">${escapeHtml(x)}</span>`).join("")}
+              ${missing.map(x => `<span class="ingredient-chip missing">${escapeHtml(x)}</span>`).join("")}
             </div>
           </div>
           `
-          : ""
-      }
+            : ""
+        }
 
-      ${
-        recipeUrl
-          ? `
-          <a class="recipe-link" href="${escapeHtml(recipeUrl)}" target="_blank" rel="noreferrer">
-            레시피 보기${recipeSource ? ` · ${escapeHtml(recipeSource)}` : ""}
-          </a>
-          `
-          : ""
-      }
+        ${
+          low.length
+            ? `
+            <div class="suggestion-section">
+              <div class="suggestion-label">적은 재료</div>
+              <div class="suggestion-chip-row">
+                ${low.map(x => `<span class="ingredient-chip low">${escapeHtml(x)}</span>`).join("")}
+              </div>
+            </div>
+            `
+            : ""
+        }
+
+        ${
+          recipeUrl
+            ? `
+            <a class="recipe-link" href="${escapeHtml(recipeUrl)}" target="_blank" rel="noreferrer">
+              레시피 보기${recipeSource ? ` · ${escapeHtml(recipeSource)}` : ""}
+            </a>
+            `
+            : ""
+        }
+      </div>
     `;
 
-    suggestionsDiv.appendChild(card);
+    // Async-load dish image
+    loadDishImage(name, card.querySelector(".suggestion-img-wrap"));
+
+    container.appendChild(card);
   });
+}
+
+async function loadDishImage(dishName, imgWrap) {
+  try {
+    const src = await findDishImage(dishName);
+    if (!src) return;
+    const img = document.createElement("img");
+    img.className = "suggestion-img";
+    img.alt = dishName;
+    img.src = src;
+    img.onload = () => {
+      imgWrap.innerHTML = "";
+      imgWrap.appendChild(img);
+    };
+  } catch {
+    // Keep placeholder on failure
+  }
+}
+
+async function findDishImage(name) {
+  // 1. Korean Wikipedia search (handles exact + compound names)
+  let src = await wikiSearchThumb(name, "ko");
+  if (src) return src;
+
+  // 2. If name has spaces, try the last word (core dish name)
+  const parts = name.trim().split(/\s+/);
+  if (parts.length > 1) {
+    src = await wikiSearchThumb(parts[parts.length - 1], "ko");
+    if (src) return src;
+  }
+
+  // 3. English Wikipedia fallback
+  return await wikiSearchThumb(name, "en");
+}
+
+async function wikiSearchThumb(query, lang) {
+  try {
+    const url = `https://${lang}.wikipedia.org/w/api.php?action=query&generator=search` +
+      `&gsrsearch=${encodeURIComponent(query)}&gsrlimit=1&gsrnamespace=0` +
+      `&prop=pageimages&piprop=thumbnail&pithumbsize=400&format=json&origin=*`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const pages = data.query?.pages;
+    if (!pages) return null;
+    const page = Object.values(pages)[0];
+    return page?.thumbnail?.source || null;
+  } catch {
+    return null;
+  }
 }
 
 function syncFilterStateFromUi() {
@@ -924,8 +1064,327 @@ function init() {
   renderFiltersCollapsedState();
   attachFilterEvents();
   attachFormEvents();
+  attachTabEvents();
+  attachMealEvents();
   resetForm();
-  loadIngredients();
+  loadIngredients().then(() => {
+    switchPage("suggestions");
+    suggestDinner();
+  });
+}
+
+// ─── Tab Navigation ───
+
+function attachTabEvents() {
+  document.querySelectorAll(".tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const page = btn.dataset.page;
+      switchPage(page);
+    });
+  });
+}
+
+function switchPage(pageName) {
+  document.querySelectorAll(".tab-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.page === pageName);
+  });
+
+  document.querySelectorAll(".page").forEach((page) => {
+    page.classList.toggle("active", page.id === `page-${pageName}`);
+  });
+
+  if (pageName === "meals") {
+    if (currentMeals.length === 0) {
+      loadMeals();
+    } else {
+      renderMeals();
+    }
+  }
+}
+
+// ─── Meals Page ───
+
+function attachMealEvents() {
+  const showBtn = byId("showMealFormBtn");
+  const saveBtn = byId("saveMealBtn");
+  const cancelBtn = byId("cancelMealBtn");
+  const searchInput = byId("mealSearchInput");
+
+  if (showBtn) {
+    showBtn.addEventListener("click", () => {
+      editingMealId = null;
+      resetMealForm();
+      byId("mealFormWrap").hidden = false;
+      showBtn.hidden = true;
+    });
+  }
+
+  if (saveBtn) {
+    saveBtn.addEventListener("click", saveMeal);
+  }
+
+  if (cancelBtn) {
+    cancelBtn.addEventListener("click", () => {
+      editingMealId = null;
+      resetMealForm();
+      byId("mealFormWrap").hidden = true;
+      byId("showMealFormBtn").hidden = false;
+    });
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener("input", () => {
+      mealSearchQuery = searchInput.value.trim().toLowerCase();
+      renderMeals();
+    });
+  }
+}
+
+function resetMealForm() {
+  byId("mealName").value = "";
+  byId("mealCuisine").value = "한식";
+  byId("mealDifficulty").value = "보통";
+  byId("mealCookTime").value = "";
+  byId("mealIngredients").value = "";
+  byId("mealTags").value = "";
+  byId("mealRecipeUrl").value = "";
+  byId("mealNotes").value = "";
+  byId("saveMealBtn").textContent = "저장";
+}
+
+function fillMealForm(meal) {
+  byId("mealName").value = meal.name ?? meal.Name ?? "";
+  byId("mealCuisine").value = meal.cuisine ?? meal.Cuisine ?? "한식";
+  byId("mealDifficulty").value = meal.difficulty ?? meal.Difficulty ?? "보통";
+  byId("mealCookTime").value = meal.cookTime ?? meal.CookTime ?? "";
+  byId("mealIngredients").value = (meal.ingredients ?? meal.Ingredients ?? []).join(", ");
+  byId("mealTags").value = (meal.tags ?? meal.Tags ?? []).join(", ");
+  byId("mealRecipeUrl").value = meal.recipeUrl ?? meal.RecipeUrl ?? "";
+  byId("mealNotes").value = meal.notes ?? meal.Notes ?? "";
+  byId("saveMealBtn").textContent = "수정 저장";
+}
+
+function showMealStatus(message) {
+  const el = byId("mealStatus");
+  if (!el) return;
+  el.textContent = message;
+  window.clearTimeout(showMealStatus._timer);
+  showMealStatus._timer = window.setTimeout(() => {
+    el.textContent = "";
+  }, 1800);
+}
+
+async function loadMeals() {
+  try {
+    const response = await fetch(`${apiBase}/meals`);
+    if (!response.ok) throw new Error(`Failed to load meals: ${response.status}`);
+    const items = await response.json();
+    currentMeals = Array.isArray(items) ? items : [];
+    renderMeals();
+  } catch (error) {
+    console.error("loadMeals failed:", error);
+    const container = byId("mealsContainer");
+    if (container) {
+      container.innerHTML = `<div class="empty-state">레시피를 불러오지 못했어요.</div>`;
+    }
+  }
+}
+
+async function saveMeal() {
+  const name = byId("mealName").value.trim();
+  if (!name) {
+    alert("요리 이름을 입력해주세요.");
+    byId("mealName").focus();
+    return;
+  }
+
+  const ingredientsRaw = byId("mealIngredients").value;
+  const ingredients = ingredientsRaw
+    .split(",")
+    .map((x) => x.trim())
+    .filter((x) => x.length > 0);
+
+  const tagsRaw = byId("mealTags").value;
+  const tags = tagsRaw
+    .split(",")
+    .map((x) => x.trim())
+    .filter((x) => x.length > 0);
+
+  const payload = {
+    name,
+    cuisine: byId("mealCuisine").value,
+    difficulty: byId("mealDifficulty").value,
+    cookTime: byId("mealCookTime").value.trim(),
+    ingredients,
+    tags,
+    recipeUrl: byId("mealRecipeUrl").value.trim(),
+    notes: byId("mealNotes").value.trim(),
+  };
+
+  const saveBtn = byId("saveMealBtn");
+
+  try {
+    setBusy(saveBtn, true, "저장 중...");
+
+    const isEditing = editingMealId !== null;
+    const url = isEditing ? `${apiBase}/meals/${editingMealId}` : `${apiBase}/meals`;
+    const method = isEditing ? "PUT" : "POST";
+
+    const response = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      if (response.status === 409) {
+        alert(text);
+        return;
+      }
+      throw new Error(`Failed to save meal: ${response.status} ${text}`);
+    }
+
+    editingMealId = null;
+    resetMealForm();
+    byId("mealFormWrap").hidden = true;
+    byId("showMealFormBtn").hidden = false;
+    await loadMeals();
+    showMealStatus(isEditing ? "레시피를 수정했어요." : "레시피를 추가했어요.");
+  } catch (error) {
+    console.error("saveMeal failed:", error);
+    alert("레시피 저장에 실패했어요.");
+  } finally {
+    setBusy(saveBtn, false);
+  }
+}
+
+async function deleteMeal(id, name) {
+  const confirmed = window.confirm(`'${name}' 레시피를 삭제할까요?`);
+  if (!confirmed) return;
+
+  try {
+    const response = await fetch(`${apiBase}/meals/${id}`, { method: "DELETE" });
+    if (!response.ok && response.status !== 204) {
+      throw new Error(`Failed to delete meal: ${response.status}`);
+    }
+    await loadMeals();
+    showMealStatus("레시피를 삭제했어요.");
+  } catch (error) {
+    console.error("deleteMeal failed:", error);
+    alert("레시피 삭제에 실패했어요.");
+  }
+}
+
+function renderMeals() {
+  const container = byId("mealsContainer");
+  if (!container) return;
+
+  let filtered = [...currentMeals];
+
+  if (mealSearchQuery) {
+    filtered = filtered.filter((meal) => {
+      const name = (meal.name ?? meal.Name ?? "").toLowerCase();
+      const ingredients = (meal.ingredients ?? meal.Ingredients ?? []).join(" ").toLowerCase();
+      const tags = (meal.tags ?? meal.Tags ?? []).join(" ").toLowerCase();
+      return name.includes(mealSearchQuery) || ingredients.includes(mealSearchQuery) || tags.includes(mealSearchQuery);
+    });
+  }
+
+  filtered.sort((a, b) => compareKo(a.name ?? a.Name ?? "", b.name ?? b.Name ?? ""));
+
+  container.innerHTML = "";
+
+  if (!filtered.length) {
+    container.innerHTML = `<div class="empty-state">저장된 레시피가 없어요. 자주 만드는 요리를 추가해보세요!</div>`;
+    return;
+  }
+
+  const list = document.createElement("div");
+  list.className = "meals-list";
+
+  for (const meal of filtered) {
+    const id = meal.id ?? meal.Id ?? "";
+    const name = meal.name ?? meal.Name ?? "";
+    const cuisine = meal.cuisine ?? meal.Cuisine ?? "";
+    const difficulty = meal.difficulty ?? meal.Difficulty ?? "";
+    const cookTime = meal.cookTime ?? meal.CookTime ?? "";
+    const ingredients = meal.ingredients ?? meal.Ingredients ?? [];
+    const tags = meal.tags ?? meal.Tags ?? [];
+    const notes = meal.notes ?? meal.Notes ?? "";
+    const recipeUrl = meal.recipeUrl ?? meal.RecipeUrl ?? "";
+
+    const diffClass = difficulty === "쉬움" ? "easy" : difficulty === "어려움" ? "hard" : "medium";
+
+    const card = document.createElement("article");
+    card.className = "meal-card";
+
+    card.innerHTML = `
+      <div class="meal-card-top">
+        <div>
+          <h3>${escapeHtml(name)}</h3>
+          <div class="meal-card-meta">
+            <span class="suggestion-cuisine">${escapeHtml(cuisine)}</span>
+            ${difficulty ? `<span class="suggestion-pill difficulty-${diffClass}">${escapeHtml(difficulty)}</span>` : ""}
+            ${cookTime ? `<span class="suggestion-pill cook-time">⏱ ${escapeHtml(cookTime)}</span>` : ""}
+          </div>
+        </div>
+        <div class="meal-card-actions">
+          <button type="button" class="icon-button edit" aria-label="수정">${iconSvg("edit")}</button>
+          <button type="button" class="icon-button delete" aria-label="삭제">${iconSvg("delete")}</button>
+        </div>
+      </div>
+
+      ${ingredients.length ? `
+        <div class="meal-card-ingredients">
+          <div class="meal-card-ingredients-label">재료</div>
+          <div class="meal-card-chips">
+            ${ingredients.map((i) => {
+              const pantryNames = currentIngredients.map(p => (p.name ?? p.Name ?? "").trim().toLowerCase());
+              const isMissing = !pantryNames.includes(i.trim().toLowerCase());
+              return `<span class="meal-chip${isMissing ? ' missing' : ''}">${escapeHtml(i)}${isMissing ? ' ❌' : ''}</span>`;
+            }).join("")}
+          </div>
+        </div>
+      ` : ""}
+
+      ${tags.length ? `
+        <div class="meal-card-ingredients">
+          <div class="meal-card-ingredients-label">태그</div>
+          <div class="meal-card-chips">
+            ${tags.map((t) => `<span class="meal-chip tag">${escapeHtml(t)}</span>`).join("")}
+          </div>
+        </div>
+      ` : ""}
+
+      ${notes ? `<div class="meal-card-notes">${escapeHtml(notes)}</div>` : ""}
+
+      ${recipeUrl ? `
+        <a class="recipe-link" href="${escapeHtml(recipeUrl)}" target="_blank" rel="noreferrer">
+          레시피 보기
+        </a>
+      ` : ""}
+    `;
+
+    const editBtn = card.querySelector(".edit");
+    const deleteBtn = card.querySelector(".delete");
+
+    editBtn.addEventListener("click", () => {
+      editingMealId = id;
+      fillMealForm(meal);
+      byId("mealFormWrap").hidden = false;
+      byId("showMealFormBtn").hidden = true;
+      byId("mealName").focus();
+    });
+
+    deleteBtn.addEventListener("click", () => {
+      deleteMeal(id, name);
+    });
+
+    list.appendChild(card);
+  }
+
+  container.appendChild(list);
 }
 
 document.addEventListener("DOMContentLoaded", init);

@@ -2,13 +2,13 @@ using System.Text.Json.Serialization;
 
 namespace DinnerSuggestionApi.Models;
 
-public class AiMealResponse
+public class AiRecipeResponse
 {
     [JsonPropertyName("suggestions")]
-    public List<AiMealSuggestion> Suggestions { get; set; } = new();
+    public List<AiRecipeSuggestion> Suggestions { get; set; } = new();
 }
 
-public class AiMealSuggestion
+public class AiRecipeSuggestion
 {
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;

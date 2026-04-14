@@ -24,7 +24,8 @@ public class SuggestionService
         List<string> availablePantry,
         List<string> lowStockIngredients,
         List<string> plentyIngredients,
-        List<string> mustInclude)
+        List<string> mustInclude,
+        List<string> exclude)
     {
         if (!IsAiConfigured())
         {
@@ -37,7 +38,8 @@ public class SuggestionService
                 availablePantry,
                 lowStockIngredients,
                 plentyIngredients,
-                mustInclude);
+                mustInclude,
+                exclude);
 
             var mapped = MapSuggestions(aiSuggestions, availablePantry, lowStockIngredients);
 
@@ -70,11 +72,12 @@ public class SuggestionService
             && !string.IsNullOrWhiteSpace(_openAiOptions.DeploymentName);
     }
 
-    private async Task<List<AiMealSuggestion>> GetAiSuggestionsAsync(
+    private async Task<List<AiRecipeSuggestion>> GetAiSuggestionsAsync(
         List<string> availablePantry,
         List<string> lowStockIngredients,
         List<string> plentyIngredients,
-        List<string> mustInclude)
+        List<string> mustInclude,
+        List<string> exclude)
     {
         var endpoint = _openAiOptions.Endpoint.TrimEnd('/');
         var url = $"{endpoint}/openai/v1/chat/completions";
@@ -83,14 +86,15 @@ public class SuggestionService
         request.Headers.Add("api-key", _openAiOptions.ApiKey);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-        var systemPrompt = MealSuggestionPrompts.SystemPrompt;
-        var userPrompt = MealSuggestionPrompts.BuildUserPrompt(
+        var systemPrompt = RecipeSuggestionPrompts.SystemPrompt;
+        var userPrompt = RecipeSuggestionPrompts.BuildUserPrompt(
             availablePantry,
             lowStockIngredients,
             plentyIngredients,
-            mustInclude);
+            mustInclude,
+            exclude);
 
-        var temp = mustInclude.Count > 0 ? 0.2 : 0.5;
+        var temp = exclude.Count > 0 ? 0.8 : mustInclude.Count > 0 ? 0.2 : 0.5;
 
         var payload = new
         {
@@ -107,7 +111,7 @@ public class SuggestionService
                 type = "json_schema",
                 json_schema = new
                 {
-                    name = "meal_suggestions",
+                    name = "recipe_suggestions",
                     strict = true,
                     schema = new
                     {
@@ -176,21 +180,21 @@ public class SuggestionService
 
         if (string.IsNullOrWhiteSpace(content))
         {
-            return new List<AiMealSuggestion>();
+            return new List<AiRecipeSuggestion>();
         }
 
-        var structured = JsonSerializer.Deserialize<AiMealResponse>(
+        var structured = JsonSerializer.Deserialize<AiRecipeResponse>(
             content,
             new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
 
-        return structured?.Suggestions ?? new List<AiMealSuggestion>();
+        return structured?.Suggestions ?? new List<AiRecipeSuggestion>();
     }
 
     private static List<Suggestion> MapSuggestions(
-        List<AiMealSuggestion> aiSuggestions,
+        List<AiRecipeSuggestion> aiSuggestions,
         List<string> availablePantry,
         List<string> lowStockIngredients)
     {

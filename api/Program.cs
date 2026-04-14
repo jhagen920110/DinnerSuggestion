@@ -29,9 +29,10 @@ builder.Services.AddSingleton(sp =>
     });
 });
 
-builder.Services.AddSingleton<PantryStore>();
+builder.Services.AddSingleton<PantryService>();
+builder.Services.AddSingleton<RecipeService>();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<SuggestionService>();
-builder.Services.AddSingleton<IIngredientTypeClassifier, IngredientTypeClassifierService>();
+builder.Services.AddSingleton<IngredientClassifierService>();
 
 builder.Build().Run();

@@ -903,7 +903,7 @@ async function wikiSearchThumb(query, lang) {
   try {
     const url = `https://${lang}.wikipedia.org/w/api.php?action=query&generator=search` +
       `&gsrsearch=${encodeURIComponent(query)}&gsrlimit=1&gsrnamespace=0` +
-      `&prop=pageimages&piprop=thumbnail&pithumbsize=400&format=json&origin=*`;
+      `&prop=pageimages&piprop=thumbnail&pithumbsize=800&format=json&origin=*`;
     const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json();

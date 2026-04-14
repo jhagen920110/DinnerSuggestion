@@ -45,6 +45,10 @@ public class Recipe
     [JsonPropertyName("recipeUrl")]
     public string RecipeUrl { get; set; } = string.Empty;
 
+    [JsonProperty("imageUrl")]
+    [JsonPropertyName("imageUrl")]
+    public string ImageUrl { get; set; } = string.Empty;
+
     [JsonProperty("lastMade")]
     [JsonPropertyName("lastMade")]
     public DateTime? LastMade { get; set; }

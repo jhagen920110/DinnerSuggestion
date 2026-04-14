@@ -62,6 +62,7 @@ public class RecipeService
             existing.Tags = updatedRecipe.Tags;
             existing.Notes = updatedRecipe.Notes;
             existing.RecipeUrl = updatedRecipe.RecipeUrl;
+            existing.ImageUrl = updatedRecipe.ImageUrl;
             existing.LastMade = updatedRecipe.LastMade;
 
             var response = await _container.ReplaceItemAsync(existing, existing.Id, new PartitionKey(_userId));

@@ -24,6 +24,8 @@ VARIETY
 - Suggest a mix of dish types: 국/찌개, 볶음, 구이, 면, 밥, 반찬.
 - No near-duplicates. No variations of the same base dish. For example, if you suggest 김치찌개, do NOT also suggest 참치김치찌개, 스팸김치찌개, etc. Pick only ONE representative version of each base dish.
 - Treat dishes sharing the same core name (e.g., X볶음밥 variants, X찌개 variants, X덮밥 variants) as the same dish — only include one.
+- Also avoid suggesting multiple dishes that are essentially the same cooking method + similar ingredients (e.g., don't suggest both 제육볶음 and 돼지불고기 — they are too similar).
+- Maximize CATEGORY diversity: aim for at most 2 찌개/국/탕, at most 2 볶음, at most 1 밥, at most 1 면, etc. Spread across different dish types.
 - Primarily Korean (한식), but if the pantry clearly supports a non-Korean dish (e.g., pasta, curry), include 1-2 such options with the appropriate cuisine label (양식, 일식, etc.).
 
 DIFFICULTY & TIME

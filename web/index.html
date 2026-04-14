@@ -31,14 +31,12 @@
 
           <div class="section-head-actions">
             <div id="pantryStatus" class="status-text" aria-live="polite"></div>
-            <button id="pantryToggleButton" type="button" class="filters-toggle">
-              Pantry <span id="pantryCaret">▾</span>
-            </button>
+            <button id="showIngredientFormBtn" type="button" class="primary-btn">+ 재료 추가</button>
           </div>
         </div>
 
         <div id="pantryContent">
-          <div class="ingredient-form">
+          <div id="ingredientFormWrap" class="ingredient-form" hidden>
             <div class="form-grid">
               <div class="field field-name">
                 <label for="ingredientName">재료명</label>
@@ -159,7 +157,14 @@
 
               <div class="field">
                 <label for="mealCookTime">조리 시간</label>
-                <input id="mealCookTime" type="text" placeholder="예: 30분" />
+                <select id="mealCookTime">
+                  <option value="">선택</option>
+                  <option value="15분">15분</option>
+                  <option value="30분">30분</option>
+                  <option value="45분">45분</option>
+                  <option value="60분">60분</option>
+                  <option value="60분+">60분+</option>
+                </select>
               </div>
 
               <div class="field field-wide">
@@ -168,8 +173,11 @@
               </div>
 
               <div class="field field-wide">
-                <label for="mealTags">태그 (쉼표로 구분)</label>
-                <input id="mealTags" type="text" placeholder="예: 국물, 겨울, 매운맛" />
+                <label>태그 (선택)</label>
+                <div id="mealTagsChips" class="tag-chips-wrap"></div>
+                <div class="tag-manage-row">
+                  <button id="manageTagsBtn" type="button" class="secondary-btn small">태그 관리</button>
+                </div>
               </div>
 
               <div class="field field-wide">
@@ -178,8 +186,11 @@
               </div>
 
               <div class="field field-wide">
-                <label for="mealNotes">메모 (선택)</label>
-                <textarea id="mealNotes" rows="2" placeholder="조리 팁이나 메모"></textarea>
+                <label for="mealImageUrl">이미지 URL (선택)</label>
+                <input id="mealImageUrl" type="url" placeholder="https://..." />
+                <div id="mealImagePreview" class="meal-image-preview" hidden>
+                  <img id="mealImagePreviewImg" alt="미리보기" />
+                </div>
               </div>
             </div>
 
@@ -195,6 +206,21 @@
         </div>
 
         <div id="mealsContainer"></div>
+
+        <!-- Tag Management Modal -->
+        <div id="tagModal" class="modal-overlay" hidden>
+          <div class="modal-content">
+            <h3>태그 관리</h3>
+            <div id="tagModalList" class="tag-modal-list"></div>
+            <div class="tag-add-row">
+              <input id="newTagInput" type="text" placeholder="새 태그 이름" />
+              <button id="addTagBtn" type="button" class="primary-btn small">추가</button>
+            </div>
+            <div class="form-actions">
+              <button id="closeTagModalBtn" type="button" class="secondary-btn">닫기</button>
+            </div>
+          </div>
+        </div>
       </section>
     </div>
 

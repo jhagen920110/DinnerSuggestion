@@ -134,7 +134,8 @@ public class SuggestionsFunction
                 RecipeSource = !string.IsNullOrWhiteSpace(recipe.RecipeUrl) ? "저장됨" : "만개의레시피",
                 Difficulty = recipe.Difficulty,
                 CookTime = recipe.CookTime,
-                Source = "saved"
+                Source = "saved",
+                ImageUrl = recipe.ImageUrl
             };
         }).Where(s => s.MissingIngredients.Count <= 1).ToList();
         if (mustInclude.Count > 0)

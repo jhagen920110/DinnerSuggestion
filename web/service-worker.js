@@ -27,31 +27,27 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Fetch: network-first for API calls, cache-first for static assets
+// Fetch: network-first — always try fresh, fall back to cache when offline
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
-  // Always go to network for API calls
+  // Skip API calls and cross-origin requests
   if (url.pathname.startsWith("/api") || url.hostname !== location.hostname) {
     return;
   }
 
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const networkFetch = fetch(event.request)
-        .then((response) => {
-          // Update cache with fresh version
-          if (response.ok) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, clone);
-            });
-          }
-          return response;
-        })
-        .catch(() => cached);
-
-      return cached || networkFetch;
-    })
+    fetch(event.request)
+      .then((response) => {
+        // Update cache with fresh version
+        if (response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, clone);
+          });
+        }
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });

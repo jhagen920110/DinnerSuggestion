@@ -54,10 +54,32 @@ select {
   font: inherit;
 }
 
+/* ─── Sticky Top Bar ─── */
+
+.top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 800;
+  background: rgba(244, 247, 251, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--card-border);
+  padding: 14px 20px calc(14px + env(safe-area-inset-top, 0px));
+}
+
+.top-bar-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #22304a;
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+
 .app-shell {
   width: min(920px, calc(100% - 24px));
   margin: 0 auto;
-  padding: 20px 0 80px;
+  padding: 12px 0 80px;
 }
 
 /* ─── Splash Screen ─── */

@@ -1254,6 +1254,12 @@ function attachTabEvents() {
   });
 }
 
+const PAGE_TITLES = {
+  suggestions: "저녁 메뉴 추천",
+  pantry: "Pantry",
+  meals: "저장된 레시피",
+};
+
 function switchPage(pageName) {
   document.querySelectorAll(".tab-btn").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.page === pageName);
@@ -1262,6 +1268,10 @@ function switchPage(pageName) {
   document.querySelectorAll(".page").forEach((page) => {
     page.classList.toggle("active", page.id === `page-${pageName}`);
   });
+
+  const titleEl = byId("topBarTitle");
+  if (titleEl && PAGE_TITLES[pageName]) titleEl.textContent = PAGE_TITLES[pageName];
+  window.scrollTo(0, 0);
 
   // Reset pantry page state
   if (pageName === "pantry") {

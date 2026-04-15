@@ -57,7 +57,7 @@ select {
 .app-shell {
   width: min(920px, calc(100% - 24px));
   margin: 0 auto;
-  padding: 20px 0 40px;
+  padding: 20px 0 80px;
 }
 
 .hero {
@@ -872,14 +872,16 @@ select {
   }
 
   .tab-bar {
-    flex-wrap: nowrap;
-    gap: 6px;
+    padding: 4px 0 calc(4px + env(safe-area-inset-bottom, 0px));
   }
 
   .tab-btn {
-    flex: 1;
-    padding: 12px 8px;
-    font-size: 0.92rem;
+    font-size: 0.6rem;
+  }
+
+  .tab-btn svg {
+    width: 20px;
+    height: 20px;
   }
 
   .meal-form-grid {
@@ -887,17 +889,20 @@ select {
   }
 }
 
-/* ─── Tab Navigation ─── */
+/* ─── Tab Navigation (Bottom App Bar) ─── */
 
 .tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
   display: flex;
-  gap: 8px;
-  margin-bottom: 18px;
-  padding: 4px;
+  justify-content: space-around;
   background: var(--card);
-  border: 1px solid var(--card-border);
-  border-radius: 16px;
-  box-shadow: var(--shadow);
+  border-top: 1px solid var(--card-border);
+  padding: 6px 0 calc(6px + env(safe-area-inset-bottom, 0px));
+  z-index: 900;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.06);
 }
 
 .tab-btn {
@@ -905,23 +910,34 @@ select {
   border: none;
   background: transparent;
   color: var(--muted);
-  font-weight: 800;
-  font-size: 1rem;
-  padding: 14px 16px;
-  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.65rem;
+  padding: 4px 0;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  transition: color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tab-btn svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 1.8;
 }
 
 .tab-btn:hover {
-  background: #f1f5f9;
   color: var(--text);
 }
 
 .tab-btn.active {
-  background: var(--primary);
-  color: white;
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+  color: var(--primary);
+}
+
+.tab-btn.active svg {
+  stroke: var(--primary);
 }
 
 /* ─── Page Visibility ─── */

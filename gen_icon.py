@@ -1,73 +1,63 @@
-"""Generate app icons: bowl + noodles + chopsticks, supersampled for clean edges."""
-from PIL import Image, ImageDraw
+"""Generate app icons from bowl-source.png on indigo circle."""
+from PIL import Image, ImageOps
 import os
 
-SCALE = 4  # supersample factor
 
+def make_icon(source_path, size):
+    # Create indigo circle background
+    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
 
-def draw_icon(size):
-    """Draw at SCALE * size then downscale for anti-aliasing."""
-    s = size * SCALE
-    img = Image.new("RGBA", (s, s), (0, 0, 0, 0))
+    # Draw circle
+    from PIL import ImageDraw
     d = ImageDraw.Draw(img)
-    cx, cy = s / 2, s / 2
-    r = s * 0.44
-
-    # Circle bg
+    r = size * 0.44
+    cx, cy = size / 2, size / 2
     d.ellipse([cx - r, cy - r, cx + r, cy + r], fill="#4f46e5")
 
-    w = (255, 255, 255, 255)
+    # Load source and convert black artwork to white
+    src = Image.open(source_path).convert("RGBA")
 
-    # --- Bowl ---
-    rim_y = cy + s * 0.05
-    rim_hw = s * 0.25  # half-width
-    sw = round(s * 0.038)  # stroke width
+    # Invert: make black parts white, keep transparency
+    r_ch, g_ch, b_ch, a_ch = src.split()
+    # The source is black-on-white. Make white areas transparent, black areas white.
+    # Convert to grayscale to detect content
+    gray = src.convert("L")
+    # Create mask: dark pixels = opaque
+    from PIL import ImageChops
+    # Threshold: pixels darker than 128 are content
+    mask = gray.point(lambda p: 255 if p < 128 else 0)
 
-    # Rim
-    d.line([(cx - rim_hw - s * 0.015, rim_y), (cx + rim_hw + s * 0.015, rim_y)],
-           fill=w, width=sw)
+    # Create white version with mask as alpha
+    white_layer = Image.new("RGBA", src.size, (255, 255, 255, 255))
+    white_layer.putalpha(mask)
 
-    # Bowl body (arc)
-    bw = s * 0.24
-    d.arc([cx - bw, rim_y, cx + bw, rim_y + s * 0.30],
-          0, 180, fill=w, width=sw)
+    # Crop to content bounding box
+    bbox = mask.getbbox()
+    if bbox:
+        white_layer = white_layer.crop(bbox)
 
-    # --- Noodles ---
-    nlw = round(s * 0.02)
-    nt = rim_y - s * 0.17  # noodle top
-    nb = rim_y + s * 0.005
-    for i in range(5):
-        nx = cx - s * 0.09 + i * (s * 0.045)
-        d.line([(nx, nt), (nx, nb)], fill=w, width=nlw)
+    # Scale to fit inside circle with padding
+    icon_area = int(r * 1.55)
+    ratio = min(icon_area / white_layer.width, icon_area / white_layer.height)
+    new_w = int(white_layer.width * ratio)
+    new_h = int(white_layer.height * ratio)
+    white_layer = white_layer.resize((new_w, new_h), Image.LANCZOS)
 
-    # --- Chopsticks ---
-    clw = round(s * 0.028)
-    # Left chopstick (top-left → right)
-    d.line([(cx - s * 0.24, cy - r * 0.60), (cx + s * 0.14, rim_y - s * 0.05)],
-           fill=w, width=clw)
-    # Right chopstick (top-right → center)
-    d.line([(cx + s * 0.27, cy - r * 0.52), (cx + s * 0.07, rim_y - s * 0.03)],
-           fill=w, width=clw)
+    # Center on circle
+    ox = int(cx - new_w / 2)
+    oy = int(cy - new_h / 2) + int(size * 0.02)  # slight downward nudge to visually center
+    img.paste(white_layer, (ox, oy), white_layer)
 
-    return img.resize((size, size), Image.LANCZOS)
+    return img
 
 
+src_path = os.path.join(os.path.dirname(__file__), "web", "images", "bowl-source.png")
 out = os.path.join(os.path.dirname(__file__), "web", "images")
+
 for sz, name in [(512, "icon-512.png"), (192, "icon-192.png"), (180, "apple-touch-icon.png")]:
-    draw_icon(sz).save(os.path.join(out, name))
+    make_icon(src_path, sz).save(os.path.join(out, name))
     print(f"Saved {name} ({sz}x{sz})")
 
-ico = draw_icon(64)
-ico.save(os.path.join(out, "favicon.ico"), format="ICO", sizes=[(64, 64)])
-print("Saved favicon.ico")
-
-out = os.path.join(os.path.dirname(__file__), "web", "images")
-for sz, name in [(512, "icon-512.png"), (192, "icon-192.png"), (180, "apple-touch-icon.png")]:
-    img = draw_icon(sz)
-    img.save(os.path.join(out, name))
-    print(f"Saved {name} ({sz}x{sz})")
-
-# favicon.ico from 64px
-ico = draw_icon(64)
+ico = make_icon(src_path, 64)
 ico.save(os.path.join(out, "favicon.ico"), format="ICO", sizes=[(64, 64)])
 print("Saved favicon.ico")

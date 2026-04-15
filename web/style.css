@@ -126,7 +126,7 @@ select {
 }
 
 .splash-row.offset {
-  margin-left: 22px;
+  margin-left: 0;
 }
 
 .splash-overlay {

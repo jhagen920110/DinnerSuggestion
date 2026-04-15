@@ -1338,8 +1338,8 @@ select {
 
 .calendar-header .secondary-btn {
   width: auto;
-  padding: 5px 12px;
-  font-size: 0.82rem;
+  padding: 6px 14px;
+  font-size: 0.85rem;
   flex-shrink: 0;
 }
 

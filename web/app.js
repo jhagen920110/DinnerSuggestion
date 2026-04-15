@@ -880,7 +880,7 @@ function appendSuggestionCards(suggestions, container) {
         <div class="suggestion-actions">
           ${
             recipeUrl
-              ? `<a class="recipe-link" href="${escapeHtml(recipeUrl)}" target="_blank" rel="noreferrer">레시피</a>`
+              ? `<a class="recipe-link" href="${escapeHtml(recipeUrl)}" target="_blank" rel="noreferrer">레시피보기</a>`
               : ""
           }
           <span class="suggestion-actions-spacer"></span>

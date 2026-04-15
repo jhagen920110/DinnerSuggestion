@@ -7,7 +7,6 @@ let inlineDraft = { name: "", type: "기타" };
 
 let pantryUiState = {
   search: "",
-  sortKorean: true,
   type: "all",
 };
 
@@ -30,6 +29,7 @@ let selectedIngredients = new Set();
 let currentMeals = [];
 let editingMealId = null;
 let mealSearchQuery = "";
+let mealCuisineFilter = "all";
 let availableTags = [];
 let selectedTags = new Set();
 let todayLoggedNames = new Set();
@@ -51,7 +51,6 @@ function getEls() {
     ingredientsSections: byId("ingredientsSections"),
     pantryContent: byId("pantryContent"),
     filterSearch: byId("filterSearch"),
-    filterSortKorean: byId("filterSortKorean"),
     filterTypeSelect: byId("filterTypeSelect"),
     clearFiltersButton: byId("clearFiltersButton"),
     toggleFiltersButton: byId("toggleFiltersButton"),
@@ -232,9 +231,7 @@ function applyIngredientFilters(items) {
     );
   }
 
-  if (pantryUiState.sortKorean) {
-    filtered.sort((a, b) => compareKo(ingredientNameOf(a), ingredientNameOf(b)));
-  }
+  filtered.sort((a, b) => compareKo(ingredientNameOf(a), ingredientNameOf(b)));
 
   return filtered;
 }
@@ -310,9 +307,6 @@ function renderIngredients() {
             </label>
             <div class="item-main">
               <div class="item-name">${escapeHtml(name)}</div>
-              <div class="item-meta">
-                <span class="type-badge">${escapeHtml(typeDisplay(type))}</span>
-              </div>
             </div>
 
             <div class="item-actions">
@@ -972,18 +966,16 @@ function attachTagEvents() {
 }
 
 function syncFilterStateFromUi() {
-  const { filterSearch, filterSortKorean, filterTypeSelect } = getEls();
+  const { filterSearch, filterTypeSelect } = getEls();
 
   pantryUiState.search = filterSearch ? filterSearch.value.trim() : "";
-  pantryUiState.sortKorean = filterSortKorean ? filterSortKorean.checked : true;
   pantryUiState.type = filterTypeSelect ? filterTypeSelect.value : "all";
 }
 
 function syncUiFromFilterState() {
-  const { filterSearch, filterSortKorean, filterTypeSelect } = getEls();
+  const { filterSearch, filterTypeSelect } = getEls();
 
   if (filterSearch) filterSearch.value = pantryUiState.search;
-  if (filterSortKorean) filterSortKorean.checked = pantryUiState.sortKorean;
   if (filterTypeSelect) filterTypeSelect.value = pantryUiState.type;
 }
 
@@ -1002,7 +994,6 @@ function renderFiltersCollapsedState() {
 function clearFilters() {
   pantryUiState = {
     search: "",
-    sortKorean: true,
     type: "all",
   };
 
@@ -1013,8 +1004,6 @@ function clearFilters() {
 function attachFilterEvents() {
   const {
     filterSearch,
-    filterLowOnly,
-    filterSortKorean,
     filterTypeSelect,
     clearFiltersButton,
     toggleFiltersButton,
@@ -1022,20 +1011,6 @@ function attachFilterEvents() {
 
   if (filterSearch) {
     filterSearch.addEventListener("input", () => {
-      syncFilterStateFromUi();
-      renderIngredients();
-    });
-  }
-
-  if (filterLowOnly) {
-    filterLowOnly.addEventListener("change", () => {
-      syncFilterStateFromUi();
-      renderIngredients();
-    });
-  }
-
-  if (filterSortKorean) {
-    filterSortKorean.addEventListener("change", () => {
       syncFilterStateFromUi();
       renderIngredients();
     });
@@ -1232,6 +1207,14 @@ function attachMealEvents() {
     });
   }
 
+  const cuisineFilter = byId("mealCuisineFilter");
+  if (cuisineFilter) {
+    cuisineFilter.addEventListener("change", () => {
+      mealCuisineFilter = cuisineFilter.value;
+      renderMeals();
+    });
+  }
+
   attachTagEvents();
 
   const imageUrlInput = byId("mealImageUrl");
@@ -1401,6 +1384,13 @@ function renderMeals() {
   if (!container) return;
 
   let filtered = [...currentMeals];
+
+  if (mealCuisineFilter !== "all") {
+    filtered = filtered.filter((meal) => {
+      const cuisine = (meal.cuisine ?? meal.Cuisine ?? "기타");
+      return cuisine === mealCuisineFilter;
+    });
+  }
 
   if (mealSearchQuery) {
     filtered = filtered.filter((meal) => {

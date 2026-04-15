@@ -1102,10 +1102,31 @@ select {
 
 .meal-search-wrap {
   margin-bottom: 16px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.meal-cuisine-filter {
+  border: 1px solid #d7deea;
+  background: #fff;
+  color: var(--text);
+  border-radius: 14px;
+  padding: 14px 12px;
+  font: inherit;
+  outline: none;
+  flex-shrink: 0;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.meal-cuisine-filter:focus {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.12);
 }
 
 .meal-search-input {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   border: 1px solid #d7deea;
   background: #fff;
   color: var(--text);

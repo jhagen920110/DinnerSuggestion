@@ -43,10 +43,16 @@ def make_icon(source_path, size):
     new_h = int(white_layer.height * ratio)
     white_layer = white_layer.resize((new_w, new_h), Image.LANCZOS)
 
-    # Center on circle
-    ox = int(cx - new_w / 2)
-    oy = int(cy - new_h / 2) + int(size * 0.02)  # slight downward nudge to visually center
+    # Center on circle, nudge right so the bowl body is visually centered
+    ox = int(cx - new_w / 2) + int(size * 0.03)
+    oy = int(cy - new_h / 2) + int(size * 0.02)
     img.paste(white_layer, (ox, oy), white_layer)
+
+    # Clip anything outside the circle to keep it clean
+    circle_mask = Image.new("L", (size, size), 0)
+    dm = ImageDraw.Draw(circle_mask)
+    dm.ellipse([cx - r, cy - r, cx + r, cy + r], fill=255)
+    img.putalpha(circle_mask)
 
     return img
 

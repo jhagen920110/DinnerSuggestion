@@ -1684,6 +1684,7 @@ function openCalendarOverlay() {
   const overlay = byId("calendarOverlay");
   if (!overlay) return;
   overlay.hidden = false;
+  document.body.style.overflow = "hidden";
   loadCalendarMonth().then(() => {
     renderCalendar();
     showDayDetail(calSelectedDate);
@@ -1693,6 +1694,7 @@ function openCalendarOverlay() {
 function closeCalendarOverlay() {
   const overlay = byId("calendarOverlay");
   if (overlay) overlay.hidden = true;
+  document.body.style.overflow = "";
 }
 
 function attachCalendarEvents() {

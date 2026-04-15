@@ -207,17 +207,36 @@
           </div>
         </div>
 
-        <div id="mealSearch" class="meal-search-wrap">
-          <input id="mealSearchInput" type="text" placeholder="레시피 검색..." class="meal-search-input" autocomplete="off" />
-          <select id="mealCuisineFilter" class="meal-cuisine-filter">
-            <option value="all">전체</option>
-            <option value="한식">한식</option>
-            <option value="양식">양식</option>
-            <option value="중식">중식</option>
-            <option value="일식">일식</option>
-            <option value="분식">분식</option>
-            <option value="기타">기타</option>
-          </select>
+        <div id="mealFiltersWrap" class="filters-wrap">
+          <button id="toggleMealFiltersBtn" type="button" class="filters-toggle">
+            Filters <span id="mealFiltersCaret">▸</span>
+          </button>
+
+          <div id="mealFiltersContent" class="filters-panel" hidden>
+            <div class="filter-grid simple-filter-grid">
+              <div class="field">
+                <label for="mealCuisineFilter">종류</label>
+                <select id="mealCuisineFilter">
+                  <option value="all">전체</option>
+                  <option value="한식">한식</option>
+                  <option value="양식">양식</option>
+                  <option value="중식">중식</option>
+                  <option value="일식">일식</option>
+                  <option value="분식">분식</option>
+                  <option value="기타">기타</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="mealSearchInput">검색</label>
+                <input id="mealSearchInput" type="text" placeholder="레시피 검색" autocomplete="off" />
+              </div>
+            </div>
+
+            <div class="filters-actions">
+              <button type="button" id="clearMealFiltersBtn" class="secondary-btn">초기화</button>
+            </div>
+          </div>
         </div>
 
         <div id="mealsContainer"></div>

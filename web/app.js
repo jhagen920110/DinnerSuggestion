@@ -33,6 +33,7 @@ let mealCuisineFilter = "all";
 let availableTags = [];
 let selectedTags = new Set();
 let todayLoggedNames = new Set();
+let mealFiltersCollapsed = true;
 let collapsedMealSections = {};
 
 function byId(id) {
@@ -897,7 +898,7 @@ function saveAiSuggestionToRecipe({ name, cuisine, difficulty, cookTime, uses, r
   byId("mealRecipeUrl").value = recipeUrl || "";
   byId("mealFormWrap").hidden = false;
   byId("showMealFormBtn").hidden = true;
-  byId("mealSearch").hidden = true;
+  byId("mealFiltersWrap").hidden = true;
   byId("mealsContainer").hidden = true;
   byId("mealName").focus();
 }
@@ -1203,7 +1204,7 @@ function switchPage(pageName) {
     resetMealForm();
     byId("mealFormWrap").hidden = true;
     byId("showMealFormBtn").hidden = false;
-    byId("mealSearch").hidden = false;
+    byId("mealFiltersWrap").hidden = false;
     byId("mealsContainer").hidden = false;
     if (currentMeals.length === 0) {
       loadMeals();
@@ -1231,7 +1232,7 @@ function attachMealEvents() {
       editingMealId = null;
       resetMealForm();
       byId("mealFormWrap").hidden = false;
-      byId("mealSearch").hidden = true;
+      byId("mealFiltersWrap").hidden = true;
       byId("mealsContainer").hidden = true;
       showBtn.hidden = true;
     });
@@ -1247,7 +1248,7 @@ function attachMealEvents() {
       resetMealForm();
       byId("mealFormWrap").hidden = true;
       byId("showMealFormBtn").hidden = false;
-      byId("mealSearch").hidden = false;
+      byId("mealFiltersWrap").hidden = false;
       byId("mealsContainer").hidden = false;
     });
   }
@@ -1263,6 +1264,26 @@ function attachMealEvents() {
   if (cuisineFilter) {
     cuisineFilter.addEventListener("change", () => {
       mealCuisineFilter = cuisineFilter.value;
+      renderMeals();
+    });
+  }
+
+  const toggleMealFilters = byId("toggleMealFiltersBtn");
+  if (toggleMealFilters) {
+    toggleMealFilters.addEventListener("click", () => {
+      mealFiltersCollapsed = !mealFiltersCollapsed;
+      byId("mealFiltersContent").hidden = mealFiltersCollapsed;
+      byId("mealFiltersCaret").textContent = mealFiltersCollapsed ? "▸" : "▾";
+    });
+  }
+
+  const clearMealFilters = byId("clearMealFiltersBtn");
+  if (clearMealFilters) {
+    clearMealFilters.addEventListener("click", () => {
+      mealSearchQuery = "";
+      mealCuisineFilter = "all";
+      if (searchInput) searchInput.value = "";
+      if (cuisineFilter) cuisineFilter.value = "all";
       renderMeals();
     });
   }
@@ -1388,7 +1409,7 @@ async function saveMeal() {
     resetMealForm();
     byId("mealFormWrap").hidden = true;
     byId("showMealFormBtn").hidden = false;
-    byId("mealSearch").hidden = false;
+    byId("mealFiltersWrap").hidden = false;
     byId("mealsContainer").hidden = false;
     await loadMeals();
     showMealStatus(isEditing ? "레시피를 수정했어요." : "레시피를 추가했어요.");
@@ -1573,7 +1594,7 @@ function renderMeals() {
           fillMealForm(meal);
           byId("mealFormWrap").hidden = false;
           byId("showMealFormBtn").hidden = true;
-          byId("mealSearch").hidden = true;
+          byId("mealFiltersWrap").hidden = true;
           byId("mealsContainer").hidden = true;
           byId("mealName").focus();
         });

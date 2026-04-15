@@ -1257,15 +1257,16 @@ select {
 /* Calendar header button */
 
 .calendar-header-btn {
-  background: none;
-  border: none;
-  font-size: 1.6rem;
+  background: var(--secondary);
+  border: 1.5px solid var(--card-border);
+  font-size: 1.4rem;
   cursor: pointer;
-  padding: 6px;
+  padding: 8px 12px;
   border-radius: var(--radius-md);
   transition: background 0.15s;
   -webkit-tap-highlight-color: transparent;
   flex-shrink: 0;
+  line-height: 1;
 }
 
 .calendar-header-btn:hover {

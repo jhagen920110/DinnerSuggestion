@@ -609,6 +609,10 @@ select {
   color: #4338ca;
 }
 
+.icon-button.delete {
+  color: #dc2626;
+}
+
 .icon-button.delete:hover {
   background: #ffe4e6;
   color: #be123c;
@@ -839,6 +843,7 @@ select {
   font-size: 0.92rem;
   color: white;
   background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  margin-top: 12px;
 }
 
 .recipe-link:hover {

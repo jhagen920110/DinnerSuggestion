@@ -72,7 +72,7 @@
             <div class="form-grid">
               <div class="field field-name">
                 <label for="ingredientName">재료명</label>
-                <input id="ingredientName" type="text" placeholder="예: 김치, 양파, 계란" />
+                <input id="ingredientName" type="text" placeholder="예: 김치, 양파, 계란" autocomplete="off" />
               </div>
             </div>
 
@@ -133,7 +133,7 @@
             <div class="meal-form-grid">
               <div class="field">
                 <label for="mealName">요리 이름</label>
-                <input id="mealName" type="text" placeholder="예: 김치찌개" />
+                <input id="mealName" type="text" placeholder="예: 김치찌개" autocomplete="off" />
               </div>
 
               <div class="field">
@@ -208,7 +208,7 @@
         </div>
 
         <div id="mealSearch" class="meal-search-wrap">
-          <input id="mealSearchInput" type="text" placeholder="레시피 검색..." class="meal-search-input" />
+          <input id="mealSearchInput" type="text" placeholder="레시피 검색..." class="meal-search-input" autocomplete="off" />
           <select id="mealCuisineFilter" class="meal-cuisine-filter">
             <option value="all">전체</option>
             <option value="한식">한식</option>
@@ -279,7 +279,7 @@
             <div id="calRecipeList" class="cal-recipe-list"></div>
             <button id="calManualToggle" type="button" class="cal-manual-divider">직접 입력 ▸</button>
             <div id="calManualFields" hidden>
-              <input id="calMealName" type="text" placeholder="요리 이름" />
+              <input id="calMealName" type="text" placeholder="요리 이름" autocomplete="off" />
               <input id="calMealImageUrl" type="url" placeholder="이미지 URL (선택)" />
               <div class="form-actions">
                 <button id="calSaveMealBtn" type="button" class="primary-btn small">저장</button>

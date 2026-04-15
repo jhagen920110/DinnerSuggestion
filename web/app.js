@@ -13,10 +13,14 @@ let pantryUiState = {
 };
 
 let collapsedSections = {
-  적음: false,
-  보통: false,
-  많음: false,
-  없음: false,
+  "야채": true,
+  "탄수화물": true,
+  "고기/단백질": true,
+  "유제품": true,
+  "과일": true,
+  "소스/조미료": true,
+  "냉동식품": true,
+  "기타": true,
 };
 
 let pantryCollapsed = false;
@@ -29,6 +33,8 @@ let editingMealId = null;
 let mealSearchQuery = "";
 let availableTags = [];
 let selectedTags = new Set();
+let todayLoggedNames = new Set();
+let collapsedMealSections = {};
 
 function byId(id) {
   return document.getElementById(id);
@@ -311,25 +317,24 @@ function renderIngredients() {
     return;
   }
 
-  const groups = {
-    적음: [],
-    보통: [],
-    많음: [],
-    없음: [],
-  };
+  const groups = {};
+  const typeOrder = ["야채", "탄수화물", "고기/단백질", "유제품", "과일", "소스/조미료", "냉동식품", "기타"];
+  for (const t of typeOrder) groups[t] = [];
 
   filtered.forEach((item) => {
-    groups[ingredientStockOf(item)].push(item);
+    const type = ingredientTypeOf(item);
+    if (!groups[type]) groups[type] = [];
+    groups[type].push(item);
   });
 
-  const order = ["적음", "보통", "많음", "없음"];
+  const order = typeOrder;
 
   for (const groupName of order) {
     const items = groups[groupName];
     if (!items.length) continue;
 
     const section = document.createElement("section");
-    section.className = groupClassName(groupName);
+    section.className = "pantry-group";
 
     const header = document.createElement("button");
     header.type = "button";
@@ -665,6 +670,18 @@ async function fetchSuggestions(exclude = []) {
 async function suggestDinner() {
   const { suggestButton, suggestionsDiv } = getEls();
 
+  // Don't suggest if pantry is empty
+  const available = currentIngredients.filter(i => {
+    const stock = (i.stockLevel ?? i.StockLevel ?? "").toLowerCase();
+    return stock !== "없음" && stock !== "out";
+  });
+  if (available.length === 0) {
+    suggestionsDiv.innerHTML = `
+      <div class="empty-state">Pantry에 재료를 먼저 추가해주세요! 🥕</div>
+    `;
+    return;
+  }
+
   try {
     setBusy(suggestButton, true, "추천 중...");
 
@@ -729,7 +746,19 @@ async function loadMoreSuggestions(btn) {
   }
 }
 
-function renderSuggestions(suggestions) {
+async function loadTodayLogs() {
+  const today = new Date().toLocaleDateString("sv-SE");
+  try {
+    const res = await fetch(`${apiBase}/meal-logs?startDate=${today}&endDate=${today}`);
+    if (!res.ok) return;
+    const logs = await res.json();
+    todayLoggedNames = new Set(logs.map(l => (l.name ?? l.Name ?? "").toLowerCase()));
+  } catch (e) {
+    console.error("loadTodayLogs failed:", e);
+  }
+}
+
+async function renderSuggestions(suggestions) {
   const { suggestionsDiv } = getEls();
   suggestionsDiv.innerHTML = "";
 
@@ -740,6 +769,7 @@ function renderSuggestions(suggestions) {
     return;
   }
 
+  await loadTodayLogs();
   appendSuggestionCards(suggestions, suggestionsDiv);
 
   // "More suggestions" button
@@ -857,6 +887,9 @@ function appendSuggestionCards(suggestions, container) {
         }
 
         ${source === "ai" ? `<button type="button" class="save-to-recipe-btn">📌 레시피에 저장</button>` : ""}
+        <button type="button" class="log-today-btn"${todayLoggedNames.has(name.toLowerCase()) ? ' disabled' : ""}>
+          ${todayLoggedNames.has(name.toLowerCase()) ? "✅ 기록됨" : "🍽️ 오늘의 식사"}
+        </button>
       </div>
     `;
 
@@ -865,6 +898,22 @@ function appendSuggestionCards(suggestions, container) {
         saveAiSuggestionToRecipe({ name, cuisine, difficulty, cookTime, uses, recipeUrl });
       });
     }
+
+    card.querySelector(".log-today-btn").addEventListener("click", async () => {
+      const today = new Date().toLocaleDateString("sv-SE"); // YYYY-MM-DD
+      try {
+        await fetch(`${apiBase}/meal-logs`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ date: today, name, imageUrl }),
+        });
+        todayLoggedNames.add(name.toLowerCase());
+        card.querySelector(".log-today-btn").textContent = "✅ 기록됨";
+        card.querySelector(".log-today-btn").disabled = true;
+      } catch (e) {
+        alert("식사 기록에 실패했어요.");
+      }
+    });
 
     container.appendChild(card);
   });
@@ -1171,6 +1220,9 @@ function init() {
   attachFormEvents();
   attachTabEvents();
   attachMealEvents();
+  initCalendar();
+  attachCalendarEvents();
+  attachCalendarOverlay();
   resetForm();
   loadTags();
   loadIngredients().then(() => {
@@ -1221,6 +1273,11 @@ function switchPage(pageName) {
     } else {
       renderMeals();
     }
+  }
+
+  // Load and render calendar
+  if (pageName === "calendar") {
+    openCalendarOverlay();
   }
 }
 
@@ -1285,6 +1342,8 @@ function resetMealForm() {
   byId("mealImageUrl").value = "";
   const preview = byId("mealImagePreview");
   if (preview) preview.hidden = true;
+  const logCheck = byId("mealLogToday");
+  if (logCheck) logCheck.checked = false;
   byId("saveMealBtn").textContent = "저장";
 }
 
@@ -1355,6 +1414,7 @@ async function saveMeal() {
     imageUrl: byId("mealImageUrl").value.trim(),
   };
 
+  const logToday = byId("mealLogToday")?.checked ?? false;
   const saveBtn = byId("saveMealBtn");
 
   try {
@@ -1387,6 +1447,20 @@ async function saveMeal() {
     byId("mealsContainer").hidden = false;
     await loadMeals();
     showMealStatus(isEditing ? "레시피를 수정했어요." : "레시피를 추가했어요.");
+
+    // Log as today's meal if checked
+    if (logToday) {
+      const today = new Date().toLocaleDateString("sv-SE");
+      try {
+        await fetch(`${apiBase}/meal-logs`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ date: today, name: payload.name, imageUrl: payload.imageUrl, source: "recipe" }),
+        });
+      } catch (e) {
+        console.error("Failed to log today's meal:", e);
+      }
+    }
   } catch (error) {
     console.error("saveMeal failed:", error);
     alert("레시피 저장에 실패했어요.");
@@ -1436,94 +1510,416 @@ function renderMeals() {
     return;
   }
 
-  const list = document.createElement("div");
-  list.className = "meals-list";
+  // Group by cuisine
+  const cuisineOrder = ["한식", "양식", "중식", "일식", "분식", "기타"];
+  const groups = {};
+  for (const c of cuisineOrder) groups[c] = [];
 
   for (const meal of filtered) {
-    const id = meal.id ?? meal.Id ?? "";
-    const name = meal.name ?? meal.Name ?? "";
-    const cuisine = meal.cuisine ?? meal.Cuisine ?? "";
-    const difficulty = meal.difficulty ?? meal.Difficulty ?? "";
-    const cookTime = meal.cookTime ?? meal.CookTime ?? "";
-    const ingredients = meal.ingredients ?? meal.Ingredients ?? [];
-    const tags = meal.tags ?? meal.Tags ?? [];
-    const recipeUrl = meal.recipeUrl ?? meal.RecipeUrl ?? "";
-    const imageUrl = meal.imageUrl ?? meal.ImageUrl ?? "";
-
-    const diffClass = difficulty === "쉬움" ? "easy" : difficulty === "어려움" ? "hard" : "medium";
-
-    const card = document.createElement("article");
-    card.className = "meal-card";
-
-    card.innerHTML = `
-      ${imageUrl ? `<div class="meal-card-image"><img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(name)}" onerror="this.parentElement.style.display='none'"></div>` : ""}
-      <div class="meal-card-top">
-        <div>
-          <h3>${escapeHtml(name)}</h3>
-          <div class="meal-card-meta">
-            <span class="suggestion-cuisine">${escapeHtml(cuisine)}</span>
-            ${difficulty ? `<span class="suggestion-pill difficulty-${diffClass}">${escapeHtml(difficulty)}</span>` : ""}
-            ${cookTime ? `<span class="suggestion-pill cook-time">⏱ ${escapeHtml(cookTime)}</span>` : ""}
-          </div>
-        </div>
-        <div class="meal-card-actions">
-          <button type="button" class="icon-button edit" aria-label="수정">${iconSvg("edit")}</button>
-          <button type="button" class="icon-button delete" aria-label="삭제">${iconSvg("delete")}</button>
-        </div>
-      </div>
-
-      ${ingredients.length ? `
-        <div class="meal-card-ingredients">
-          <div class="meal-card-ingredients-label">재료</div>
-          <div class="meal-card-chips">
-            ${ingredients.map((i) => {
-              const pantryNames = currentIngredients.map(p => (p.name ?? p.Name ?? "").trim().toLowerCase());
-              const isMissing = !pantryNames.includes(i.trim().toLowerCase());
-              return `<span class="meal-chip${isMissing ? ' missing' : ''}">${escapeHtml(i)}${isMissing ? ' ❌' : ''}</span>`;
-            }).join("")}
-          </div>
-        </div>
-      ` : ""}
-
-      ${tags.length ? `
-        <div class="meal-card-ingredients">
-          <div class="meal-card-ingredients-label">태그</div>
-          <div class="meal-card-chips">
-            ${tags.map((t) => `<span class="meal-chip tag">${escapeHtml(t)}</span>`).join("")}
-          </div>
-        </div>
-      ` : ""}
-
-
-
-      ${recipeUrl ? `
-        <a class="recipe-link" href="${escapeHtml(recipeUrl)}" target="_blank" rel="noreferrer">
-          레시피 보기
-        </a>
-      ` : ""}
-    `;
-
-    const editBtn = card.querySelector(".edit");
-    const deleteBtn = card.querySelector(".delete");
-
-    editBtn.addEventListener("click", () => {
-      editingMealId = id;
-      fillMealForm(meal);
-      byId("mealFormWrap").hidden = false;
-      byId("showMealFormBtn").hidden = true;
-      byId("mealSearch").hidden = true;
-      byId("mealsContainer").hidden = true;
-      byId("mealName").focus();
-    });
-
-    deleteBtn.addEventListener("click", () => {
-      deleteMeal(id, name);
-    });
-
-    list.appendChild(card);
+    const cuisine = meal.cuisine ?? meal.Cuisine ?? "기타";
+    if (!groups[cuisine]) groups[cuisine] = [];
+    groups[cuisine].push(meal);
   }
 
-  container.appendChild(list);
+  for (const cuisineName of cuisineOrder) {
+    const items = groups[cuisineName];
+    if (!items.length) continue;
+
+    // Default collapsed
+    if (collapsedMealSections[cuisineName] === undefined) {
+      collapsedMealSections[cuisineName] = true;
+    }
+
+    const section = document.createElement("section");
+    section.className = "pantry-group";
+
+    const header = document.createElement("button");
+    header.type = "button";
+    header.className = "group-header";
+    header.innerHTML = `
+      <span class="group-title">${collapsedMealSections[cuisineName] ? "▸" : "▾"} ${cuisineName}</span>
+      <span class="group-count">${items.length}</span>
+    `;
+
+    header.addEventListener("click", () => {
+      collapsedMealSections[cuisineName] = !collapsedMealSections[cuisineName];
+      renderMeals();
+    });
+
+    section.appendChild(header);
+
+    if (!collapsedMealSections[cuisineName]) {
+      const list = document.createElement("div");
+      list.className = "meals-list";
+
+      for (const meal of items) {
+        const id = meal.id ?? meal.Id ?? "";
+        const name = meal.name ?? meal.Name ?? "";
+        const cuisine = meal.cuisine ?? meal.Cuisine ?? "";
+        const difficulty = meal.difficulty ?? meal.Difficulty ?? "";
+        const cookTime = meal.cookTime ?? meal.CookTime ?? "";
+        const ingredients = meal.ingredients ?? meal.Ingredients ?? [];
+        const tags = meal.tags ?? meal.Tags ?? [];
+        const recipeUrl = meal.recipeUrl ?? meal.RecipeUrl ?? "";
+        const imageUrl = meal.imageUrl ?? meal.ImageUrl ?? "";
+
+        const diffClass = difficulty === "쉬움" ? "easy" : difficulty === "어려움" ? "hard" : "medium";
+
+        const card = document.createElement("article");
+        card.className = "meal-card";
+
+        card.innerHTML = `
+          ${imageUrl ? `<div class="meal-card-image"><img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(name)}" onerror="this.parentElement.style.display='none'"></div>` : ""}
+          <div class="meal-card-top">
+            <div>
+              <h3>${escapeHtml(name)}</h3>
+              <div class="meal-card-meta">
+                ${difficulty ? `<span class="suggestion-pill difficulty-${diffClass}">${escapeHtml(difficulty)}</span>` : ""}
+                ${cookTime ? `<span class="suggestion-pill cook-time">⏱ ${escapeHtml(cookTime)}</span>` : ""}
+              </div>
+            </div>
+            <div class="meal-card-actions">
+              <button type="button" class="icon-button edit" aria-label="수정">${iconSvg("edit")}</button>
+              <button type="button" class="icon-button delete" aria-label="삭제">${iconSvg("delete")}</button>
+            </div>
+          </div>
+
+          ${ingredients.length ? `
+            <div class="meal-card-ingredients">
+              <div class="meal-card-ingredients-label">재료</div>
+              <div class="meal-card-chips">
+                ${ingredients.map((i) => {
+                  const pantryNames = currentIngredients.map(p => (p.name ?? p.Name ?? "").trim().toLowerCase());
+                  const isMissing = !pantryNames.includes(i.trim().toLowerCase());
+                  return `<span class="meal-chip${isMissing ? ' missing' : ''}">${escapeHtml(i)}${isMissing ? ' ❌' : ''}</span>`;
+                }).join("")}
+              </div>
+            </div>
+          ` : ""}
+
+          ${tags.length ? `
+            <div class="meal-card-ingredients">
+              <div class="meal-card-ingredients-label">태그</div>
+              <div class="meal-card-chips">
+                ${tags.map((t) => `<span class="meal-chip tag">${escapeHtml(t)}</span>`).join("")}
+              </div>
+            </div>
+          ` : ""}
+
+          ${recipeUrl ? `
+            <a class="recipe-link" href="${escapeHtml(recipeUrl)}" target="_blank" rel="noreferrer">
+              레시피 보기
+            </a>
+          ` : ""}
+        `;
+
+        const editBtn = card.querySelector(".edit");
+        const deleteBtn = card.querySelector(".delete");
+
+        editBtn.addEventListener("click", () => {
+          editingMealId = id;
+          fillMealForm(meal);
+          byId("mealFormWrap").hidden = false;
+          byId("showMealFormBtn").hidden = true;
+          byId("mealSearch").hidden = true;
+          byId("mealsContainer").hidden = true;
+          byId("mealName").focus();
+        });
+
+        deleteBtn.addEventListener("click", () => {
+          deleteMeal(id, name);
+        });
+
+        list.appendChild(card);
+      }
+
+      section.appendChild(list);
+    }
+
+    container.appendChild(section);
+  }
+}
+
+// ─── Calendar Page ───
+
+let calYear, calMonth, calSelectedDate;
+let calMealLogs = {}; // { "YYYY-MM-DD": [...] }
+
+function initCalendar() {
+  const now = new Date();
+  calYear = now.getFullYear();
+  calMonth = now.getMonth();
+  calSelectedDate = now.toLocaleDateString("sv-SE");
+}
+
+function attachCalendarOverlay() {
+  byId("calendarFab")?.addEventListener("click", openCalendarOverlay);
+  byId("calCloseBtn")?.addEventListener("click", closeCalendarOverlay);
+  byId("calendarOverlay")?.addEventListener("click", (e) => {
+    if (e.target === byId("calendarOverlay")) closeCalendarOverlay();
+  });
+}
+
+function openCalendarOverlay() {
+  const overlay = byId("calendarOverlay");
+  if (!overlay) return;
+  overlay.hidden = false;
+  loadCalendarMonth().then(() => {
+    renderCalendar();
+    showDayDetail(calSelectedDate);
+  });
+}
+
+function closeCalendarOverlay() {
+  const overlay = byId("calendarOverlay");
+  if (overlay) overlay.hidden = true;
+}
+
+function attachCalendarEvents() {
+  byId("calPrevMonth")?.addEventListener("click", () => {
+    calMonth--;
+    if (calMonth < 0) { calMonth = 11; calYear--; }
+    renderCalendar();
+  });
+  byId("calNextMonth")?.addEventListener("click", () => {
+    calMonth++;
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    renderCalendar();
+  });
+  byId("calToday")?.addEventListener("click", () => {
+    const now = new Date();
+    calYear = now.getFullYear();
+    calMonth = now.getMonth();
+    calSelectedDate = now.toLocaleDateString("sv-SE");
+    renderCalendar();
+    showDayDetail(calSelectedDate);
+  });
+  byId("calAddMealBtn")?.addEventListener("click", async () => {
+    byId("calAddMealForm").hidden = false;
+    byId("calManualFields").hidden = true;
+    const toggle = byId("calManualToggle");
+    if (toggle) toggle.textContent = "직접 입력 ▸";
+    await renderCalRecipeList();
+  });
+  byId("calCancelMealBtn")?.addEventListener("click", () => {
+    byId("calAddMealForm").hidden = true;
+    byId("calManualFields").hidden = true;
+    byId("calMealName").value = "";
+    byId("calMealImageUrl").value = "";
+  });
+  byId("calManualToggle")?.addEventListener("click", () => {
+    const fields = byId("calManualFields");
+    const toggle = byId("calManualToggle");
+    if (fields.hidden) {
+      fields.hidden = false;
+      toggle.textContent = "직접 입력 ▾";
+      byId("calMealName").focus();
+    } else {
+      fields.hidden = true;
+      toggle.textContent = "직접 입력 ▸";
+    }
+  });
+  byId("calSaveMealBtn")?.addEventListener("click", async () => {
+    const name = byId("calMealName").value.trim();
+    if (!name) { alert("요리 이름을 입력해주세요."); return; }
+    try {
+      await fetch(`${apiBase}/meal-logs`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: calSelectedDate,
+          name,
+          imageUrl: byId("calMealImageUrl").value.trim(),
+          source: "manual",
+        }),
+      });
+      byId("calAddMealForm").hidden = true;
+      byId("calMealName").value = "";
+      byId("calMealImageUrl").value = "";
+      await loadCalendarMonth();
+      showDayDetail(calSelectedDate);
+    } catch (e) {
+      alert("식사 기록에 실패했어요.");
+    }
+  });
+}
+
+async function loadCalendarMonth() {
+  const startDate = `${calYear}-${String(calMonth + 1).padStart(2, "0")}-01`;
+  const lastDay = new Date(calYear, calMonth + 1, 0).getDate();
+  const endDate = `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+
+  try {
+    const res = await fetch(`${apiBase}/meal-logs?startDate=${startDate}&endDate=${endDate}`);
+    if (!res.ok) return;
+    const logs = await res.json();
+    calMealLogs = {};
+    for (const log of logs) {
+      const d = log.date ?? log.Date;
+      if (!calMealLogs[d]) calMealLogs[d] = [];
+      calMealLogs[d].push(log);
+    }
+  } catch (e) {
+    console.error("loadCalendarMonth failed:", e);
+  }
+}
+
+function renderCalendar() {
+  const grid = byId("calendarGrid");
+  if (!grid) return;
+
+  const title = byId("calTitle");
+  const monthNames = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
+  title.textContent = `${calYear}년 ${monthNames[calMonth]}`;
+
+  grid.innerHTML = "";
+
+  // Day headers
+  const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
+  for (const d of dayNames) {
+    const hdr = document.createElement("div");
+    hdr.className = "cal-day-header";
+    hdr.textContent = d;
+    grid.appendChild(hdr);
+  }
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const todayStr = new Date().toLocaleDateString("sv-SE");
+
+  // Blank cells before first day
+  for (let i = 0; i < firstDay; i++) {
+    const blank = document.createElement("div");
+    blank.className = "cal-day empty";
+    grid.appendChild(blank);
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    const cell = document.createElement("div");
+    cell.className = "cal-day";
+    if (dateStr === todayStr) cell.classList.add("today");
+    if (dateStr === calSelectedDate) cell.classList.add("selected");
+
+    const meals = calMealLogs[dateStr] || [];
+    cell.innerHTML = `
+      <span class="cal-day-num">${d}</span>
+      ${meals.length ? `<span class="cal-day-dot">${meals.length > 1 ? meals.length : "●"}</span>` : ""}
+    `;
+
+    cell.addEventListener("click", () => {
+      calSelectedDate = dateStr;
+      renderCalendar();
+      showDayDetail(dateStr);
+    });
+
+    grid.appendChild(cell);
+  }
+}
+
+async function renderCalRecipeList() {
+  const list = byId("calRecipeList");
+  if (!list) return;
+  list.innerHTML = `<div class="empty-message">불러오는 중...</div>`;
+
+  try {
+    const res = await fetch(`${apiBase}/meals`);
+    if (!res.ok) { list.innerHTML = ""; return; }
+    const meals = await res.json();
+    const sorted = meals.sort((a, b) => {
+      const na = (a.name ?? a.Name ?? "").toLowerCase();
+      const nb = (b.name ?? b.Name ?? "").toLowerCase();
+      return na.localeCompare(nb, "ko");
+    });
+
+    list.innerHTML = "";
+    if (!sorted.length) {
+      list.innerHTML = `<div class="empty-message">저장된 레시피가 없어요.</div>`;
+      return;
+    }
+
+    for (const meal of sorted) {
+      const name = meal.name ?? meal.Name ?? "";
+      const imageUrl = meal.imageUrl ?? meal.ImageUrl ?? "";
+
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "cal-recipe-item";
+      item.innerHTML = `
+        ${imageUrl ? `<img class="cal-recipe-item-img" src="${escapeHtml(imageUrl)}" alt="" onerror="this.style.display='none'" />` : `<span class="cal-recipe-item-icon">🍽️</span>`}
+        <span>${escapeHtml(name)}</span>
+      `;
+      item.addEventListener("click", async () => {
+        try {
+          await fetch(`${apiBase}/meal-logs`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ date: calSelectedDate, name, imageUrl }),
+          });
+          byId("calAddMealForm").hidden = true;
+          await loadCalendarMonth();
+          showDayDetail(calSelectedDate);
+          renderCalendar();
+        } catch (e) {
+          alert("식사 기록에 실패했어요.");
+        }
+      });
+
+      list.appendChild(item);
+    }
+  } catch (e) {
+    console.error("renderCalRecipeList failed:", e);
+    list.innerHTML = "";
+  }
+}
+
+function showDayDetail(dateStr) {
+  const detail = byId("calDayDetail");
+  if (!detail) return;
+  detail.hidden = false;
+
+  const [y, m, d] = dateStr.split("-");
+  byId("calDayTitle").textContent = `${parseInt(m)}월 ${parseInt(d)}일`;
+  byId("calAddMealForm").hidden = true;
+
+  const container = byId("calDayMeals");
+  container.innerHTML = "";
+
+  const meals = calMealLogs[dateStr] || [];
+  if (!meals.length) {
+    container.innerHTML = `<p class="empty-message">기록된 식사가 없어요.</p>`;
+    return;
+  }
+
+  for (const meal of meals) {
+    const name = meal.name ?? meal.Name ?? "";
+    const imageUrl = meal.imageUrl ?? meal.ImageUrl ?? "";
+    const id = meal.id ?? meal.Id ?? "";
+
+    const row = document.createElement("div");
+    row.className = "cal-meal-row";
+    row.innerHTML = `
+      ${imageUrl ? `<img class="cal-meal-img" src="${escapeHtml(imageUrl)}" alt="" onerror="this.style.display='none'" />` : ""}
+      <div class="cal-meal-info">
+        <span class="cal-meal-name">${escapeHtml(name)}</span>
+      </div>
+      <button type="button" class="icon-button delete" aria-label="삭제">${iconSvg("delete")}</button>
+    `;
+
+    row.querySelector(".delete").addEventListener("click", async () => {
+      if (!confirm(`'${name}' 기록을 삭제할까요?`)) return;
+      try {
+        await fetch(`${apiBase}/meal-logs/${id}`, { method: "DELETE" });
+        await loadCalendarMonth();
+        showDayDetail(dateStr);
+        renderCalendar();
+      } catch (e) {
+        alert("삭제에 실패했어요.");
+      }
+    });
+
+    container.appendChild(row);
+  }
 }
 
 document.addEventListener("DOMContentLoaded", init);

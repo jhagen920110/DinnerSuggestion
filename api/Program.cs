@@ -32,6 +32,7 @@ builder.Services.AddSingleton(sp =>
 builder.Services.AddSingleton<PantryService>();
 builder.Services.AddSingleton<RecipeService>();
 builder.Services.AddSingleton<TagService>();
+builder.Services.AddSingleton<MealLogService>();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<SuggestionService>();
 builder.Services.AddSingleton<IngredientClassifierService>();

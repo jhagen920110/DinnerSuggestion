@@ -13,6 +13,7 @@
       <div class="hero-copy">
         <h1 class="app-title">🍲 오늘 뭐 먹지?</h1>
       </div>
+      <button id="calendarFab" type="button" class="calendar-header-btn" aria-label="캘린더 열기">📅</button>
     </header>
 
     <nav class="tab-bar">
@@ -195,6 +196,10 @@
             </div>
 
             <div class="form-actions">
+              <label class="today-meal-check">
+                <input id="mealLogToday" type="checkbox" />
+                오늘의 식사로 기록
+              </label>
               <button id="saveMealBtn" type="button" class="primary-btn">저장</button>
               <button id="cancelMealBtn" type="button" class="secondary-btn">취소</button>
             </div>
@@ -238,6 +243,47 @@
       </section>
     </div>
   </main>
+
+  <!-- Calendar Overlay -->
+  <div id="calendarOverlay" class="calendar-overlay" hidden>
+    <div class="calendar-overlay-content">
+      <div class="calendar-overlay-header">
+        <h2>📅 식사 캘린더</h2>
+        <button id="calCloseBtn" type="button" class="icon-button" aria-label="닫기">✕</button>
+      </div>
+      <section class="cal-section">
+        <div class="calendar-header">
+          <button id="calPrevMonth" type="button" class="icon-button" aria-label="이전 달">◀</button>
+          <h3 id="calTitle"></h3>
+          <button id="calNextMonth" type="button" class="icon-button" aria-label="다음 달">▶</button>
+          <button id="calToday" type="button" class="secondary-btn small">오늘</button>
+        </div>
+        <div id="calendarGrid" class="calendar-grid"></div>
+      </section>
+
+      <section id="calDayDetail" class="cal-section" hidden>
+        <div class="section-head">
+          <h3 id="calDayTitle"></h3>
+          <button id="calAddMealBtn" type="button" class="primary-btn small">+ 식사 추가</button>
+        </div>
+        <div id="calAddMealForm" hidden>
+          <div class="cal-add-form">
+            <div id="calRecipeList" class="cal-recipe-list"></div>
+            <button id="calManualToggle" type="button" class="cal-manual-divider">직접 입력 ▸</button>
+            <div id="calManualFields" hidden>
+              <input id="calMealName" type="text" placeholder="요리 이름" />
+              <input id="calMealImageUrl" type="url" placeholder="이미지 URL (선택)" />
+              <div class="form-actions">
+                <button id="calSaveMealBtn" type="button" class="primary-btn small">저장</button>
+                <button id="calCancelMealBtn" type="button" class="secondary-btn small">취소</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="calDayMeals"></div>
+      </section>
+    </div>
+  </div>
 
   <script src="config.js"></script>
   <script src="app.js"></script>

@@ -6,3 +6,7 @@ bin/
 obj/
 .vs/
 .vscode/
+cleanup.py
+clear_dev.py
+copy_data.py
+verify_data.py

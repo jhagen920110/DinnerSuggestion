@@ -62,6 +62,9 @@ select {
 
 .hero {
   padding: 8px 4px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .app-title {
@@ -1247,4 +1250,330 @@ select {
 
 .modal-close-btn:hover {
   background: var(--bg-2);
+}
+
+/* ─── Calendar ─── */
+
+/* Calendar header button */
+
+.calendar-header-btn {
+  background: none;
+  border: none;
+  font-size: 1.6rem;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: var(--radius-md);
+  transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+}
+
+.calendar-header-btn:hover {
+  background: var(--bg-2);
+}
+
+/* Overlay */
+
+.calendar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.calendar-overlay[hidden] {
+  display: none;
+}
+
+.calendar-overlay-content {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  width: 420px;
+  max-width: 94vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow);
+}
+
+.calendar-overlay-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.calendar-overlay-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.cal-section {
+  margin-bottom: 16px;
+}
+
+.cal-section:last-child {
+  margin-bottom: 0;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.calendar-header h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  min-width: 120px;
+  text-align: center;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.cal-day-header {
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 8px 0;
+}
+
+.cal-day {
+  position: relative;
+  min-height: 48px;
+  padding: 6px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  transition: background 0.15s;
+}
+
+.cal-day:hover {
+  background: var(--bg-2);
+}
+
+.cal-day.empty {
+  cursor: default;
+}
+
+.cal-day.empty:hover {
+  background: transparent;
+}
+
+.cal-day.today {
+  background: var(--secondary);
+  font-weight: 700;
+}
+
+.cal-day.selected {
+  background: var(--primary);
+  color: #fff;
+}
+
+.cal-day.selected .cal-day-dot {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.cal-day-num {
+  font-size: 0.9rem;
+}
+
+.cal-day-dot {
+  font-size: 0.65rem;
+  color: var(--primary);
+  line-height: 1;
+}
+
+/* Calendar day detail */
+
+.cal-meal-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--secondary);
+  border-radius: var(--radius-md);
+  margin-bottom: 8px;
+}
+
+.cal-meal-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.cal-meal-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cal-meal-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.cal-meal-source {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.cal-add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--bg-2);
+  border-radius: var(--radius-md);
+}
+
+.cal-add-form input {
+  padding: 8px 12px;
+  border: 1.5px solid var(--card-border);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+}
+
+.empty-message {
+  color: var(--muted);
+  text-align: center;
+  padding: 20px;
+  font-size: 0.9rem;
+}
+
+/* Today's meal checkbox */
+
+.today-meal-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--secondary-text);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.today-meal-check input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+}
+
+/* Calendar recipe picker */
+
+.cal-recipe-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.cal-recipe-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 1.5px solid var(--card-border);
+  border-radius: var(--radius-md);
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-align: left;
+  transition: all 0.15s;
+}
+
+.cal-recipe-item:hover {
+  border-color: var(--primary);
+  background: var(--secondary);
+}
+
+.cal-recipe-item-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.cal-recipe-item-icon {
+  font-size: 1.2rem;
+  width: 32px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.cal-manual-divider {
+  display: block;
+  width: 100%;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 12px 0 4px;
+  padding: 6px 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+}
+
+.cal-manual-divider:hover {
+  color: var(--primary);
+}
+
+.cal-manual-divider::before,
+.cal-manual-divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 30%;
+  height: 1px;
+  background: var(--card-border);
+}
+
+.cal-manual-divider::before {
+  left: 0;
+}
+
+.cal-manual-divider::after {
+  right: 0;
+}
+
+/* Log today button on suggestion cards */
+
+.log-today-btn {
+  padding: 6px 14px;
+  border: 1.5px solid var(--card-border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--secondary-text);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.log-today-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.log-today-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
 }

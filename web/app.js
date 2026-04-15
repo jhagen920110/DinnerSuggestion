@@ -1255,9 +1255,9 @@ function attachTabEvents() {
 }
 
 const PAGE_TITLES = {
-  suggestions: "저녁 메뉴 추천",
-  pantry: "Pantry",
-  meals: "저장된 레시피",
+  suggestions: "🍽️ 저녁 메뉴 추천",
+  pantry: "🥕 Pantry",
+  meals: "🍳 저장된 레시피",
 };
 
 function switchPage(pageName) {

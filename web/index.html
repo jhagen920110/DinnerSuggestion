@@ -62,15 +62,9 @@
     <!-- PAGE: Pantry -->
     <div id="page-pantry" class="page">
       <section class="card pantry-card">
-        <div class="section-head">
-          <div>
-            <h2>🥕 Pantry</h2>
-          </div>
-
-          <div class="section-head-actions">
-            <div id="pantryStatus" class="status-text" aria-live="polite"></div>
-            <button id="showIngredientFormBtn" type="button" class="primary-btn">+ 재료 추가</button>
-          </div>
+        <div class="section-head-actions page-actions">
+          <div id="pantryStatus" class="status-text" aria-live="polite"></div>
+          <button id="showIngredientFormBtn" type="button" class="primary-btn">+ 재료 추가</button>
         </div>
 
         <div id="pantryContent">
@@ -154,14 +148,9 @@
     <!-- PAGE: Meals -->
     <div id="page-meals" class="page">
       <section class="card">
-        <div class="section-head">
-          <div>
-            <h2>🍳 저장된 레시피</h2>
-          </div>
-          <div class="section-head-actions">
-            <div id="mealStatus" class="status-text" aria-live="polite"></div>
-            <button id="showMealFormBtn" type="button" class="primary-btn">+ 레시피 추가</button>
-          </div>
+        <div class="section-head-actions page-actions">
+          <div id="mealStatus" class="status-text" aria-live="polite"></div>
+          <button id="showMealFormBtn" type="button" class="primary-btn">+ 레시피 추가</button>
         </div>
 
         <div id="mealFormWrap" class="meal-form-wrap" hidden>
@@ -269,10 +258,7 @@
     <!-- PAGE: Suggestions -->
     <div id="page-suggestions" class="page active">
       <section class="card suggestion-card">
-        <div class="section-head">
-          <div>
-            <h2>🍽️ 저녁 메뉴 추천</h2>
-          </div>
+        <div class="page-actions">
           <button id="suggestButton" type="button" class="primary-btn">오늘 뭐 먹지?</button>
         </div>
 

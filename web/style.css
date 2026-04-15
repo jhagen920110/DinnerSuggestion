@@ -1069,6 +1069,7 @@ select {
 
 .page.active {
   display: block;
+  padding-bottom: 80px;
 }
 
 /* ─── Meals Page ─── */

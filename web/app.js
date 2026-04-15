@@ -563,16 +563,21 @@ async function fetchSuggestions(exclude = []) {
   const suggestions = await response.json();
   const safeSuggestions = Array.isArray(suggestions) ? suggestions : [];
 
-  // Keep saved (DB) suggestions on top in order, shuffle AI suggestions
+  // Sort: saved first, then by fewest missing ingredients
   const saved = safeSuggestions.filter(s => (s.source ?? s.Source) === "saved");
   const ai = safeSuggestions.filter(s => (s.source ?? s.Source) !== "saved");
-  for (let i = ai.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [ai[i], ai[j]] = [ai[j], ai[i]];
-  }
+  ai.sort((a, b) => {
+    const aMissing = (a.missingIngredients ?? a.MissingIngredients ?? []).length;
+    const bMissing = (b.missingIngredients ?? b.MissingIngredients ?? []).length;
+    return aMissing - bMissing;
+  });
 
   return [...saved, ...ai];
 }
+
+let allSuggestions = [];
+let shownSuggestionCount = 0;
+const SUGGESTIONS_PER_PAGE = 3;
 
 async function suggestDinner() {
   const { suggestButton, suggestionsDiv } = getEls();
@@ -593,8 +598,9 @@ async function suggestDinner() {
       <div class="empty-state">추천 메뉴를 불러오는 중...</div>
     `;
 
-    const results = await fetchSuggestions();
-    renderSuggestions(results);
+    allSuggestions = await fetchSuggestions();
+    shownSuggestionCount = 0;
+    await renderSuggestions(allSuggestions);
   } catch (error) {
     console.error("suggestDinner failed:", error);
 
@@ -609,24 +615,40 @@ async function suggestDinner() {
 async function loadMoreSuggestions(btn) {
   const { suggestionsDiv } = getEls();
 
+  // If we still have buffered suggestions to show
+  if (shownSuggestionCount < allSuggestions.length) {
+    const next = allSuggestions.slice(shownSuggestionCount, shownSuggestionCount + SUGGESTIONS_PER_PAGE);
+    shownSuggestionCount += next.length;
+
+    // Remove the more button before appending
+    const existingBtn = suggestionsDiv.querySelector(".more-suggestions-btn");
+    if (existingBtn) existingBtn.remove();
+
+    appendSuggestionCards(next, suggestionsDiv);
+    addMoreButton(suggestionsDiv);
+    return;
+  }
+
+  // Otherwise fetch new batch from API
   try {
     btn.textContent = "추천 불러오는 중...";
     btn.disabled = true;
 
-    // Collect already-shown dish names to exclude
     const existingNames = [...suggestionsDiv.querySelectorAll("h3")].map(h => h.textContent.trim());
     const results = await fetchSuggestions(existingNames);
 
-    // Remove the "more" button before appending
     const existingBtn = suggestionsDiv.querySelector(".more-suggestions-btn");
     if (existingBtn) existingBtn.remove();
 
-    // Client-side dedup as safety net
     const existingNamesLower = new Set(existingNames.map(n => n.toLowerCase()));
     const newResults = results.filter(s => {
       const name = (s.name ?? s.Name ?? "").trim().toLowerCase();
       return !existingNamesLower.has(name);
     });
+
+    // Buffer new results
+    allSuggestions = newResults;
+    shownSuggestionCount = 0;
 
     if (newResults.length === 0) {
       const notice = document.createElement("div");
@@ -634,15 +656,12 @@ async function loadMoreSuggestions(btn) {
       notice.textContent = "새로운 추천이 없어요. 다시 시도해보세요!";
       suggestionsDiv.appendChild(notice);
     } else {
-      appendSuggestionCards(newResults, suggestionsDiv);
+      const next = allSuggestions.slice(0, SUGGESTIONS_PER_PAGE);
+      shownSuggestionCount = next.length;
+      appendSuggestionCards(next, suggestionsDiv);
     }
 
-    // Re-add the "more" button
-    const moreBtn = document.createElement("button");
-    moreBtn.className = "more-suggestions-btn";
-    moreBtn.textContent = "🔄 더 보기";
-    moreBtn.addEventListener("click", () => loadMoreSuggestions(moreBtn));
-    suggestionsDiv.appendChild(moreBtn);
+    addMoreButton(suggestionsDiv);
   } catch (error) {
     console.error("loadMoreSuggestions failed:", error);
     btn.textContent = "🔄 더 보기";
@@ -674,14 +693,20 @@ async function renderSuggestions(suggestions) {
   }
 
   await loadTodayLogs();
-  appendSuggestionCards(suggestions, suggestionsDiv);
 
-  // "More suggestions" button
+  const first = suggestions.slice(0, SUGGESTIONS_PER_PAGE);
+  shownSuggestionCount = first.length;
+  appendSuggestionCards(first, suggestionsDiv);
+
+  addMoreButton(suggestionsDiv);
+}
+
+function addMoreButton(container) {
   const moreBtn = document.createElement("button");
   moreBtn.className = "more-suggestions-btn";
   moreBtn.textContent = "🔄 더 보기";
   moreBtn.addEventListener("click", () => loadMoreSuggestions(moreBtn));
-  suggestionsDiv.appendChild(moreBtn);
+  container.appendChild(moreBtn);
 }
 
 function appendSuggestionCards(suggestions, container) {

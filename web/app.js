@@ -1923,3 +1923,8 @@ function showDayDetail(dateStr) {
 }
 
 document.addEventListener("DOMContentLoaded", init);
+
+// Register service worker for PWA
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/service-worker.js").catch(() => {});
+}

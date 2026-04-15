@@ -45,7 +45,6 @@ public class IngredientsFunction
             return bad;
         }
 
-        ingredient.StockLevel = NormalizeStockLevel(ingredient.StockLevel);
         ingredient.Name = ingredient.Name.Trim();
         ingredient.Type = await ResolveIngredientTypeForSaveAsync(ingredient.Name, ingredient.Type);
 
@@ -81,7 +80,6 @@ public class IngredientsFunction
             return bad;
         }
 
-        ingredient.StockLevel = NormalizeStockLevel(ingredient.StockLevel);
         ingredient.Name = ingredient.Name.Trim();
         ingredient.Type = await ResolveIngredientTypeForSaveAsync(ingredient.Name, ingredient.Type);
 
@@ -165,20 +163,6 @@ public class IngredientsFunction
             "냉동식품" => "냉동식품",
             "기타" => "기타",
             _ => "기타"
-        };
-    }
-
-    private static string NormalizeStockLevel(string? value)
-    {
-        var raw = (value ?? string.Empty).Trim().ToLowerInvariant();
-
-        return raw switch
-        {
-            "plenty" or "많음" => "Plenty",
-            "some" or "보통" => "Some",
-            "low" or "적음" => "Low",
-            "out" or "없음" => "Out",
-            _ => "Some"
         };
     }
 

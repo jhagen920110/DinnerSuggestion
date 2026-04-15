@@ -3,11 +3,10 @@ const apiBase = window.APP_CONFIG.apiBase;
 let currentIngredients = [];
 let classifyTimer = null;
 let editingRowId = null;
-let inlineDraft = { name: "", stockLevel: "보통", type: "기타" };
+let inlineDraft = { name: "", type: "기타" };
 
 let pantryUiState = {
   search: "",
-  lowOnly: false,
   sortKorean: true,
   type: "all",
 };
@@ -43,7 +42,6 @@ function byId(id) {
 function getEls() {
   return {
     ingredientNameInput: byId("ingredientName"),
-    ingredientStockLevelInput: byId("ingredientStockLevel"),
     typePreview: byId("typePreview"),
     typePreviewValue: byId("typePreviewValue"),
     saveButton: byId("saveButton"),
@@ -51,10 +49,8 @@ function getEls() {
     suggestionsDiv: byId("suggestions"),
     pantryStatus: byId("pantryStatus"),
     ingredientsSections: byId("ingredientsSections"),
-    pantrySummary: byId("pantrySummary"),
     pantryContent: byId("pantryContent"),
     filterSearch: byId("filterSearch"),
-    filterLowOnly: byId("filterLowOnly"),
     filterSortKorean: byId("filterSortKorean"),
     filterTypeSelect: byId("filterTypeSelect"),
     clearFiltersButton: byId("clearFiltersButton"),
@@ -111,21 +107,6 @@ function ingredientIdOf(item) {
   return item.id ?? item.Id ?? "";
 }
 
-function normalizeStockLevel(value) {
-  const raw = String(value || "").trim();
-
-  if (raw === "많음" || raw.toLowerCase() === "plenty") return "많음";
-  if (raw === "적음" || raw.toLowerCase() === "low") return "적음";
-  if (raw === "없음" || raw.toLowerCase() === "out") return "없음";
-  if (raw === "보통" || raw.toLowerCase() === "some") return "보통";
-
-  return "보통";
-}
-
-function ingredientStockOf(item) {
-  return normalizeStockLevel(item.stockLevel ?? item.StockLevel ?? "보통");
-}
-
 function normalizeType(value) {
   const raw = String(value || "").trim();
   const allowed = [
@@ -151,22 +132,6 @@ function typeDisplay(type) {
 
 function compareKo(a, b) {
   return String(a).localeCompare(String(b), "ko");
-}
-
-function stockBadgeClass(stockLevel) {
-  const value = normalizeStockLevel(stockLevel);
-
-  if (value === "적음") return "badge low";
-  if (value === "보통") return "badge some";
-  if (value === "많음") return "badge plenty";
-  return "badge out";
-}
-
-function groupClassName(stockLevel) {
-  if (stockLevel === "적음") return "pantry-group low-group";
-  if (stockLevel === "보통") return "pantry-group some-group";
-  if (stockLevel === "많음") return "pantry-group plenty-group";
-  return "pantry-group out-group";
 }
 
 function iconSvg(kind) {
@@ -261,12 +226,6 @@ function applyIngredientFilters(items) {
     );
   }
 
-  if (pantryUiState.lowOnly) {
-    filtered = filtered.filter(
-      (item) => ingredientStockOf(item) === "적음"
-    );
-  }
-
   if (pantryUiState.type !== "all") {
     filtered = filtered.filter(
       (item) => ingredientTypeOf(item) === pantryUiState.type
@@ -280,33 +239,11 @@ function applyIngredientFilters(items) {
   return filtered;
 }
 
-function buildPantrySummary(items) {
-  const { pantrySummary } = getEls();
-  if (!pantrySummary) return;
-
-  const counts = {
-    total: items.length,
-    low: items.filter((x) => ingredientStockOf(x) === "적음").length,
-    some: items.filter((x) => ingredientStockOf(x) === "보통").length,
-    plenty: items.filter((x) => ingredientStockOf(x) === "많음").length,
-    out: items.filter((x) => ingredientStockOf(x) === "없음").length,
-  };
-
-  pantrySummary.innerHTML = `
-    <span class="summary-chip total">Total ${counts.total}</span>
-    <span class="summary-chip low">적음 ${counts.low}</span>
-    <span class="summary-chip some">보통 ${counts.some}</span>
-    <span class="summary-chip plenty">많음 ${counts.plenty}</span>
-    <span class="summary-chip out">없음 ${counts.out}</span>
-  `;
-}
-
 function renderIngredients() {
   const { ingredientsSections } = getEls();
   if (!ingredientsSections) return;
 
   const filtered = applyIngredientFilters(currentIngredients);
-  buildPantrySummary(filtered);
 
   ingredientsSections.innerHTML = "";
 
@@ -361,7 +298,6 @@ function renderIngredients() {
 
         const id = ingredientIdOf(item);
         const name = ingredientNameOf(item);
-        const stock = ingredientStockOf(item);
         const type = ingredientTypeOf(item);
         const isEditing = editingRowId === id;
 
@@ -375,7 +311,6 @@ function renderIngredients() {
             <div class="item-main">
               <div class="item-name">${escapeHtml(name)}</div>
               <div class="item-meta">
-                <span class="${stockBadgeClass(stock)}">${escapeHtml(stock)}</span>
                 <span class="type-badge">${escapeHtml(typeDisplay(type))}</span>
               </div>
             </div>
@@ -392,16 +327,6 @@ function renderIngredients() {
 
           ${isEditing ? `
             <div class="inline-edit-panel compact">
-              <div class="inline-edit-field">
-                <label class="inline-edit-label" for="inline-stock-${id}">수량</label>
-                <select class="inline-edit-select" id="inline-stock-${id}">
-                  <option value="적음" ${inlineDraft.stockLevel === "적음" ? "selected" : ""}>적음</option>
-                  <option value="보통" ${inlineDraft.stockLevel === "보통" ? "selected" : ""}>보통</option>
-                  <option value="많음" ${inlineDraft.stockLevel === "많음" ? "selected" : ""}>많음</option>
-                  <option value="없음" ${inlineDraft.stockLevel === "없음" ? "selected" : ""}>없음</option>
-                </select>
-              </div>
-
               <div class="inline-edit-field">
                 <label class="inline-edit-label" for="inline-type-${id}">종류</label>
                 <select class="inline-edit-select" id="inline-type-${id}">
@@ -450,16 +375,9 @@ function renderIngredients() {
         }
 
         if (isEditing) {
-          const stockSelect = row.querySelector(`#inline-stock-${id}`);
           const typeSelect = row.querySelector(`#inline-type-${id}`);
           const saveBtn = row.querySelector(".inline-save-btn");
           const cancelBtn = row.querySelector(".inline-cancel-btn");
-
-          if (stockSelect) {
-            stockSelect.addEventListener("change", (e) => {
-              inlineDraft.stockLevel = e.target.value;
-            });
-          }
 
           if (typeSelect) {
             typeSelect.addEventListener("change", (e) => {
@@ -494,7 +412,6 @@ function startEditIngredient(item) {
   editingRowId = ingredientIdOf(item);
   inlineDraft = {
     name: ingredientNameOf(item),
-    stockLevel: ingredientStockOf(item),
     type: ingredientTypeOf(item),
   };
   renderIngredients();
@@ -502,21 +419,19 @@ function startEditIngredient(item) {
 
 function cancelInlineEdit() {
   editingRowId = null;
-  inlineDraft = { name: "", stockLevel: "보통", type: "기타" };
+  inlineDraft = { name: "", type: "기타" };
   renderIngredients();
 }
 
 function resetForm() {
   const {
     ingredientNameInput,
-    ingredientStockLevelInput,
     typePreview,
     typePreviewValue,
     saveButton,
   } = getEls();
 
   ingredientNameInput.value = "";
-  ingredientStockLevelInput.value = "보통";
 
   if (typePreview) typePreview.hidden = false;
   if (typePreviewValue) typePreviewValue.textContent = "기타";
@@ -525,7 +440,7 @@ function resetForm() {
 }
 
 async function saveIngredient() {
-  const { ingredientNameInput, ingredientStockLevelInput, saveButton } = getEls();
+  const { ingredientNameInput, saveButton } = getEls();
 
   const name = ingredientNameInput.value.trim();
 
@@ -537,7 +452,6 @@ async function saveIngredient() {
 
   const payload = {
     name,
-    stockLevel: ingredientStockLevelInput.value,
   };
 
   try {
@@ -596,7 +510,6 @@ async function saveInlineEdit(id) {
 
   const payload = {
     name,
-    stockLevel: inlineDraft.stockLevel,
     type: normalizeType(inlineDraft.type),
   };
 
@@ -613,7 +526,7 @@ async function saveInlineEdit(id) {
     }
 
     editingRowId = null;
-    inlineDraft = { name: "", stockLevel: "보통", type: "기타" };
+    inlineDraft = { name: "", type: "기타" };
     await loadIngredients();
     showStatus("재료를 수정했어요.");
   } catch (error) {
@@ -671,10 +584,7 @@ async function suggestDinner() {
   const { suggestButton, suggestionsDiv } = getEls();
 
   // Don't suggest if pantry is empty
-  const available = currentIngredients.filter(i => {
-    const stock = (i.stockLevel ?? i.StockLevel ?? "").toLowerCase();
-    return stock !== "없음" && stock !== "out";
-  });
+  const available = currentIngredients;
   if (available.length === 0) {
     suggestionsDiv.innerHTML = `
       <div class="empty-state">Pantry에 재료를 먼저 추가해주세요! 🥕</div>
@@ -789,10 +699,6 @@ function appendSuggestionCards(suggestions, container) {
       ? (item.missingIngredients ?? item.MissingIngredients)
       : [];
 
-    const low = Array.isArray(item.lowStockIngredients ?? item.LowStockIngredients)
-      ? (item.lowStockIngredients ?? item.LowStockIngredients)
-      : [];
-
     const uses = Array.isArray(item.uses ?? item.Uses)
       ? (item.uses ?? item.Uses)
       : [];
@@ -861,19 +767,6 @@ function appendSuggestionCards(suggestions, container) {
             </div>
           </div>
           `
-            : ""
-        }
-
-        ${
-          low.length
-            ? `
-            <div class="suggestion-section">
-              <div class="suggestion-label">적은 재료</div>
-              <div class="suggestion-chip-row">
-                ${low.map(x => `<span class="ingredient-chip low">${escapeHtml(x)}</span>`).join("")}
-              </div>
-            </div>
-            `
             : ""
         }
 
@@ -1079,19 +972,17 @@ function attachTagEvents() {
 }
 
 function syncFilterStateFromUi() {
-  const { filterSearch, filterLowOnly, filterSortKorean, filterTypeSelect } = getEls();
+  const { filterSearch, filterSortKorean, filterTypeSelect } = getEls();
 
   pantryUiState.search = filterSearch ? filterSearch.value.trim() : "";
-  pantryUiState.lowOnly = Boolean(filterLowOnly?.checked);
   pantryUiState.sortKorean = filterSortKorean ? filterSortKorean.checked : true;
   pantryUiState.type = filterTypeSelect ? filterTypeSelect.value : "all";
 }
 
 function syncUiFromFilterState() {
-  const { filterSearch, filterLowOnly, filterSortKorean, filterTypeSelect } = getEls();
+  const { filterSearch, filterSortKorean, filterTypeSelect } = getEls();
 
   if (filterSearch) filterSearch.value = pantryUiState.search;
-  if (filterLowOnly) filterLowOnly.checked = pantryUiState.lowOnly;
   if (filterSortKorean) filterSortKorean.checked = pantryUiState.sortKorean;
   if (filterTypeSelect) filterTypeSelect.value = pantryUiState.type;
 }
@@ -1111,7 +1002,6 @@ function renderFiltersCollapsedState() {
 function clearFilters() {
   pantryUiState = {
     search: "",
-    lowOnly: false,
     sortKorean: true,
     type: "all",
   };

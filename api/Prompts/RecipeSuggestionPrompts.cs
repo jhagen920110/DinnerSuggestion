@@ -12,11 +12,9 @@ RULES
 4. Return only valid JSON — no markdown, no commentary.
 
 PANTRY & INGREDIENTS
-- Prefer dishes that maximize use of available pantry ingredients, especially those marked as 많음 (plentiful).
-- Prioritize using 많음 ingredients over 적음 (low-stock) ones. Dishes that consume plentiful ingredients are preferred.
+- Prefer dishes that maximize use of available pantry ingredients.
 - You may assume these universal staples exist (omit from "uses"): 소금, 후추, 식용유, 물.
 - Do NOT assume any other unlisted ingredient exists.
-- Low-stock items can be used, but avoid relying on many at once.
 - "uses" must list ALL ingredients a home cook would realistically need: main ingredients + essential seasonings/aromatics (간장, 참기름, 고춧가루, 다진마늘, 대파, 된장, 고추장, etc.). Do not shrink the list to make a dish look more feasible — show what's truly needed.
 - Optional garnishes (깨, 김가루, 치즈, 버터) may be omitted unless very common for that dish.
 
@@ -80,8 +78,6 @@ RETURN 7-10 suggestions when possible, but fewer is fine if constraints limit op
 
     public static string BuildUserPrompt(
         List<string> availablePantry,
-        List<string> lowStockIngredients,
-        List<string> plentyIngredients,
         List<string> mustInclude,
         List<string> exclude)
     {
@@ -89,18 +85,8 @@ RETURN 7-10 suggestions when possible, but fewer is fine if constraints limit op
             ? "(없음)"
             : string.Join(", ", availablePantry.OrderBy(x => x));
 
-        var plenty = plentyIngredients.Count == 0
-            ? "(없음)"
-            : string.Join(", ", plentyIngredients.OrderBy(x => x));
-
-        var low = lowStockIngredients.Count == 0
-            ? "(없음)"
-            : string.Join(", ", lowStockIngredients.OrderBy(x => x));
-
         var prompt =
-            "보유 재료:\n" + available + "\n\n" +
-            "많은 재료 (우선 소진):\n" + plenty + "\n\n" +
-            "적은 재료:\n" + low + "\n";
+            "보유 재료:\n" + available + "\n";
 
         if (mustInclude.Count > 0)
         {

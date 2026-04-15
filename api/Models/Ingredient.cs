@@ -17,10 +17,6 @@ public class Ingredient
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
 
-    [JsonProperty("stockLevel")]
-    [JsonPropertyName("stockLevel")]
-    public string StockLevel { get; set; } = "Some";
-
     [JsonProperty("type")]
     [JsonPropertyName("type")]
     public string Type { get; set; } = string.Empty;

@@ -74,16 +74,6 @@
                 <label for="ingredientName">재료명</label>
                 <input id="ingredientName" type="text" placeholder="예: 김치, 양파, 계란" />
               </div>
-
-              <div class="field">
-                <label for="ingredientStockLevel">수량</label>
-                <select id="ingredientStockLevel">
-                  <option value="보통" selected>보통</option>
-                  <option value="적음">적음</option>
-                  <option value="많음">많음</option>
-                  <option value="없음">없음</option>
-                </select>
-              </div>
             </div>
 
             <div class="form-actions">
@@ -98,13 +88,6 @@
 
             <div id="filtersContent" class="filters-panel" hidden>
               <div class="filter-grid simple-filter-grid">
-                <div class="field">
-                  <label>
-                    <input type="checkbox" id="filterLowOnly" />
-                    부족한 재료만 보기
-                  </label>
-                </div>
-
                 <div class="field">
                   <label>
                     <input type="checkbox" id="filterSortKorean" checked />
@@ -139,7 +122,6 @@
             </div>
           </div>
 
-          <div id="pantrySummary" class="pantry-summary"></div>
           <div id="ingredientsSections"></div>
         </div>
       </section>

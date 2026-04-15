@@ -22,26 +22,22 @@ public class SuggestionService
 
     public async Task<List<Suggestion>> GetSuggestionsAsync(
         List<string> availablePantry,
-        List<string> lowStockIngredients,
-        List<string> plentyIngredients,
         List<string> mustInclude,
         List<string> exclude)
     {
         if (!IsAiConfigured())
         {
-            return BuildFallbackSuggestions(availablePantry, lowStockIngredients);
+            return BuildFallbackSuggestions(availablePantry);
         }
 
         try
         {
             var aiSuggestions = await GetAiSuggestionsAsync(
                 availablePantry,
-                lowStockIngredients,
-                plentyIngredients,
                 mustInclude,
                 exclude);
 
-            var mapped = MapSuggestions(aiSuggestions, availablePantry, lowStockIngredients);
+            var mapped = MapSuggestions(aiSuggestions, availablePantry);
 
             // Server-side enforcement: remove suggestions that don't use any must-include ingredient
             if (mustInclude.Count > 0)
@@ -57,11 +53,11 @@ public class SuggestionService
 
             return mapped.Count > 0
                 ? mapped
-                : BuildFallbackSuggestions(availablePantry, lowStockIngredients);
+                : BuildFallbackSuggestions(availablePantry);
         }
         catch
         {
-            return BuildFallbackSuggestions(availablePantry, lowStockIngredients);
+            return BuildFallbackSuggestions(availablePantry);
         }
     }
 
@@ -74,8 +70,6 @@ public class SuggestionService
 
     private async Task<List<AiRecipeSuggestion>> GetAiSuggestionsAsync(
         List<string> availablePantry,
-        List<string> lowStockIngredients,
-        List<string> plentyIngredients,
         List<string> mustInclude,
         List<string> exclude)
     {
@@ -89,8 +83,6 @@ public class SuggestionService
         var systemPrompt = RecipeSuggestionPrompts.SystemPrompt;
         var userPrompt = RecipeSuggestionPrompts.BuildUserPrompt(
             availablePantry,
-            lowStockIngredients,
-            plentyIngredients,
             mustInclude,
             exclude);
 
@@ -195,17 +187,10 @@ public class SuggestionService
 
     private static List<Suggestion> MapSuggestions(
         List<AiRecipeSuggestion> aiSuggestions,
-        List<string> availablePantry,
-        List<string> lowStockIngredients)
+        List<string> availablePantry)
     {
         var availableSet = new HashSet<string>(
             availablePantry
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Select(ToComparisonKey),
-            StringComparer.OrdinalIgnoreCase);
-
-        var lowSet = new HashSet<string>(
-            lowStockIngredients
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .Select(ToComparisonKey),
             StringComparer.OrdinalIgnoreCase);
@@ -226,10 +211,6 @@ public class SuggestionService
                     .Where(x => !availableSet.Contains(ToComparisonKey(x)))
                     .ToList();
 
-                var low = uses
-                    .Where(x => lowSet.Contains(ToComparisonKey(x)))
-                    .ToList();
-
                 var recipeQuery = string.IsNullOrWhiteSpace(ai.RecipeSearchQuery)
                     ? ai.Name.Trim()
                     : ai.RecipeSearchQuery.Trim();
@@ -240,7 +221,6 @@ public class SuggestionService
                     Cuisine = string.IsNullOrWhiteSpace(ai.Cuisine) ? "한식" : ai.Cuisine.Trim(),
                     Uses = uses,
                     MissingIngredients = missing,
-                    LowStockIngredients = low,
                     CanMakeNow = missing.Count == 0,
                     RecipeUrl = Build10000RecipeSearchUrl(recipeQuery),
                     RecipeSource = "만개의레시피",
@@ -257,17 +237,10 @@ public class SuggestionService
     }
 
     private static List<Suggestion> BuildFallbackSuggestions(
-        List<string> availablePantry,
-        List<string> lowStockIngredients)
+        List<string> availablePantry)
     {
         var availableSet = new HashSet<string>(
             availablePantry
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Select(ToComparisonKey),
-            StringComparer.OrdinalIgnoreCase);
-
-        var lowSet = new HashSet<string>(
-            lowStockIngredients
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .Select(ToComparisonKey),
             StringComparer.OrdinalIgnoreCase);
@@ -326,10 +299,6 @@ public class SuggestionService
 
             idea.MissingIngredients = idea.Uses
                 .Where(x => !availableSet.Contains(ToComparisonKey(x)))
-                .ToList();
-
-            idea.LowStockIngredients = idea.Uses
-                .Where(x => lowSet.Contains(ToComparisonKey(x)))
                 .ToList();
 
             idea.CanMakeNow = idea.MissingIngredients.Count == 0;

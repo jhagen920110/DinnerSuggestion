@@ -52,11 +52,9 @@ public class SuggestionsFunction
         catch { /* empty body is fine */ }
 
         var availablePantry = await _pantryStore.GetAvailableIngredientNamesAsync();
-        var lowStockIngredients = await _pantryStore.GetLowStockIngredientNamesAsync();
-        var plentyIngredients = await _pantryStore.GetPlentyIngredientNamesAsync();
 
         // 1. DB recipes first (exclude already-shown)
-        var dbSuggestions = await BuildDbSuggestions(availablePantry, lowStockIngredients, mustInclude);
+        var dbSuggestions = await BuildDbSuggestions(availablePantry, mustInclude);
 
         if (exclude.Count > 0)
         {
@@ -72,8 +70,6 @@ public class SuggestionsFunction
         // 2. AI suggestions
         var aiSuggestions = await _suggestionService.GetSuggestionsAsync(
             availablePantry,
-            lowStockIngredients,
-            plentyIngredients,
             mustInclude,
             exclude);
 
@@ -95,7 +91,6 @@ public class SuggestionsFunction
 
     private async Task<List<Suggestion>> BuildDbSuggestions(
         List<string> availablePantry,
-        List<string> lowStockIngredients,
         List<string> mustInclude)
     {
         var recipes = await _recipeService.FindByIngredientsAsync(availablePantry);
@@ -104,18 +99,10 @@ public class SuggestionsFunction
             availablePantry.Select(ToComparisonKey),
             StringComparer.OrdinalIgnoreCase);
 
-        var lowSet = new HashSet<string>(
-            lowStockIngredients.Select(ToComparisonKey),
-            StringComparer.OrdinalIgnoreCase);
-
         var suggestions = recipes.Select(recipe =>
         {
             var missing = recipe.Ingredients
                 .Where(i => !availableSet.Contains(ToComparisonKey(i)))
-                .ToList();
-
-            var low = recipe.Ingredients
-                .Where(i => lowSet.Contains(ToComparisonKey(i)))
                 .ToList();
 
             var recipeUrl = !string.IsNullOrWhiteSpace(recipe.RecipeUrl)
@@ -128,7 +115,6 @@ public class SuggestionsFunction
                 Cuisine = recipe.Cuisine,
                 Uses = recipe.Ingredients,
                 MissingIngredients = missing,
-                LowStockIngredients = low,
                 CanMakeNow = missing.Count == 0,
                 RecipeUrl = recipeUrl,
                 RecipeSource = !string.IsNullOrWhiteSpace(recipe.RecipeUrl) ? "저장됨" : "만개의레시피",

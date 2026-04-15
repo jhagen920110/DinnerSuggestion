@@ -69,7 +69,6 @@ public class PantryService
 
             var existing = existingResponse.Resource;
             existing.Name = updatedIngredient.Name;
-            existing.StockLevel = updatedIngredient.StockLevel;
             existing.Type = updatedIngredient.Type;
             existing.UserId = _userId;
 
@@ -134,33 +133,6 @@ public class PantryService
         var items = await GetAllAsync();
 
         return items
-            .Where(x => !string.Equals(x.StockLevel, "Out", StringComparison.OrdinalIgnoreCase))
-            .Select(x => x.Name.Trim())
-            .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-    }
-
-    public async Task<List<string>> GetLowStockIngredientNamesAsync()
-    {
-        var items = await GetAllAsync();
-
-        return items
-            .Where(x => string.Equals(x.StockLevel, "Low", StringComparison.OrdinalIgnoreCase))
-            .Select(x => x.Name.Trim())
-            .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-    }
-
-    public async Task<List<string>> GetPlentyIngredientNamesAsync()
-    {
-        var items = await GetAllAsync();
-
-        return items
-            .Where(x => string.Equals(x.StockLevel, "Plenty", StringComparison.OrdinalIgnoreCase))
             .Select(x => x.Name.Trim())
             .Where(x => !string.IsNullOrWhiteSpace(x))
             .Distinct(StringComparer.OrdinalIgnoreCase)

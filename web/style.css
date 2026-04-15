@@ -336,9 +336,9 @@ select {
 
 .filters-panel {
   margin-top: 10px;
-  background: #f8fafc;
-  border: 1px solid #e8edf5;
-  border-radius: 18px;
+  background: linear-gradient(135deg, #f0f4ff 0%, #f5f3ff 100%);
+  border: 1px dashed #c7d2fe;
+  border-radius: 14px;
   padding: 16px;
 }
 

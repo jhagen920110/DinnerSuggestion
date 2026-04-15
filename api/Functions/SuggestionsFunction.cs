@@ -93,7 +93,7 @@ public class SuggestionsFunction
         List<string> availablePantry,
         List<string> mustInclude)
     {
-        var recipes = await _recipeService.FindByIngredientsAsync(availablePantry);
+        var recipes = await _recipeService.GetAllAsync();
 
         var availableSet = new HashSet<string>(
             availablePantry.Select(ToComparisonKey),

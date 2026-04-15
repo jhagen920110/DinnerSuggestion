@@ -69,8 +69,10 @@ ADDITIONAL RULES:
 - Stick to dishes that have been cooked in Korean households for decades or are universally recognized restaurant menu items.
 - When in doubt, leave the dish out. Fewer real dishes are always better than more questionable ones.
 
-ORDERING
-- Sort by popularity: most well-known dishes first.
+ORDERING (CRITICAL — this determines the array order)
+- You MUST sort the JSON array by real-world popularity. The FIRST item in the array must be the single most popular, most commonly cooked dish. The second item is the next most popular, and so on.
+- Do NOT sort alphabetically (가나다순). Do NOT sort by ingredient match count. Sort ONLY by how frequently Korean households actually cook each dish nationwide.
+- Before finalizing, re-read your array and ask: "Is item 1 truly more popular than item 2? Is item 2 more popular than item 3?" If not, reorder.
 - Among equally popular dishes, prefer ones where more pantry ingredients are already available.
 
 RETURN 7-10 suggestions when possible, but fewer is fine if constraints limit options.

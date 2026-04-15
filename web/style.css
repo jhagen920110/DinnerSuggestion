@@ -696,6 +696,9 @@ select {
   padding: 0;
   box-shadow: 0 8px 24px rgba(79, 70, 229, 0.06);
   overflow: hidden;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .suggestion-img-wrap {

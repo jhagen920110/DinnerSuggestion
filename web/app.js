@@ -1245,6 +1245,10 @@ function attachTabEvents() {
   document.querySelectorAll(".tab-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const page = btn.dataset.page;
+      if (page === "calendar") {
+        openCalendarOverlay();
+        return;
+      }
       switchPage(page);
     });
   });

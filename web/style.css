@@ -92,21 +92,21 @@ select {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 12px;
-  padding: 20px;
-  opacity: 0.25;
+  gap: 6px;
+  padding: 10px;
+  opacity: 0.45;
 }
 
 .splash-row {
   display: flex;
   justify-content: center;
-  gap: 20px;
-  font-size: 2.8rem;
+  gap: 10px;
+  font-size: 2.4rem;
   line-height: 1;
 }
 
 .splash-row.offset {
-  margin-left: 28px;
+  margin-left: 22px;
 }
 
 .splash-overlay {

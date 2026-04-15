@@ -459,6 +459,10 @@ async function saveIngredient() {
 
     if (!response.ok) {
       const text = await response.text();
+      if (response.status === 409) {
+        alert(text);
+        return;
+      }
       throw new Error(`Failed to save ingredient: ${response.status} ${text}`);
     }
 

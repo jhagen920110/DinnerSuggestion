@@ -60,6 +60,79 @@ select {
   padding: 20px 0 80px;
 }
 
+/* ─── Splash Screen ─── */
+
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: #f8f6f1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+.splash.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.splash-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.splash-foods {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px;
+  opacity: 0.25;
+}
+
+.splash-row {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  font-size: 2.8rem;
+  line-height: 1;
+}
+
+.splash-row.offset {
+  margin-left: 28px;
+}
+
+.splash-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at center, rgba(248, 246, 241, 0.95) 0%, rgba(248, 246, 241, 0.7) 70%, transparent 100%);
+}
+
+.splash-title {
+  font-size: clamp(2rem, 6vw, 3rem);
+  font-weight: 900;
+  color: #22304a;
+  margin: 0 0 12px;
+  letter-spacing: -0.03em;
+}
+
+.splash-sub {
+  font-size: 1rem;
+  color: var(--muted);
+  margin: 0;
+}
+
 .hero {
   padding: 8px 4px 18px;
   display: flex;

@@ -1225,10 +1225,18 @@ function init() {
   attachCalendarOverlay();
   resetForm();
   loadTags();
-  loadIngredients().then(() => {
+  loadIngredients().then(async () => {
     switchPage("suggestions");
-    suggestDinner();
+    await suggestDinner();
+    dismissSplash();
   });
+}
+
+function dismissSplash() {
+  const splash = byId("splashScreen");
+  if (!splash) return;
+  splash.classList.add("hidden");
+  setTimeout(() => splash.remove(), 500);
 }
 
 // ─── Tab Navigation ───

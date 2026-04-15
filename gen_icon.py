@@ -36,6 +36,10 @@ def make_icon(source_path, size):
     if bbox:
         white_layer = white_layer.crop(bbox)
 
+    # Trim right side to shorten chopsticks
+    trim_right = int(white_layer.width * 0.06)
+    white_layer = white_layer.crop((0, 0, white_layer.width - trim_right, white_layer.height))
+
     # Scale to fit inside circle with padding
     icon_area = int(r * 1.55)
     ratio = min(icon_area / white_layer.width, icon_area / white_layer.height)

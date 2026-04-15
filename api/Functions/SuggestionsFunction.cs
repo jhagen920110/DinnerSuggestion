@@ -123,7 +123,7 @@ public class SuggestionsFunction
                 Source = "saved",
                 ImageUrl = recipe.ImageUrl
             };
-        }).Where(s => s.MissingIngredients.Count <= 1).ToList();
+        }).Where(s => s.MissingIngredients.Count <= 2).ToList();
         if (mustInclude.Count > 0)
         {
             var mustIncludeKeys = new HashSet<string>(

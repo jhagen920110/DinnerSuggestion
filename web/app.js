@@ -567,16 +567,39 @@ async function fetchSuggestions(exclude = []) {
   const suggestions = await response.json();
   const safeSuggestions = Array.isArray(suggestions) ? suggestions : [];
 
-  // Sort: saved first, then by fewest missing ingredients
+  // Priority-based sorting:
+  // P0: Saved recipes (missing ≤ 2)
+  // P1: AI, 0 missing & popular (top half of AI order)
+  // P2: AI, 1 missing & popular
+  // P3: AI, 0 missing & less popular (bottom half)
+  // P4: AI, 1 missing & less popular
+  // P5: rest (2+ missing)
+  // AI returns results sorted by popularity, so original index = popularity rank
   const saved = safeSuggestions.filter(s => (s.source ?? s.Source) === "saved");
-  const ai = safeSuggestions.filter(s => (s.source ?? s.Source) !== "saved");
-  ai.sort((a, b) => {
-    const aMissing = (a.missingIngredients ?? a.MissingIngredients ?? []).length;
-    const bMissing = (b.missingIngredients ?? b.MissingIngredients ?? []).length;
-    return aMissing - bMissing;
+  saved.sort((a, b) => {
+    const am = (a.missingIngredients ?? a.MissingIngredients ?? []).length;
+    const bm = (b.missingIngredients ?? b.MissingIngredients ?? []).length;
+    return am - bm;
   });
 
-  return [...saved, ...ai];
+  const ai = safeSuggestions.filter(s => (s.source ?? s.Source) !== "saved");
+  const popularCutoff = Math.ceil(ai.length / 2);
+
+  const prioritized = ai.map((s, idx) => {
+    const missing = (s.missingIngredients ?? s.MissingIngredients ?? []).length;
+    const isPopular = idx < popularCutoff;
+    let priority;
+    if (missing === 0 && isPopular) priority = 1;
+    else if (missing <= 1 && isPopular) priority = 2;
+    else if (missing === 0) priority = 3;
+    else if (missing <= 1) priority = 4;
+    else priority = 5;
+    return { ...s, _priority: priority, _origIdx: idx };
+  });
+
+  prioritized.sort((a, b) => a._priority - b._priority || a._origIdx - b._origIdx);
+
+  return [...saved, ...prioritized];
 }
 
 let allSuggestions = [];

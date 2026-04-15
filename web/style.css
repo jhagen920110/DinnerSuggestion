@@ -1425,10 +1425,10 @@ select {
   width: 420px;
   max-width: 94vw;
   max-height: 90vh;
-  overflow-y: auto;
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .calendar-overlay-header {
@@ -1436,20 +1436,22 @@ select {
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px 16px;
-  position: sticky;
-  top: 0;
   background: #fff;
-  z-index: 10;
+  flex-shrink: 0;
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 
-.calendar-overlay-content > :not(.calendar-overlay-header) {
-  padding-left: 24px;
-  padding-right: 24px;
+.cal-header-icon {
+  width: 1.2em;
+  height: 1.2em;
+  vertical-align: -0.15em;
+  stroke: currentColor;
 }
 
-.calendar-overlay-content > :last-child {
-  padding-bottom: 24px;
+.calendar-overlay-body {
+  overflow-y: auto;
+  flex: 1;
+  padding: 0 24px 24px;
 }
 
 .calendar-overlay-header h2 {

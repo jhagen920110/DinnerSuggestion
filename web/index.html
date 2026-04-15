@@ -271,9 +271,10 @@
   <div id="calendarOverlay" class="calendar-overlay" hidden>
     <div class="calendar-overlay-content">
       <div class="calendar-overlay-header">
-        <h2>📅 식사 캘린더</h2>
+        <h2><svg class="cal-header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><rect x="7" y="14" width="3" height="3" rx="0.5"/><rect x="14" y="14" width="3" height="3" rx="0.5"/></svg> 식사 캘린더</h2>
         <button id="calCloseBtn" type="button" class="icon-button" aria-label="닫기">✕</button>
       </div>
+      <div class="calendar-overlay-body">
       <section class="cal-section">
         <div class="calendar-header">
           <button id="calPrevMonth" type="button" class="icon-button" aria-label="이전 달">◀</button>
@@ -305,6 +306,7 @@
         </div>
         <div id="calDayMeals"></div>
       </section>
+      </div>
     </div>
   </div>
 

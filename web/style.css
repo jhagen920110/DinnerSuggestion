@@ -413,6 +413,27 @@ select {
   justify-content: flex-end;
 }
 
+.expand-all-wrap {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.expand-all-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: color 0.15s;
+}
+
+.expand-all-btn:hover {
+  color: var(--primary);
+}
+
 .pantry-summary {
   display: flex;
   flex-wrap: wrap;

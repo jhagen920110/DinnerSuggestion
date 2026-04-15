@@ -245,6 +245,13 @@ function renderIngredients() {
 
   ingredientsSections.innerHTML = "";
 
+  // Sync expand-all button text
+  const toggleBtn = byId("toggleAllPantry");
+  if (toggleBtn) {
+    const allCollapsed = Object.values(collapsedSections).every(v => v);
+    toggleBtn.textContent = allCollapsed ? "리스트 모두 펼치기" : "리스트 모두 접기";
+  }
+
   if (!filtered.length) {
     ingredientsSections.innerHTML = `
       <div class="empty-state">조건에 맞는 재료가 없어요.</div>
@@ -1087,6 +1094,18 @@ function attachFilterEvents() {
     });
   }
 
+  const toggleAllPantry = byId("toggleAllPantry");
+  if (toggleAllPantry) {
+    toggleAllPantry.addEventListener("click", () => {
+      const allCollapsed = Object.values(collapsedSections).every(v => v);
+      for (const key of Object.keys(collapsedSections)) {
+        collapsedSections[key] = !allCollapsed;
+      }
+      toggleAllPantry.textContent = allCollapsed ? "리스트 모두 접기" : "리스트 모두 펼치기";
+      renderIngredients();
+    });
+  }
+
   const showIngBtn = byId("showIngredientFormBtn");
   if (showIngBtn) {
     showIngBtn.addEventListener("click", () => {
@@ -1288,6 +1307,18 @@ function attachMealEvents() {
     });
   }
 
+  const toggleAllMeals = byId("toggleAllMeals");
+  if (toggleAllMeals) {
+    toggleAllMeals.addEventListener("click", () => {
+      const allCollapsed = Object.values(collapsedMealSections).every(v => v);
+      for (const key of Object.keys(collapsedMealSections)) {
+        collapsedMealSections[key] = !allCollapsed;
+      }
+      toggleAllMeals.textContent = allCollapsed ? "리스트 모두 접기" : "리스트 모두 펼치기";
+      renderMeals();
+    });
+  }
+
   attachTagEvents();
 
   const imageUrlInput = byId("mealImageUrl");
@@ -1477,6 +1508,13 @@ function renderMeals() {
   filtered.sort((a, b) => compareKo(a.name ?? a.Name ?? "", b.name ?? b.Name ?? ""));
 
   container.innerHTML = "";
+
+  // Sync expand-all button text
+  const toggleBtn = byId("toggleAllMeals");
+  if (toggleBtn) {
+    const allCollapsed = Object.values(collapsedMealSections).every(v => v);
+    toggleBtn.textContent = allCollapsed ? "리스트 모두 펼치기" : "리스트 모두 접기";
+  }
 
   if (!filtered.length) {
     container.innerHTML = `<div class="empty-state">저장된 레시피가 없어요. 자주 만드는 요리를 추가해보세요!</div>`;

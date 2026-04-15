@@ -1422,19 +1422,34 @@ select {
 .calendar-overlay-content {
   background: #fff;
   border-radius: var(--radius-lg);
-  padding: 24px;
   width: 420px;
   max-width: 94vw;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
 }
 
 .calendar-overlay-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  padding: 20px 24px 16px;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 10;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.calendar-overlay-content > :not(.calendar-overlay-header) {
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.calendar-overlay-content > :last-child {
+  padding-bottom: 24px;
 }
 
 .calendar-overlay-header h2 {

@@ -837,6 +837,7 @@ function appendSuggestionCards(suggestions, container) {
               ${cookTimeBadge}
             </div>
           </div>
+          ${source === "ai" ? `<button type="button" class="save-to-recipe-btn" title="레시피에 저장"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 저장</button>` : ""}
         </div>
 
         <div class="suggestion-section">
@@ -876,20 +877,16 @@ function appendSuggestionCards(suggestions, container) {
             : ""
         }
 
-        ${
-          recipeUrl
-            ? `
-            <a class="recipe-link" href="${escapeHtml(recipeUrl)}" target="_blank" rel="noreferrer">
-              레시피 보기${recipeSource ? ` · ${escapeHtml(recipeSource)}` : ""}
-            </a>
-            `
-            : ""
-        }
-
-        ${source === "ai" ? `<button type="button" class="save-to-recipe-btn">📌 레시피에 저장</button>` : ""}
-        <button type="button" class="log-today-btn"${todayLoggedNames.has(name.toLowerCase()) ? ' disabled' : ""}>
-          ${todayLoggedNames.has(name.toLowerCase()) ? "✅ 기록됨" : "🍽️ 오늘의 식사"}
-        </button>
+        <div class="suggestion-actions">
+          ${
+            recipeUrl
+              ? `<a class="recipe-link" href="${escapeHtml(recipeUrl)}" target="_blank" rel="noreferrer">레시피</a>`
+              : ""
+          }
+          <button type="button" class="log-today-btn"${todayLoggedNames.has(name.toLowerCase()) ? ' disabled' : ""}>
+            ${todayLoggedNames.has(name.toLowerCase()) ? "✅ 기록됨" : "🍽️ 오늘의 식사"}
+          </button>
+        </div>
       </div>
     `;
 

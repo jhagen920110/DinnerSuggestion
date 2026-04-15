@@ -54,7 +54,12 @@ public class SuggestionsFunction
         var availablePantry = await _pantryStore.GetAvailableIngredientNamesAsync();
 
         // 1. DB recipes first (exclude already-shown)
-        var dbSuggestions = await BuildDbSuggestions(availablePantry, mustInclude);
+        var allRecipes = await _recipeService.GetAllAsync();
+        var allRecipeNames = new HashSet<string>(
+            allRecipes.Select(r => ToComparisonKey(r.Name)),
+            StringComparer.OrdinalIgnoreCase);
+
+        var dbSuggestions = BuildDbSuggestions(allRecipes, availablePantry, mustInclude);
 
         if (exclude.Count > 0)
         {
@@ -67,19 +72,16 @@ public class SuggestionsFunction
                 .ToList();
         }
 
-        // 2. AI suggestions
+        // 2. AI suggestions (also exclude all saved recipe names)
+        var aiExclude = exclude.Concat(allRecipes.Select(r => r.Name)).Distinct().ToList();
         var aiSuggestions = await _suggestionService.GetSuggestionsAsync(
             availablePantry,
             mustInclude,
-            exclude);
+            aiExclude);
 
-        // Deduplicate: remove AI suggestions that match a DB recipe name
-        var dbNames = new HashSet<string>(
-            dbSuggestions.Select(s => ToComparisonKey(s.Name)),
-            StringComparer.OrdinalIgnoreCase);
-
+        // Deduplicate: remove AI suggestions that match any saved recipe name
         var uniqueAi = aiSuggestions
-            .Where(s => !dbNames.Contains(ToComparisonKey(s.Name)))
+            .Where(s => !allRecipeNames.Contains(ToComparisonKey(s.Name)))
             .ToList();
 
         var combined = dbSuggestions.Concat(uniqueAi).ToList();
@@ -89,11 +91,11 @@ public class SuggestionsFunction
         return response;
     }
 
-    private async Task<List<Suggestion>> BuildDbSuggestions(
+    private List<Suggestion> BuildDbSuggestions(
+        List<Recipe> recipes,
         List<string> availablePantry,
         List<string> mustInclude)
     {
-        var recipes = await _recipeService.GetAllAsync();
 
         var availableSet = new HashSet<string>(
             availablePantry.Select(ToComparisonKey),

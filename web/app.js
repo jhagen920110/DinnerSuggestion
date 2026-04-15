@@ -837,7 +837,7 @@ function appendSuggestionCards(suggestions, container) {
               ${cookTimeBadge}
             </div>
           </div>
-          ${source === "ai" ? `<button type="button" class="save-to-recipe-btn" title="레시피에 저장">📌 저장</button>` : ""}
+          ${source === "ai" ? `<button type="button" class="save-to-recipe-btn" title="레시피에 저장">+ 저장</button>` : ""}
         </div>
 
         <div class="suggestion-section">

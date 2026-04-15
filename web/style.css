@@ -420,18 +420,20 @@ select {
 }
 
 .expand-all-btn {
-  background: none;
-  border: none;
-  color: var(--muted);
+  background: #f0f4ff;
+  border: 1px solid #c7d2fe;
+  color: #4f46e5;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  padding: 4px 0;
-  transition: color 0.15s;
+  padding: 6px 14px;
+  border-radius: 10px;
+  transition: background 0.15s, color 0.15s;
 }
 
 .expand-all-btn:hover {
-  color: var(--primary);
+  background: #e0e7ff;
+  color: #4338ca;
 }
 
 .pantry-summary {

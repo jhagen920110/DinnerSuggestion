@@ -13,6 +13,8 @@
   --radius-xl: 24px;
   --radius-lg: 18px;
   --radius-md: 14px;
+  --font-display: 'Jua', 'Apple SD Gothic Neo', sans-serif;
+  --font-body: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Segoe UI', sans-serif;
 
   --low-bg: #fff1f2;
   --low-text: #be123c;
@@ -40,7 +42,7 @@ html,
 body {
   margin: 0;
   padding: 0;
-  font-family: "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  font-family: var(--font-body);
   color: var(--text);
   background: radial-gradient(circle at top left, #ffffff 0%, #eef3fb 36%, #e4eaf5 100%);
   min-height: 100%;
@@ -68,6 +70,7 @@ select {
 }
 
 .top-bar-title {
+  font-family: var(--font-display);
   margin: 0;
   font-size: 1.15rem;
   font-weight: 800;
@@ -269,7 +272,7 @@ select {
 }
 
 .splash-title {
-  font-family: 'Jua', sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(2rem, 6vw, 3rem);
   font-weight: 900;
   color: #22304a;
@@ -278,7 +281,7 @@ select {
 }
 
 .splash-sub {
-  font-family: 'Jua', sans-serif;
+  font-family: var(--font-display);
   font-size: 1.2rem;
   color: var(--muted);
   margin: 0;
@@ -350,6 +353,7 @@ select {
 }
 
 .section-head h2 {
+  font-family: var(--font-display);
   margin: 0;
   font-size: 1.85rem;
   line-height: 1.2;
@@ -436,6 +440,7 @@ select {
 .secondary-btn,
 .filters-toggle,
 .icon-button {
+  font-family: var(--font-display);
   border: none;
   border-radius: 12px;
   cursor: pointer;
@@ -906,6 +911,7 @@ select {
 }
 
 .suggestion h3 {
+  font-family: var(--font-display);
   margin: 0;
   font-size: 1.2rem;
   line-height: 1.25;
@@ -920,6 +926,7 @@ select {
 
 .suggestion-cuisine,
 .suggestion-pill {
+  font-family: var(--font-display);
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
@@ -969,6 +976,7 @@ select {
 }
 
 .suggestion-label {
+  font-family: var(--font-display);
   font-size: 0.84rem;
   font-weight: 800;
   color: #667085;
@@ -1227,6 +1235,7 @@ select {
 }
 
 .ai-question-text {
+  font-family: var(--font-display);
   font-size: 1rem;
   font-weight: 600;
   color: #1e293b;
@@ -1247,9 +1256,9 @@ select {
   padding: 9px 18px;
   font-size: 0.9rem;
   color: #4338ca;
+  font-family: var(--font-display);
   cursor: pointer;
   transition: all 0.2s;
-  font-family: inherit;
 }
 
 .ai-option-btn:hover:not(:disabled) {
@@ -1434,6 +1443,7 @@ select {
   border: none;
   background: transparent;
   color: var(--muted);
+  font-family: var(--font-display);
   font-weight: 600;
   font-size: 0.65rem;
   padding: 4px 0;

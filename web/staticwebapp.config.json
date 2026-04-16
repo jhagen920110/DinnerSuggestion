@@ -5,6 +5,9 @@
         "registration": {
           "clientIdSettingName": "GOOGLE_CLIENT_ID",
           "clientSecretSettingName": "GOOGLE_CLIENT_SECRET"
+        },
+        "login": {
+          "loginParameters": ["prompt=select_account"]
         }
       }
     }

@@ -1,46 +1,57 @@
+using System.Collections.Concurrent;
 using System.Net;
+using DinnerSuggestionApi.Middleware;
 using DinnerSuggestionApi.Models;
 using Microsoft.Azure.Cosmos;
-using Microsoft.Extensions.Options;
 
 namespace DinnerSuggestionApi.Services;
 
 public class TagService
 {
     private readonly Container _container;
-    private readonly string _userId;
+    private readonly UserContext _userContext;
+
+    private static readonly ConcurrentDictionary<string, bool> SeededUsers = new(StringComparer.OrdinalIgnoreCase);
 
     private static readonly List<string> DefaultTags = new()
     {
         "시원", "뜨끈", "국물", "매운맛", "간단", "든든", "밑반찬", "볶음", "건강", "야식"
     };
 
-    public TagService(CosmosClient cosmosClient, IOptions<CosmosDbOptions> options)
+    public TagService(CosmosContainers containers, UserContext userContext)
     {
-        var database = cosmosClient.GetDatabase(options.Value.DatabaseName);
-        database.CreateContainerIfNotExistsAsync("tags", "/userId").GetAwaiter().GetResult();
-        _container = database.GetContainer("tags");
-        _userId = options.Value.UserId;
-
-        SeedDefaultTagsAsync().GetAwaiter().GetResult();
+        _container = containers.Tags;
+        _userContext = userContext;
     }
 
-    private async Task SeedDefaultTagsAsync()
+    private async Task SeedDefaultTagsIfNeededAsync()
     {
-        var existing = await GetAllAsync();
-        if (existing.Count > 0) return;
+        var userId = _userContext.UserId;
+        if (SeededUsers.ContainsKey(userId)) return;
 
-        foreach (var name in DefaultTags)
+        var query = new QueryDefinition("SELECT VALUE COUNT(1) FROM c WHERE c.userId = @userId")
+            .WithParameter("@userId", userId);
+        var iterator = _container.GetItemQueryIterator<int>(query);
+        var response = await iterator.ReadNextAsync();
+
+        if (response.First() == 0)
         {
-            var tag = new Tag { Name = name, UserId = _userId };
-            await _container.CreateItemAsync(tag, new PartitionKey(_userId));
+            foreach (var name in DefaultTags)
+            {
+                var tag = new Tag { Name = name, UserId = userId };
+                await _container.CreateItemAsync(tag, new PartitionKey(userId));
+            }
         }
+
+        SeededUsers.TryAdd(userId, true);
     }
 
     public async Task<List<Tag>> GetAllAsync()
     {
+        await SeedDefaultTagsIfNeededAsync();
+
         var query = new QueryDefinition("SELECT * FROM c WHERE c.userId = @userId ORDER BY c.name")
-            .WithParameter("@userId", _userId);
+            .WithParameter("@userId", _userContext.UserId);
 
         var iterator = _container.GetItemQueryIterator<Tag>(query);
         var results = new List<Tag>();
@@ -54,9 +65,9 @@ public class TagService
 
     public async Task<Tag> AddAsync(Tag tag)
     {
-        tag.UserId = _userId;
+        tag.UserId = _userContext.UserId;
         tag.Name = tag.Name.Trim();
-        var response = await _container.CreateItemAsync(tag, new PartitionKey(_userId));
+        var response = await _container.CreateItemAsync(tag, new PartitionKey(_userContext.UserId));
         return response.Resource;
     }
 
@@ -64,7 +75,7 @@ public class TagService
     {
         try
         {
-            await _container.DeleteItemAsync<Tag>(id, new PartitionKey(_userId));
+            await _container.DeleteItemAsync<Tag>(id, new PartitionKey(_userContext.UserId));
             return true;
         }
         catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)

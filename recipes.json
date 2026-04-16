@@ -1,0 +1,68 @@
+[
+  {
+    "name": "된장찌개",
+    "ingredients": ["된장", "두부", "고춧가루", "양파", "다진마늘", "애호박", "진간장", "설탕", "소금"],
+    "difficulty": "보통",
+    "cookTime": "20분",
+    "cuisine": "한식",
+    "tags": [],
+    "notes": "",
+    "recipeUrl": "https://www.10000recipe.com/recipe/6859263",
+    "imageUrl": "https://i.namu.wiki/i/q92IvK9BBntFYRjAKr3kMSTdlim5LIIqNxsyzZx6Ij_JUxnX84S1xizUEnEqMNZfl1l7ayM76hnHIeUehxVDZuJogp-MKOQQslR1zFkMrd1n352ZMXbX-UGVELsGWIhdfW_cAsBvvJ-6pIV614eoGA.webp"
+  },
+  {
+    "name": "크림파스타",
+    "ingredients": ["올리브유", "베이컨", "소금", "우유", "다진마늘", "양파", "파스타면", "후추", "버터"],
+    "difficulty": "보통",
+    "cookTime": "30분",
+    "cuisine": "양식",
+    "tags": [],
+    "notes": "",
+    "recipeUrl": "https://www.10000recipe.com/recipe/6901938",
+    "imageUrl": "https://i.namu.wiki/i/KeIu-63LGmTPJGr7-17ilTnTbQN8pcLaqEvon6hi0PE4HwsmEqfZPqAN9Eb6jngaJk47Yw6bxyAWSHCc5Dd0MFdoxSi9Rv6YiLZfpSZ3F2g1S2ve_lrYCE4krnXUFWa0C6FbZDFd9dE3kTOWscJ6zg.webp"
+  },
+  {
+    "name": "떡볶이",
+    "ingredients": ["떡볶이떡", "고추장", "고춧가루", "설탕", "간장", "물엿", "어묵", "다진마늘"],
+    "difficulty": "쉬움",
+    "cookTime": "20분",
+    "cuisine": "한식",
+    "tags": [],
+    "notes": "",
+    "recipeUrl": "https://www.10000recipe.com/recipe/6894096",
+    "imageUrl": "https://i.namu.wiki/i/XUKBEVhwTsB5mBvU124Y6N9hcqXreP7agd9gb1BBMP6jJ74avPCMUVDNZpWd-vGMRV6pHI7i4K4WyAiZfrMxt-KWZNZ9c2dWBfqJZn_E65SzlMdhXJMx3AXm7cKSy39BrwsHfHJbEkyGzSgDDMTNHQ.webp"
+  },
+  {
+    "name": "제육볶음",
+    "ingredients": ["돼지고기", "고추장", "다진마늘", "고춧가루", "간장", "설탕", "다진마늘", "양파", "참기름", "후추", "물엿"],
+    "difficulty": "보통",
+    "cookTime": "20분",
+    "cuisine": "한식",
+    "tags": [],
+    "notes": "",
+    "recipeUrl": "https://www.10000recipe.com/recipe/6845428",
+    "imageUrl": "https://i.namu.wiki/i/JFFVyoJ577t5QkL-2i9t-lU6BN4MCXF0JwdjRa88J2NozVIWyItKjJ0Zn-M5XIY__IYndJ6PxuXWWzzYgm48Rs3JjR1Hmn7OSMGyiDmvWB49kRZY5tCKOJs6VnlODjhMRwDfwxyHw0MWoihFOzF-1A.webp"
+  },
+  {
+    "name": "불고기",
+    "ingredients": ["소고기", "식용유", "간장", "설탕", "물엿", "다진마늘", "미림", "참기름", "양파", "후추"],
+    "difficulty": "보통",
+    "cookTime": "30분",
+    "cuisine": "한식",
+    "tags": [],
+    "notes": "",
+    "recipeUrl": "https://www.10000recipe.com/recipe/6863296",
+    "imageUrl": "https://i.namu.wiki/i/B_tJ7YkfbwbMLILjIP0EQAK2rciXfx1apGHiM172ivH1mL5t-VZhvKYAARDVpxfNgiggV1I2fJ4zImosL6D0irRZlb1jvCjN8VTjCyvhrnaS7yqbG7VQiNQwm5Alh2hAgCnX5wrZGt_uoHCxI-IvIg.webp"
+  },
+  {
+    "name": "순두부찌개",
+    "ingredients": ["순두부", "돼지고기", "고춧가루", "다진마늘", "양파", "설탕", "참기름", "계란", "소금", "멸치육수", "식용유", "소금"],
+    "difficulty": "쉬움",
+    "cookTime": "15분",
+    "cuisine": "한식",
+    "tags": [],
+    "notes": "",
+    "recipeUrl": "https://www.10000recipe.com/recipe/6912220",
+    "imageUrl": "https://qyrunibtywmzghzozbom.supabase.co/storage/v1/object/public/recipes/images/variants/0398b244-a372-4bb8-a35b-f89c14a3716f/v1/16x9/960.avif"
+  }
+]

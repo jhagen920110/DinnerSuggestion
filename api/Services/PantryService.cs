@@ -1,39 +1,31 @@
+using DinnerSuggestionApi.Middleware;
 using DinnerSuggestionApi.Models;
 using Microsoft.Azure.Cosmos;
-using Microsoft.Extensions.Options;
 
 namespace DinnerSuggestionApi.Services;
 
 public class PantryService
 {
     private readonly Container _container;
-    private readonly string _userId;
+    private readonly UserContext _userContext;
 
-    public PantryService(CosmosClient cosmosClient, IOptions<CosmosDbOptions> options)
+    public PantryService(CosmosContainers containers, UserContext userContext)
     {
-        var settings = options.Value;
-
-        if (string.IsNullOrWhiteSpace(settings.DatabaseName))
-            throw new InvalidOperationException("CosmosDb:DatabaseName is missing.");
-
-        if (string.IsNullOrWhiteSpace(settings.ContainerName))
-            throw new InvalidOperationException("CosmosDb:ContainerName is missing.");
-
-        _userId = string.IsNullOrWhiteSpace(settings.UserId) ? "jonathan" : settings.UserId;
-        _container = cosmosClient.GetContainer(settings.DatabaseName, settings.ContainerName);
+        _container = containers.Ingredients;
+        _userContext = userContext;
     }
 
     public async Task<List<Ingredient>> GetAllAsync()
     {
         var query = new QueryDefinition(
             "SELECT * FROM c WHERE c.userId = @userId ORDER BY c.name")
-            .WithParameter("@userId", _userId);
+            .WithParameter("@userId", _userContext.UserId);
 
         var iterator = _container.GetItemQueryIterator<Ingredient>(
             queryDefinition: query,
             requestOptions: new QueryRequestOptions
             {
-                PartitionKey = new PartitionKey(_userId)
+                PartitionKey = new PartitionKey(_userContext.UserId)
             });
 
         var results = new List<Ingredient>();
@@ -50,11 +42,11 @@ public class PantryService
     public async Task<Ingredient> AddAsync(Ingredient ingredient)
     {
         ingredient.Id = Guid.NewGuid().ToString();
-        ingredient.UserId = _userId;
+        ingredient.UserId = _userContext.UserId;
 
         var response = await _container.CreateItemAsync(
             ingredient,
-            new PartitionKey(_userId));
+            new PartitionKey(_userContext.UserId));
 
         return response.Resource;
     }
@@ -65,17 +57,17 @@ public class PantryService
         {
             var existingResponse = await _container.ReadItemAsync<Ingredient>(
                 id,
-                new PartitionKey(_userId));
+                new PartitionKey(_userContext.UserId));
 
             var existing = existingResponse.Resource;
             existing.Name = updatedIngredient.Name;
             existing.Type = updatedIngredient.Type;
-            existing.UserId = _userId;
+            existing.UserId = _userContext.UserId;
 
             var response = await _container.ReplaceItemAsync(
                 existing,
                 existing.Id,
-                new PartitionKey(_userId));
+                new PartitionKey(_userContext.UserId));
 
             return response.Resource;
         }
@@ -89,7 +81,7 @@ public class PantryService
     {
         try
         {
-            await _container.DeleteItemAsync<Ingredient>(id, new PartitionKey(_userId));
+            await _container.DeleteItemAsync<Ingredient>(id, new PartitionKey(_userContext.UserId));
             return true;
         }
         catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
@@ -106,14 +98,14 @@ public class PantryService
 
         var query = new QueryDefinition(
             "SELECT TOP 1 c.type FROM c WHERE c.userId = @userId AND LOWER(c.name) = LOWER(@name)")
-            .WithParameter("@userId", _userId)
+            .WithParameter("@userId", _userContext.UserId)
             .WithParameter("@name", normalized);
 
         var iterator = _container.GetItemQueryIterator<TypeLookupResult>(
             queryDefinition: query,
             requestOptions: new QueryRequestOptions
             {
-                PartitionKey = new PartitionKey(_userId)
+                PartitionKey = new PartitionKey(_userContext.UserId)
             });
 
         while (iterator.HasMoreResults)

@@ -1,5 +1,34 @@
 const apiBase = window.APP_CONFIG.apiBase;
 
+let currentUserEmail = "";
+
+async function initAuth() {
+  try {
+    const res = await fetch("/.auth/me");
+    const data = await res.json();
+    if (data.clientPrincipal) {
+      currentUserEmail = data.clientPrincipal.userDetails || "";
+    }
+  } catch {
+    // Local dev - no SWA auth
+    currentUserEmail = "";
+  }
+
+  const userDisplay = document.getElementById("userEmail");
+  if (userDisplay && currentUserEmail) {
+    userDisplay.textContent = currentUserEmail;
+    userDisplay.hidden = false;
+  }
+}
+
+async function apiFetch(url, options = {}) {
+  const headers = { ...(options.headers || {}) };
+  if (currentUserEmail) {
+    headers["X-User-Email"] = currentUserEmail;
+  }
+  return fetch(url, { ...options, headers });
+}
+
 let currentIngredients = [];
 let classifyTimer = null;
 let editingRowId = null;
@@ -156,7 +185,7 @@ function iconSvg(kind) {
 }
 
 async function classifyIngredientType(name) {
-  const response = await fetch(`${apiBase}/ingredients/classify-type`, {
+  const response = await apiFetch(`${apiBase}/ingredients/classify-type`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name }),
@@ -197,7 +226,7 @@ async function loadIngredients() {
   if (!ingredientsSections) return;
 
   try {
-    const response = await fetch(`${apiBase}/ingredients`);
+    const response = await apiFetch(`${apiBase}/ingredients`);
 
     if (!response.ok) {
       throw new Error(`Failed to load ingredients: ${response.status}`);
@@ -459,7 +488,7 @@ async function saveIngredient() {
   try {
     setBusy(saveButton, true, "추가 중...");
 
-    const response = await fetch(`${apiBase}/ingredients`, {
+    const response = await apiFetch(`${apiBase}/ingredients`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -487,7 +516,7 @@ async function saveIngredient() {
 
 async function deleteIngredient(id) {
   try {
-    const response = await fetch(`${apiBase}/ingredients/${id}`, {
+    const response = await apiFetch(`${apiBase}/ingredients/${id}`, {
       method: "DELETE",
     });
 
@@ -520,7 +549,7 @@ async function saveInlineEdit(id) {
   };
 
   try {
-    const response = await fetch(`${apiBase}/ingredients/${id}`, {
+    const response = await apiFetch(`${apiBase}/ingredients/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -562,7 +591,7 @@ async function fetchSuggestions(exclude = []) {
     body.exclude = exclude;
   }
 
-  const response = await fetch(`${apiBase}/suggestions`, {
+  const response = await apiFetch(`${apiBase}/suggestions`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -707,7 +736,7 @@ async function loadMoreSuggestions(btn) {
 async function loadTodayLogs() {
   const today = new Date().toLocaleDateString("sv-SE");
   try {
-    const res = await fetch(`${apiBase}/meal-logs?startDate=${today}&endDate=${today}`);
+    const res = await apiFetch(`${apiBase}/meal-logs?startDate=${today}&endDate=${today}`);
     if (!res.ok) return;
     const logs = await res.json();
     todayLoggedNames = new Set(logs.map(l => (l.name ?? l.Name ?? "").toLowerCase()));
@@ -847,7 +876,7 @@ function appendSuggestionCards(suggestions, container) {
     card.querySelector(".log-today-btn").addEventListener("click", async () => {
       const today = new Date().toLocaleDateString("sv-SE"); // YYYY-MM-DD
       try {
-        await fetch(`${apiBase}/meal-logs`, {
+        await apiFetch(`${apiBase}/meal-logs`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ date: today, name, imageUrl }),
@@ -914,7 +943,7 @@ function saveAiSuggestionToRecipe({ name, cuisine, difficulty, cookTime, uses, r
 
 async function loadTags() {
   try {
-    const res = await fetch(`${apiBase}/tags`);
+    const res = await apiFetch(`${apiBase}/tags`);
     if (!res.ok) return;
     const items = await res.json();
     availableTags = Array.isArray(items) ? items : [];
@@ -972,7 +1001,7 @@ function renderTagModalList() {
     row.querySelector(".delete").addEventListener("click", async () => {
       if (!confirm(`'${name}' 태그를 삭제할까요?`)) return;
       try {
-        await fetch(`${apiBase}/tags/${id}`, { method: "DELETE" });
+        await apiFetch(`${apiBase}/tags/${id}`, { method: "DELETE" });
         selectedTags.delete(name);
         await loadTags();
         renderTagModalList();
@@ -989,7 +1018,7 @@ async function addTag() {
   const name = input.value.trim();
   if (!name) return;
   try {
-    const res = await fetch(`${apiBase}/tags`, {
+    const res = await apiFetch(`${apiBase}/tags`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name }),
@@ -1148,7 +1177,8 @@ function attachFormEvents() {
   }
 }
 
-function init() {
+async function init() {
+  await initAuth();
   syncUiFromFilterState();
   renderFiltersCollapsedState();
   attachFilterEvents();
@@ -1370,7 +1400,7 @@ function showMealStatus(message) {
 
 async function loadMeals() {
   try {
-    const response = await fetch(`${apiBase}/meals`);
+    const response = await apiFetch(`${apiBase}/meals`);
     if (!response.ok) throw new Error(`Failed to load meals: ${response.status}`);
     const items = await response.json();
     currentMeals = Array.isArray(items) ? items : [];
@@ -1421,7 +1451,7 @@ async function saveMeal() {
     const url = isEditing ? `${apiBase}/meals/${editingMealId}` : `${apiBase}/meals`;
     const method = isEditing ? "PUT" : "POST";
 
-    const response = await fetch(url, {
+    const response = await apiFetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -1449,7 +1479,7 @@ async function saveMeal() {
     if (logToday) {
       const today = new Date().toLocaleDateString("sv-SE");
       try {
-        await fetch(`${apiBase}/meal-logs`, {
+        await apiFetch(`${apiBase}/meal-logs`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ date: today, name: payload.name, imageUrl: payload.imageUrl, source: "recipe" }),
@@ -1471,7 +1501,7 @@ async function deleteMeal(id, name) {
   if (!confirmed) return;
 
   try {
-    const response = await fetch(`${apiBase}/meals/${id}`, { method: "DELETE" });
+    const response = await apiFetch(`${apiBase}/meals/${id}`, { method: "DELETE" });
     if (!response.ok && response.status !== 204) {
       throw new Error(`Failed to delete meal: ${response.status}`);
     }
@@ -1736,7 +1766,7 @@ function attachCalendarEvents() {
     const name = byId("calMealName").value.trim();
     if (!name) { alert("요리 이름을 입력해주세요."); return; }
     try {
-      await fetch(`${apiBase}/meal-logs`, {
+      await apiFetch(`${apiBase}/meal-logs`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1763,7 +1793,7 @@ async function loadCalendarMonth() {
   const endDate = `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
 
   try {
-    const res = await fetch(`${apiBase}/meal-logs?startDate=${startDate}&endDate=${endDate}`);
+    const res = await apiFetch(`${apiBase}/meal-logs?startDate=${startDate}&endDate=${endDate}`);
     if (!res.ok) return;
     const logs = await res.json();
     calMealLogs = {};
@@ -1836,7 +1866,7 @@ async function renderCalRecipeList() {
   list.innerHTML = `<div class="empty-message">불러오는 중...</div>`;
 
   try {
-    const res = await fetch(`${apiBase}/meals`);
+    const res = await apiFetch(`${apiBase}/meals`);
     if (!res.ok) { list.innerHTML = ""; return; }
     const meals = await res.json();
     const sorted = meals.sort((a, b) => {
@@ -1864,7 +1894,7 @@ async function renderCalRecipeList() {
       `;
       item.addEventListener("click", async () => {
         try {
-          await fetch(`${apiBase}/meal-logs`, {
+          await apiFetch(`${apiBase}/meal-logs`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ date: calSelectedDate, name, imageUrl }),
@@ -1922,7 +1952,7 @@ function showDayDetail(dateStr) {
     row.querySelector(".delete").addEventListener("click", async () => {
       if (!confirm(`'${name}' 기록을 삭제할까요?`)) return;
       try {
-        await fetch(`${apiBase}/meal-logs/${id}`, { method: "DELETE" });
+        await apiFetch(`${apiBase}/meal-logs/${id}`, { method: "DELETE" });
         await loadCalendarMonth();
         showDayDetail(dateStr);
         renderCalendar();

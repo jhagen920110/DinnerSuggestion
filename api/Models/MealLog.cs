@@ -11,7 +11,7 @@ public class MealLog
 
     [JsonProperty("userId")]
     [JsonPropertyName("userId")]
-    public string UserId { get; set; } = "jonathan";
+    public string UserId { get; set; } = string.Empty;
 
     [JsonProperty("date")]
     [JsonPropertyName("date")]

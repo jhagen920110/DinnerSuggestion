@@ -1,28 +1,26 @@
 using System.Net;
+using DinnerSuggestionApi.Middleware;
 using DinnerSuggestionApi.Models;
 using Microsoft.Azure.Cosmos;
-using Microsoft.Extensions.Options;
 
 namespace DinnerSuggestionApi.Services;
 
 public class MealLogService
 {
     private readonly Container _container;
-    private readonly string _userId;
+    private readonly UserContext _userContext;
 
-    public MealLogService(CosmosClient cosmosClient, IOptions<CosmosDbOptions> options)
+    public MealLogService(CosmosContainers containers, UserContext userContext)
     {
-        var database = cosmosClient.GetDatabase(options.Value.DatabaseName);
-        database.CreateContainerIfNotExistsAsync("meal-logs", "/userId").GetAwaiter().GetResult();
-        _container = database.GetContainer("meal-logs");
-        _userId = options.Value.UserId;
+        _container = containers.MealLogs;
+        _userContext = userContext;
     }
 
     public async Task<List<MealLog>> GetByDateRangeAsync(string startDate, string endDate)
     {
         var query = new QueryDefinition(
             "SELECT * FROM c WHERE c.userId = @userId AND c.date >= @start AND c.date <= @end ORDER BY c.date")
-            .WithParameter("@userId", _userId)
+            .WithParameter("@userId", _userContext.UserId)
             .WithParameter("@start", startDate)
             .WithParameter("@end", endDate);
 
@@ -43,12 +41,12 @@ public class MealLogService
 
     public async Task<MealLog> AddAsync(MealLog log)
     {
-        log.UserId = _userId;
+        log.UserId = _userContext.UserId;
 
         // Check for duplicate (same date + name)
         var query = new QueryDefinition(
             "SELECT * FROM c WHERE c.userId = @userId AND c.date = @date AND c.name = @name")
-            .WithParameter("@userId", _userId)
+            .WithParameter("@userId", _userContext.UserId)
             .WithParameter("@date", log.Date)
             .WithParameter("@name", log.Name);
 
@@ -60,7 +58,7 @@ public class MealLogService
                 return batch.First(); // Return existing instead of creating duplicate
         }
 
-        var response = await _container.CreateItemAsync(log, new PartitionKey(_userId));
+        var response = await _container.CreateItemAsync(log, new PartitionKey(_userContext.UserId));
         return response.Resource;
     }
 
@@ -68,7 +66,7 @@ public class MealLogService
     {
         try
         {
-            var existingResponse = await _container.ReadItemAsync<MealLog>(id, new PartitionKey(_userId));
+            var existingResponse = await _container.ReadItemAsync<MealLog>(id, new PartitionKey(_userContext.UserId));
             var existing = existingResponse.Resource;
 
             existing.Date = updated.Date;
@@ -77,7 +75,7 @@ public class MealLogService
             existing.RecipeId = updated.RecipeId;
             existing.Source = updated.Source;
 
-            var response = await _container.ReplaceItemAsync(existing, existing.Id, new PartitionKey(_userId));
+            var response = await _container.ReplaceItemAsync(existing, existing.Id, new PartitionKey(_userContext.UserId));
             return response.Resource;
         }
         catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
@@ -90,7 +88,7 @@ public class MealLogService
     {
         try
         {
-            await _container.DeleteItemAsync<MealLog>(id, new PartitionKey(_userId));
+            await _container.DeleteItemAsync<MealLog>(id, new PartitionKey(_userContext.UserId));
             return true;
         }
         catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)

@@ -11,7 +11,7 @@ public class Tag
 
     [JsonProperty("userId")]
     [JsonPropertyName("userId")]
-    public string UserId { get; set; } = "jonathan";
+    public string UserId { get; set; } = string.Empty;
 
     [JsonProperty("name")]
     [JsonPropertyName("name")]

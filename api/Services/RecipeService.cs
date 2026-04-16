@@ -1,32 +1,31 @@
+using DinnerSuggestionApi.Middleware;
 using DinnerSuggestionApi.Models;
 using Microsoft.Azure.Cosmos;
-using Microsoft.Extensions.Options;
 
 namespace DinnerSuggestionApi.Services;
 
 public class RecipeService
 {
     private readonly Container _container;
-    private readonly string _userId;
+    private readonly UserContext _userContext;
 
-    public RecipeService(CosmosClient cosmosClient, IOptions<CosmosDbOptions> options)
+    public RecipeService(CosmosContainers containers, UserContext userContext)
     {
-        var settings = options.Value;
-        _userId = string.IsNullOrWhiteSpace(settings.UserId) ? "jonathan" : settings.UserId;
-        _container = cosmosClient.GetContainer(settings.DatabaseName, "recipes");
+        _container = containers.Recipes;
+        _userContext = userContext;
     }
 
     public async Task<List<Recipe>> GetAllAsync()
     {
         var query = new QueryDefinition(
             "SELECT * FROM c WHERE c.userId = @userId ORDER BY c.name")
-            .WithParameter("@userId", _userId);
+            .WithParameter("@userId", _userContext.UserId);
 
         var iterator = _container.GetItemQueryIterator<Recipe>(
             queryDefinition: query,
             requestOptions: new QueryRequestOptions
             {
-                PartitionKey = new PartitionKey(_userId)
+                PartitionKey = new PartitionKey(_userContext.UserId)
             });
 
         var results = new List<Recipe>();
@@ -41,9 +40,9 @@ public class RecipeService
     public async Task<Recipe> AddAsync(Recipe recipe)
     {
         recipe.Id = Guid.NewGuid().ToString();
-        recipe.UserId = _userId;
+        recipe.UserId = _userContext.UserId;
 
-        var response = await _container.CreateItemAsync(recipe, new PartitionKey(_userId));
+        var response = await _container.CreateItemAsync(recipe, new PartitionKey(_userContext.UserId));
         return response.Resource;
     }
 
@@ -51,7 +50,7 @@ public class RecipeService
     {
         try
         {
-            var existingResponse = await _container.ReadItemAsync<Recipe>(id, new PartitionKey(_userId));
+            var existingResponse = await _container.ReadItemAsync<Recipe>(id, new PartitionKey(_userContext.UserId));
             var existing = existingResponse.Resource;
 
             existing.Name = updatedRecipe.Name;
@@ -65,7 +64,7 @@ public class RecipeService
             existing.ImageUrl = updatedRecipe.ImageUrl;
             existing.LastMade = updatedRecipe.LastMade;
 
-            var response = await _container.ReplaceItemAsync(existing, existing.Id, new PartitionKey(_userId));
+            var response = await _container.ReplaceItemAsync(existing, existing.Id, new PartitionKey(_userContext.UserId));
             return response.Resource;
         }
         catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
@@ -78,7 +77,7 @@ public class RecipeService
     {
         try
         {
-            await _container.DeleteItemAsync<Recipe>(id, new PartitionKey(_userId));
+            await _container.DeleteItemAsync<Recipe>(id, new PartitionKey(_userContext.UserId));
             return true;
         }
         catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)

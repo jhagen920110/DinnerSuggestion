@@ -24,7 +24,7 @@
     },
     {
       "route": "/*",
-      "allowedRoles": ["family"]
+      "allowedRoles": ["authenticated"]
     }
   ],
   "responseOverrides": {

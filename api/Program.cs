@@ -1,3 +1,4 @@
+using DinnerSuggestionApi.Middleware;
 using DinnerSuggestionApi.Models;
 using DinnerSuggestionApi.Services;
 using Microsoft.Azure.Cosmos;
@@ -8,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 var builder = FunctionsApplication.CreateBuilder(args);
 
 builder.ConfigureFunctionsWebApplication();
+builder.UseMiddleware<AuthMiddleware>();
 
 builder.Services.Configure<CosmosDbOptions>(
     builder.Configuration.GetSection("CosmosDb"));
@@ -29,10 +31,12 @@ builder.Services.AddSingleton(sp =>
     });
 });
 
-builder.Services.AddSingleton<PantryService>();
-builder.Services.AddSingleton<RecipeService>();
-builder.Services.AddSingleton<TagService>();
-builder.Services.AddSingleton<MealLogService>();
+builder.Services.AddScoped<UserContext>();
+builder.Services.AddSingleton<CosmosContainers>();
+builder.Services.AddScoped<PantryService>();
+builder.Services.AddScoped<RecipeService>();
+builder.Services.AddScoped<TagService>();
+builder.Services.AddScoped<MealLogService>();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<SuggestionService>();
 builder.Services.AddSingleton<IngredientClassifierService>();

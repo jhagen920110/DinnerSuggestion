@@ -643,11 +643,11 @@ body.theme-modern {
   background: #f0f4ff;
   border: 1px solid #c7d2fe;
   color: #4f46e5;
-  font-size: 0.72rem;
+  font-size: 0.65rem;
   font-weight: 700;
   cursor: pointer;
-  padding: 3px 8px;
-  border-radius: 8px;
+  padding: 2px 5px;
+  border-radius: 6px;
   transition: background 0.15s, color 0.15s;
 }
 

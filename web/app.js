@@ -607,13 +607,16 @@ function updateSelectedCount() {
   if (existing) existing.remove();
 }
 
-async function fetchSuggestions(exclude = []) {
+async function fetchSuggestions(exclude = [], answers = null) {
   const body = {};
   if (selectedIngredients.size > 0) {
     body.mustInclude = [...selectedIngredients];
   }
   if (exclude.length > 0) {
     body.exclude = exclude;
+  }
+  if (answers && answers.length > 0) {
+    body.answers = answers;
   }
 
   const response = await apiFetch(`${apiBase}/suggestions`, {
@@ -669,12 +672,81 @@ async function fetchSuggestions(exclude = []) {
 let allSuggestions = [];
 let shownSuggestionCount = 0;
 let currentAiMessage = "";
+let currentAnswers = [];
 const SUGGESTIONS_PER_PAGE = 3;
+
+async function fetchQuestions() {
+  const response = await apiFetch(`${apiBase}/suggestions/questions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({}),
+  });
+  if (!response.ok) throw new Error(`Failed to get questions: ${response.status}`);
+  return await response.json();
+}
+
+function showQuestion(question, container) {
+  return new Promise((resolve) => {
+    const qDiv = document.createElement("div");
+    qDiv.className = "ai-question";
+
+    const text = document.createElement("div");
+    text.className = "ai-question-text";
+    text.textContent = question.text ?? question.Text ?? "";
+    qDiv.appendChild(text);
+
+    const optionsDiv = document.createElement("div");
+    optionsDiv.className = "ai-options";
+
+    const options = question.options ?? question.Options ?? [];
+    options.forEach(opt => {
+      const btn = document.createElement("button");
+      btn.className = "ai-option-btn";
+      btn.textContent = opt;
+      btn.addEventListener("click", () => {
+        optionsDiv.querySelectorAll(".ai-option-btn").forEach(b => {
+          b.classList.remove("selected");
+          b.disabled = true;
+        });
+        btn.classList.add("selected");
+        customWrap.hidden = true;
+        setTimeout(() => resolve(opt), 300);
+      });
+      optionsDiv.appendChild(btn);
+    });
+
+    qDiv.appendChild(optionsDiv);
+
+    const customWrap = document.createElement("div");
+    customWrap.className = "ai-custom-input";
+    const customInput = document.createElement("input");
+    customInput.type = "text";
+    customInput.placeholder = "직접 입력...";
+    const customBtn = document.createElement("button");
+    customBtn.textContent = "확인";
+    const submitCustom = () => {
+      const val = customInput.value.trim();
+      if (val) {
+        optionsDiv.querySelectorAll(".ai-option-btn").forEach(b => b.disabled = true);
+        customWrap.hidden = true;
+        resolve(val);
+      }
+    };
+    customBtn.addEventListener("click", submitCustom);
+    customInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") submitCustom();
+    });
+    customWrap.appendChild(customInput);
+    customWrap.appendChild(customBtn);
+    qDiv.appendChild(customWrap);
+
+    container.appendChild(qDiv);
+  });
+}
 
 async function suggestDinner() {
   const { suggestButton, suggestionsDiv } = getEls();
 
-  // Don't suggest if pantry is empty
   const available = currentIngredients;
   if (available.length === 0) {
     suggestionsDiv.innerHTML = `
@@ -685,31 +757,61 @@ async function suggestDinner() {
 
   try {
     setBusy(suggestButton, true, "추천 중...");
-
     suggestionsDiv.innerHTML = `
       <div class="empty-state">추천 메뉴를 불러오는 중...</div>
     `;
 
-    // Show a friendly intermediate message after 3 seconds
-    const thinkingTimeout = setTimeout(() => {
+    // Phase 1: Get AI questions
+    const thinkingTimeout1 = setTimeout(() => {
       suggestionsDiv.innerHTML = `
         <div class="ai-message ai-thinking">
           <span class="ai-thinking-dots"></span>
-          냉장고 재료를 확인하고 메뉴를 고르고 있어요...
+          오늘 저녁 메뉴를 고민하고 있어요...
         </div>
       `;
     }, 3000);
 
-    const result = await fetchSuggestions();
-    clearTimeout(thinkingTimeout);
+    const qResult = await fetchQuestions();
+    clearTimeout(thinkingTimeout1);
 
+    // Show greeting + questions
+    suggestionsDiv.innerHTML = "";
+
+    const qMsg = qResult.message ?? qResult.Message ?? "";
+    if (qMsg) {
+      const msgDiv = document.createElement("div");
+      msgDiv.className = "ai-message";
+      msgDiv.textContent = qMsg;
+      suggestionsDiv.appendChild(msgDiv);
+    }
+
+    // Phase 2: Show questions one by one
+    const questions = qResult.questions ?? qResult.Questions ?? [];
+    const answers = [];
+    for (const q of questions) {
+      const category = q.category ?? q.Category ?? "";
+      const answer = await showQuestion(q, suggestionsDiv);
+      answers.push({ category, answer });
+    }
+
+    currentAnswers = answers;
+
+    // Phase 3: Fetch suggestions with answers
+    const thinkingDiv = document.createElement("div");
+    thinkingDiv.className = "ai-message ai-thinking";
+    thinkingDiv.innerHTML = `<span class="ai-thinking-dots"></span> 선택하신 조건에 맞는 메뉴를 골라보고 있어요...`;
+    suggestionsDiv.appendChild(thinkingDiv);
+
+    const result = await fetchSuggestions([], answers);
+
+    // Replace everything with results
+    suggestionsDiv.innerHTML = "";
     allSuggestions = result.suggestions;
     currentAiMessage = result.message;
     shownSuggestionCount = 0;
     await renderSuggestions(allSuggestions);
   } catch (error) {
     console.error("suggestDinner failed:", error);
-
     suggestionsDiv.innerHTML = `
       <div class="empty-state">추천을 불러오지 못했어요.</div>
     `;
@@ -741,7 +843,7 @@ async function loadMoreSuggestions(btn) {
     btn.disabled = true;
 
     const existingNames = [...suggestionsDiv.querySelectorAll("h3")].map(h => h.textContent.trim());
-    const result = await fetchSuggestions(existingNames);
+    const result = await fetchSuggestions(existingNames, currentAnswers);
 
     const existingBtn = suggestionsDiv.querySelector(".more-suggestions-btn");
     if (existingBtn) existingBtn.remove();

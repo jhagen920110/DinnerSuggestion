@@ -1114,6 +1114,90 @@ select {
   to { opacity: 1; transform: translateY(0); }
 }
 
+.ai-question {
+  margin-bottom: 16px;
+  animation: aiFadeIn 0.4s ease;
+}
+
+.ai-question-text {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 10px;
+}
+
+.ai-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.ai-option-btn {
+  background: white;
+  border: 1.5px solid #c7d2fe;
+  border-radius: 20px;
+  padding: 9px 18px;
+  font-size: 0.9rem;
+  color: #4338ca;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.ai-option-btn:hover:not(:disabled) {
+  background: #eef2ff;
+  border-color: #818cf8;
+}
+
+.ai-option-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.ai-option-btn.selected {
+  background: #4338ca;
+  color: white;
+  border-color: #4338ca;
+  opacity: 1;
+}
+
+.ai-custom-input {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.ai-custom-input input {
+  flex: 1;
+  border: 1.5px solid #d1d5db;
+  border-radius: 12px;
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+}
+
+.ai-custom-input input:focus {
+  border-color: #818cf8;
+}
+
+.ai-custom-input button {
+  background: #4338ca;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s;
+}
+
+.ai-custom-input button:hover {
+  background: #3730a3;
+}
+
 .section-head-actions {
   display: flex;
   align-items: center;

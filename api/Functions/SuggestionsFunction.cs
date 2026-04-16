@@ -22,12 +22,42 @@ public class SuggestionsFunction
         _mealLogService = mealLogService;
     }
 
+    [Function("GetSuggestionQuestions")]
+    public async Task<HttpResponseData> GetSuggestionQuestions(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "suggestions/questions")] HttpRequestData req)
+    {
+        var availablePantry = await _pantryStore.GetAvailableIngredientNamesAsync();
+
+        var today = DateTime.UtcNow;
+        var thirtyDaysAgo = today.AddDays(-30);
+        var recentLogs = await _mealLogService.GetByDateRangeAsync(
+            thirtyDaysAgo.ToString("yyyy-MM-dd"),
+            today.ToString("yyyy-MM-dd"));
+        var recentMealNames = recentLogs
+            .OrderByDescending(l => l.Date)
+            .Select(l => l.Name)
+            .Where(n => !string.IsNullOrWhiteSpace(n))
+            .Distinct()
+            .ToList();
+
+        var mealHistoryForAi = recentMealNames.Count >= 2 ? recentMealNames : null;
+
+        var (message, questions) = await _suggestionService.GetQuestionsAsync(
+            availablePantry,
+            mealHistoryForAi);
+
+        var response = req.CreateResponse(HttpStatusCode.OK);
+        await response.WriteAsJsonAsync(new { message, questions });
+        return response;
+    }
+
     [Function("GetSuggestions")]
     public async Task<HttpResponseData> GetSuggestions(
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "suggestions")] HttpRequestData req)
     {
         var mustInclude = new List<string>();
         var exclude = new List<string>();
+        List<AnswerEntry>? answers = null;
 
         try
         {
@@ -48,6 +78,13 @@ public class SuggestionsFunction
                 exclude = body.Exclude
                     .Where(x => !string.IsNullOrWhiteSpace(x))
                     .Select(x => x.Trim())
+                    .ToList();
+            }
+
+            if (body?.Answers is not null)
+            {
+                answers = body.Answers
+                    .Where(a => !string.IsNullOrWhiteSpace(a.Category) && !string.IsNullOrWhiteSpace(a.Answer))
                     .ToList();
             }
         }
@@ -79,6 +116,21 @@ public class SuggestionsFunction
 
         var dbSuggestions = BuildDbSuggestions(allRecipes, availablePantry, mustInclude);
 
+        // Filter saved recipes by cuisine if user specified a preference
+        var preferences = answers?
+            .Select(a => new KeyValuePair<string, string>(a.Category, a.Answer))
+            .ToList();
+
+        var cuisineAnswer = answers?
+            .FirstOrDefault(a => string.Equals(a.Category, "cuisine", StringComparison.OrdinalIgnoreCase))?.Answer;
+
+        if (!string.IsNullOrWhiteSpace(cuisineAnswer) && !IsCatchAllAnswer(cuisineAnswer))
+        {
+            dbSuggestions = dbSuggestions
+                .Where(s => IsCuisineMatch(s.Cuisine, cuisineAnswer))
+                .ToList();
+        }
+
         if (exclude.Count > 0)
         {
             var excludeKeys = new HashSet<string>(
@@ -100,7 +152,8 @@ public class SuggestionsFunction
             aiExclude,
             mealHistoryForAi,
             knownRecipeNames,
-            savedSuggestionNames);
+            savedSuggestionNames,
+            preferences);
 
         // Deduplicate: remove AI suggestions that match any saved recipe name
         var uniqueAi = aiSuggestions
@@ -171,9 +224,45 @@ public class SuggestionsFunction
         return (value ?? string.Empty).Trim().Replace(" ", string.Empty).ToLowerInvariant();
     }
 
+    private static bool IsCatchAllAnswer(string answer)
+    {
+        var lower = answer.Trim().ToLowerInvariant();
+        return lower.Contains("아무") || lower.Contains("상관없") || lower.Contains("다 좋") || lower.Contains("뭐든");
+    }
+
+    private static bool IsCuisineMatch(string recipeCuisine, string userChoice)
+    {
+        if (string.IsNullOrWhiteSpace(recipeCuisine) || string.IsNullOrWhiteSpace(userChoice))
+            return false;
+
+        var rc = recipeCuisine.Trim().ToLowerInvariant();
+        var uc = userChoice.Trim().ToLowerInvariant();
+
+        // Direct contains match
+        if (rc.Contains(uc) || uc.Contains(rc))
+            return true;
+
+        // Map common labels
+        return (uc, rc) switch
+        {
+            ("한식", "korean") or ("korean", "한식") => true,
+            ("양식", "western") or ("western", "양식") => true,
+            ("중식", "chinese") or ("chinese", "중식") => true,
+            ("일식", "japanese") or ("japanese", "일식") => true,
+            _ => false
+        };
+    }
+
     private class SuggestionsRequest
     {
         public List<string>? MustInclude { get; set; }
         public List<string>? Exclude { get; set; }
+        public List<AnswerEntry>? Answers { get; set; }
+    }
+
+    private class AnswerEntry
+    {
+        public string Category { get; set; } = string.Empty;
+        public string Answer { get; set; } = string.Empty;
     }
 }

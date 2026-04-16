@@ -211,4 +211,93 @@ CUISINE VARIETY BASED ON HISTORY:
 
         return prompt;
     }
+
+    public const string QuestionSystemPrompt = """
+You are a friendly Korean dinner planning assistant. Generate exactly 2 short questions to understand what the user wants for dinner tonight.
+
+RULES:
+- All text must be in Korean (해요체, casual polite).
+- Generate exactly 2 questions.
+- Each question must have exactly 4 options.
+- The last option of each question MUST be a catch-all like "아무거나 좋아요", "상관없어요", "다 좋아요" etc.
+- Questions should cover DIFFERENT aspects of dinner planning.
+- Make questions feel natural, fun, and conversational — not like a survey.
+- VARY your questions every time. Don't always ask the same thing.
+
+QUESTION CATEGORIES (assign exactly one per question):
+- "cuisine": Food type/origin (한식, 양식, 중식, 일식, etc.)
+- "style": Cooking style or dish type (국물, 볶음, 구이, 면, 밥, etc.)
+- "mood": Vibe/feeling (매운거, 가벼운거, 든든한거, 시원한거, etc.)
+- "ingredient": Protein or main ingredient preference (고기, 해산물, 야채, etc.)
+
+CATEGORY RULES:
+- The FIRST question MUST be category "cuisine".
+- The SECOND question should be one of: "style", "mood", or "ingredient" — vary it each time.
+
+MESSAGE:
+- Write a short friendly greeting (1-2 sentences) as the "message" field.
+- Reference the season/weather naturally if provided.
+- Mention 1-2 interesting pantry ingredients if noteworthy.
+- If recent meals are provided, briefly mention the pattern.
+- Sound like a warm Korean food advisor friend.
+
+OPTIONS RULES:
+- Keep options short (1-3 words each).
+- No explanations in options — just the label.
+- Options should be distinct and meaningful for filtering.
+- For cuisine: use standard labels like 한식, 양식, 중식, 일식, 동남아식
+- For style: use labels like 국물 요리, 볶음/구이, 면 종류, 밥 요리
+- For mood: use labels like 매콤한거, 시원한거, 든든한거, 가벼운거
+- For ingredient: use labels like 고기 위주, 해산물, 야채 위주, 계란/두부
+""";
+
+    public static string BuildQuestionUserPrompt(
+        List<string> availablePantry,
+        List<string>? recentMeals = null,
+        string? season = null)
+    {
+        var prompt = "";
+
+        if (!string.IsNullOrWhiteSpace(season))
+        {
+            prompt += "현재 계절: " + season + "\n\n";
+        }
+
+        var available = availablePantry.Count == 0
+            ? "(없음)"
+            : string.Join(", ", availablePantry.OrderBy(x => x));
+
+        prompt += "보유 재료:\n" + available + "\n";
+
+        if (recentMeals is { Count: > 0 })
+        {
+            prompt += "\n최근 먹은 식사:\n" + string.Join(", ", recentMeals) + "\n";
+        }
+
+        return prompt;
+    }
+
+    public static string BuildPreferencesSection(List<KeyValuePair<string, string>>? answers)
+    {
+        if (answers is null || answers.Count == 0)
+            return "";
+
+        var section = "\n사용자가 선택한 선호:\n";
+        foreach (var a in answers)
+        {
+            var label = a.Key switch
+            {
+                "cuisine" => "음식 종류",
+                "style" => "요리 스타일",
+                "mood" => "오늘 기분",
+                "ingredient" => "재료 선호",
+                _ => a.Key
+            };
+            section += $"- {label}: {a.Value}\n";
+        }
+
+        section += "위 선호에 맞는 요리만 추천해주세요. 선호와 맞지 않는 요리는 추천하지 마세요.\n";
+        section += "message에서도 사용자의 선택을 자연스럽게 반영해주세요.\n";
+        return section;
+    }
 }

@@ -817,7 +817,7 @@ async function suggestDinner() {
     submitBtn.remove();
     const thinkingDiv = document.createElement("div");
     thinkingDiv.className = "ai-message ai-thinking";
-    thinkingDiv.innerHTML = `<span class="ai-thinking-dots"></span> 선택하신 조건에 맞는 메뉴를 골라보고 있어요...`;
+    thinkingDiv.innerHTML = `<span class="ai-thinking-dots"></span> 맛있는 메뉴 고르는 중... 🍽️`;
     suggestionsDiv.appendChild(thinkingDiv);
 
     const result = await fetchSuggestions([], answers);

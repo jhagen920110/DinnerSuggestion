@@ -543,13 +543,15 @@ body.theme-modern {
 }
 
 .filters-toggle-sm {
-  padding: 8px 12px;
-  font-size: 0.85rem;
+  padding: 10px 10px;
+  font-size: 0.8rem;
+  order: 2;
 }
 
 .primary-btn-sm {
-  padding: 8px 14px;
+  padding: 10px 14px;
   font-size: 0.85rem;
+  order: 1;
 }
 
 .filters-panel {

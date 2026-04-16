@@ -196,6 +196,7 @@ public class SuggestionsFunction
             .ToList();
         var filteredAi = uniqueAi
             .Where(s => !blockedNames.Contains(ToComparisonKey(s.Name)))
+            .OrderBy(_ => Random.Shared.Next())
             .ToList();
 
         // Interleave: AI, AI, saved, AI, AI, saved, ...
@@ -265,6 +266,7 @@ public class SuggestionsFunction
         return suggestions
             .OrderByDescending(s => s.CanMakeNow)
             .ThenBy(s => s.MissingIngredients.Count)
+            .ThenBy(_ => Random.Shared.Next())
             .ToList();
     }
 

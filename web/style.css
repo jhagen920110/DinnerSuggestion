@@ -1232,7 +1232,6 @@ select {
 }
 
 .ai-question-text {
-  font-family: var(--font-display);
   font-size: 1rem;
   font-weight: 600;
   color: #1e293b;
@@ -1253,7 +1252,6 @@ select {
   padding: 9px 18px;
   font-size: 0.9rem;
   color: #4338ca;
-  font-family: var(--font-display);
   cursor: pointer;
   transition: all 0.2s;
 }

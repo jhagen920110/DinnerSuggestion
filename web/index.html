@@ -29,10 +29,18 @@
       </div>
       <div class="splash-overlay">
         <h1 class="splash-title">🍲 오늘 뭐 먹지?</h1>
-        <p class="splash-sub">메뉴 준비 중...</p>
+        <p class="splash-sub">메뉴 준비 중 <span id="splashFoodIcon">🍳</span></p>
       </div>
     </div>
   </div>
+  <script>
+    (function(){
+      var icons = ['🍳','🥘','🍜','🍲','🥟','🍣','🍛','🍝','🥩','🍤','🍕','🌮','🍔','🥗','🧆','🫕'];
+      var i = 0;
+      var el = document.getElementById('splashFoodIcon');
+      if (el) setInterval(function(){ i = (i+1) % icons.length; el.textContent = icons[i]; }, 400);
+    })();
+  </script>
 
   <header id="topBar" class="top-bar">
     <h1 id="topBarTitle" class="top-bar-title">저녁 메뉴 추천</h1>

@@ -282,6 +282,17 @@ select {
   margin: 0;
 }
 
+#splashFoodIcon {
+  display: inline-block;
+  font-size: 1.3rem;
+  animation: splashBounce 0.4s ease infinite alternate;
+}
+
+@keyframes splashBounce {
+  0% { transform: translateY(0) scale(1); }
+  100% { transform: translateY(-6px) scale(1.15); }
+}
+
 .hero {
   padding: 8px 4px 18px;
   display: flex;

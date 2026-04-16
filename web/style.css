@@ -1313,7 +1313,7 @@ body.theme-modern {
   transition: all 0.2s;
 }
 
-.ai-option-btn:hover:not(:disabled) {
+.ai-option-btn:hover:not(:disabled):not(.selected) {
   background: #eef2ff;
   border-color: #818cf8;
 }
@@ -1323,7 +1323,8 @@ body.theme-modern {
   cursor: default;
 }
 
-.ai-option-btn.selected {
+.ai-option-btn.selected,
+.ai-option-btn.selected:hover {
   background: #4338ca;
   color: #ffffff;
   border-color: #4338ca;

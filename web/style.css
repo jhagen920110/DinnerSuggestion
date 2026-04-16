@@ -511,7 +511,7 @@ body.theme-modern {
   background: var(--primary);
   color: white;
   font-weight: 800;
-  padding: 12px 18px;
+  padding: 12px 22px;
 }
 
 .primary-btn:hover {
@@ -625,10 +625,10 @@ body.theme-modern {
   background: #f0f4ff;
   border: 1px solid #c7d2fe;
   color: #4f46e5;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
-  padding: 6px 14px;
+  padding: 5px 10px;
   border-radius: 10px;
   transition: background 0.15s, color 0.15s;
 }
@@ -1158,6 +1158,7 @@ body.theme-modern {
 
 .blocked-add-row input {
   flex: 1;
+  min-width: 0;
   padding: 8px 12px;
   border: 1.5px solid var(--card-border);
   border-radius: var(--radius-md);

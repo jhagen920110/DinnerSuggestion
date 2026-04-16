@@ -1,9 +1,10 @@
-const CACHE_NAME = "dinner-v2";
+const CACHE_NAME = "dinner-v3";
 const STATIC_ASSETS = [
   "/index.html",
   "/style.css",
   "/config.js",
   "/app.js",
+  "/manifest.json",
   "/images/jjigae-favicon.ico",
 ];
 
@@ -57,6 +58,6 @@ self.addEventListener("fetch", (event) => {
         }
         return response;
       })
-      .catch(() => caches.match(event.request))
+      .catch(() => caches.match(event.request).then(r => r || new Response('', { status: 503 })))
   );
 });

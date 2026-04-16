@@ -14,7 +14,7 @@
   --radius-lg: 18px;
   --radius-md: 14px;
   --font-display: 'Jua', 'Apple SD Gothic Neo', sans-serif;
-  --font-body: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Segoe UI', sans-serif;
+  --font-body: 'Gowun Dodum', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Segoe UI', sans-serif;
 
   --low-bg: #fff1f2;
   --low-text: #be123c;
@@ -132,6 +132,47 @@ select {
   flex-direction: column;
   align-items: center;
   gap: 10px;
+}
+
+/* Font Theme Picker */
+.font-theme-picker {
+  display: flex;
+  gap: 10px;
+}
+.font-theme-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.font-theme-btn:hover {
+  border-color: #a5b4fc;
+  background: #f5f3ff;
+}
+.font-theme-btn.active {
+  border-color: var(--primary);
+  background: #eef2ff;
+}
+.font-theme-preview {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+.font-theme-name {
+  font-size: 0.72rem;
+  color: #667085;
+  font-weight: 600;
+}
+
+/* Handwritten theme overrides */
+body.theme-handwritten {
+  --font-display: 'Gaegu', cursive;
+  --font-body: 'Gaegu', cursive;
 }
 .logout-btn {
   display: inline-block;

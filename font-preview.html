@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Font Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Do+Hyeon&family=Gaegu:wght@400;700&family=Gamja+Flower&family=Gowun+Dodum&family=Gothic+A1:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;600&family=Jua&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #f4f7fb; padding: 24px; }
+    h1 { font-family: sans-serif; font-size: 1.2rem; color: #667; margin-bottom: 24px; text-align: center; }
+
+    .combo { 
+      background: #fff; 
+      border-radius: 18px; 
+      padding: 24px; 
+      margin-bottom: 24px; 
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    }
+    .combo-label {
+      font-family: monospace;
+      font-size: 0.75rem;
+      color: #999;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .combo-title {
+      font-size: 1.85rem;
+      font-weight: 900;
+      color: #1f2937;
+      margin-bottom: 4px;
+    }
+    .combo-dish {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 12px;
+    }
+    .combo-body {
+      font-size: 0.95rem;
+      color: #334155;
+      line-height: 1.6;
+      margin-bottom: 10px;
+    }
+    .combo-pills {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;
+    }
+    .pill {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+    .pill-purple { background: #ede9fe; color: #6d28d9; }
+    .pill-green { background: #ecfdf5; color: #047857; }
+    .pill-blue { background: #eff6ff; color: #1d4ed8; }
+    .pill-yellow { background: #fef3c7; color: #92400e; }
+
+    .combo-question {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 8px;
+    }
+    .combo-options { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+    .option-btn {
+      background: white;
+      border: 1.5px solid #c7d2fe;
+      border-radius: 20px;
+      padding: 8px 16px;
+      font-size: 0.88rem;
+      color: #4338ca;
+      cursor: default;
+    }
+    .combo-btn {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 20px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: default;
+      margin-top: 8px;
+    }
+    .divider { border: none; border-top: 1px dashed #e2e8f0; margin: 14px 0; }
+  </style>
+</head>
+<body>
+
+<h1>Font Combo Preview — 오늘 뭐 먹지?</h1>
+
+<!-- COMBO 1: Jua + Gowun Dodum -->
+<div class="combo">
+  <div class="combo-label">Combo 1 — Jua (titles) + Gowun Dodum (body)</div>
+  <div class="combo-title" style="font-family: 'Jua', sans-serif;">🍽️ 저녁 메뉴 추천</div>
+  <div class="combo-dish" style="font-family: 'Jua', sans-serif;">김치찌개</div>
+  <div class="combo-pills">
+    <span class="pill pill-purple" style="font-family: 'Gowun Dodum', sans-serif;">한식</span>
+    <span class="pill pill-green" style="font-family: 'Gowun Dodum', sans-serif;">지금 가능</span>
+    <span class="pill pill-blue" style="font-family: 'Gowun Dodum', sans-serif;">⏱ 30분</span>
+    <span class="pill pill-yellow" style="font-family: 'Gowun Dodum', sans-serif;">보통</span>
+  </div>
+  <div class="combo-body" style="font-family: 'Gowun Dodum', sans-serif;">
+    사용재료: 김치, 두부, 돼지고기, 대파, 고추장<br>
+    집에 있는 재료로 간단하게 만들 수 있는 김치찌개예요.
+  </div>
+  <hr class="divider">
+  <div class="combo-question" style="font-family: 'Gowun Dodum', sans-serif;">오늘 어떤 분위기의 저녁이 끌려요?</div>
+  <div class="combo-options">
+    <span class="option-btn" style="font-family: 'Gowun Dodum', sans-serif;">🍲 따뜻한 국물</span>
+    <span class="option-btn" style="font-family: 'Gowun Dodum', sans-serif;">🥗 가벼운 한 끼</span>
+    <span class="option-btn" style="font-family: 'Gowun Dodum', sans-serif;">🍖 든든한 고기</span>
+  </div>
+  <button class="combo-btn" style="font-family: 'Gowun Dodum', sans-serif;">추천 받기 🍽️</button>
+</div>
+
+<!-- COMBO 2: Black Han Sans + Noto Sans KR -->
+<div class="combo">
+  <div class="combo-label">Combo 2 — Black Han Sans (titles) + Noto Sans KR (body)</div>
+  <div class="combo-title" style="font-family: 'Black Han Sans', sans-serif;">🍽️ 저녁 메뉴 추천</div>
+  <div class="combo-dish" style="font-family: 'Black Han Sans', sans-serif;">김치찌개</div>
+  <div class="combo-pills">
+    <span class="pill pill-purple" style="font-family: 'Noto Sans KR', sans-serif;">한식</span>
+    <span class="pill pill-green" style="font-family: 'Noto Sans KR', sans-serif;">지금 가능</span>
+    <span class="pill pill-blue" style="font-family: 'Noto Sans KR', sans-serif;">⏱ 30분</span>
+    <span class="pill pill-yellow" style="font-family: 'Noto Sans KR', sans-serif;">보통</span>
+  </div>
+  <div class="combo-body" style="font-family: 'Noto Sans KR', sans-serif;">
+    사용재료: 김치, 두부, 돼지고기, 대파, 고추장<br>
+    집에 있는 재료로 간단하게 만들 수 있는 김치찌개예요.
+  </div>
+  <hr class="divider">
+  <div class="combo-question" style="font-family: 'Noto Sans KR', sans-serif;">오늘 어떤 분위기의 저녁이 끌려요?</div>
+  <div class="combo-options">
+    <span class="option-btn" style="font-family: 'Noto Sans KR', sans-serif;">🍲 따뜻한 국물</span>
+    <span class="option-btn" style="font-family: 'Noto Sans KR', sans-serif;">🥗 가벼운 한 끼</span>
+    <span class="option-btn" style="font-family: 'Noto Sans KR', sans-serif;">🍖 든든한 고기</span>
+  </div>
+  <button class="combo-btn" style="font-family: 'Noto Sans KR', sans-serif;">추천 받기 🍽️</button>
+</div>
+
+<!-- COMBO 3: Gaegu everywhere -->
+<div class="combo">
+  <div class="combo-label">Combo 3 — Gaegu (everywhere)</div>
+  <div class="combo-title" style="font-family: 'Gaegu', cursive; font-weight: 700;">🍽️ 저녁 메뉴 추천</div>
+  <div class="combo-dish" style="font-family: 'Gaegu', cursive; font-weight: 700;">김치찌개</div>
+  <div class="combo-pills">
+    <span class="pill pill-purple" style="font-family: 'Gaegu', cursive;">한식</span>
+    <span class="pill pill-green" style="font-family: 'Gaegu', cursive;">지금 가능</span>
+    <span class="pill pill-blue" style="font-family: 'Gaegu', cursive;">⏱ 30분</span>
+    <span class="pill pill-yellow" style="font-family: 'Gaegu', cursive;">보통</span>
+  </div>
+  <div class="combo-body" style="font-family: 'Gaegu', cursive;">
+    사용재료: 김치, 두부, 돼지고기, 대파, 고추장<br>
+    집에 있는 재료로 간단하게 만들 수 있는 김치찌개예요.
+  </div>
+  <hr class="divider">
+  <div class="combo-question" style="font-family: 'Gaegu', cursive; font-weight: 700;">오늘 어떤 분위기의 저녁이 끌려요?</div>
+  <div class="combo-options">
+    <span class="option-btn" style="font-family: 'Gaegu', cursive;">🍲 따뜻한 국물</span>
+    <span class="option-btn" style="font-family: 'Gaegu', cursive;">🥗 가벼운 한 끼</span>
+    <span class="option-btn" style="font-family: 'Gaegu', cursive;">🍖 든든한 고기</span>
+  </div>
+  <button class="combo-btn" style="font-family: 'Gaegu', cursive;">추천 받기 🍽️</button>
+</div>
+
+<!-- BONUS: Current (Jua + system sans) -->
+<div class="combo" style="border: 2px solid #c7d2fe;">
+  <div class="combo-label">Current — Jua (titles) + System sans-serif (body)</div>
+  <div class="combo-title" style="font-family: 'Jua', sans-serif;">🍽️ 저녁 메뉴 추천</div>
+  <div class="combo-dish" style="font-family: 'Jua', sans-serif;">김치찌개</div>
+  <div class="combo-pills">
+    <span class="pill pill-purple">한식</span>
+    <span class="pill pill-green">지금 가능</span>
+    <span class="pill pill-blue">⏱ 30분</span>
+    <span class="pill pill-yellow">보통</span>
+  </div>
+  <div class="combo-body">
+    사용재료: 김치, 두부, 돼지고기, 대파, 고추장<br>
+    집에 있는 재료로 간단하게 만들 수 있는 김치찌개예요.
+  </div>
+  <hr class="divider">
+  <div class="combo-question">오늘 어떤 분위기의 저녁이 끌려요?</div>
+  <div class="combo-options">
+    <span class="option-btn">🍲 따뜻한 국물</span>
+    <span class="option-btn">🥗 가벼운 한 끼</span>
+    <span class="option-btn">🍖 든든한 고기</span>
+  </div>
+  <button class="combo-btn">추천 받기 🍽️</button>
+</div>
+
+</body>
+</html>

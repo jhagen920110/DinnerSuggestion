@@ -1363,6 +1363,7 @@ function attachFormEvents() {
 }
 
 async function init() {
+  applyFontTheme();
   await initAuth();
   syncUiFromFilterState();
   renderFiltersCollapsedState();
@@ -1373,6 +1374,7 @@ async function init() {
   initCalendar();
   attachCalendarEvents();
   attachCalendarOverlay();
+  attachFontThemePicker();
   byId("accountBtn")?.addEventListener("click", () => switchPage("account"));
   resetForm();
   attachBlockedEvents();
@@ -2265,6 +2267,29 @@ function attachBlockedEvents() {
 }
 
 document.addEventListener("DOMContentLoaded", init);
+
+// ─── Font Theme ───
+
+function applyFontTheme() {
+  const theme = localStorage.getItem("fontTheme") || "clean";
+  document.body.classList.toggle("theme-handwritten", theme === "handwritten");
+}
+
+function attachFontThemePicker() {
+  const picker = byId("fontThemePicker");
+  if (!picker) return;
+  const current = localStorage.getItem("fontTheme") || "clean";
+  picker.querySelectorAll(".font-theme-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.theme === current);
+    btn.addEventListener("click", () => {
+      localStorage.setItem("fontTheme", btn.dataset.theme);
+      applyFontTheme();
+      picker.querySelectorAll(".font-theme-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+    });
+  });
+}
+
 
 // Register service worker for PWA
 if ("serviceWorker" in navigator) {

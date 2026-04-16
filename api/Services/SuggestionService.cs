@@ -87,12 +87,23 @@ public class SuggestionService
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
         var systemPrompt = RecipeSuggestionPrompts.SystemPrompt;
+        // Determine season from current month
+        var month = DateTime.UtcNow.Month;
+        var season = month switch
+        {
+            >= 3 and <= 5 => "봄 (Spring)",
+            >= 6 and <= 8 => "여름 (Summer)",
+            >= 9 and <= 11 => "가을 (Fall)",
+            _ => "겨울 (Winter)"
+        };
+
         var userPrompt = RecipeSuggestionPrompts.BuildUserPrompt(
             availablePantry,
             mustInclude,
             exclude,
             recentMeals,
-            knownRecipes);
+            knownRecipes,
+            season);
 
         var temp = exclude.Count > 0 ? 0.8 : mustInclude.Count > 0 ? 0.2 : 0.5;
 

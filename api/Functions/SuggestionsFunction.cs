@@ -55,11 +55,11 @@ public class SuggestionsFunction
 
         var availablePantry = await _pantryStore.GetAvailableIngredientNamesAsync();
 
-        // Fetch recent meal logs (last 2 weeks)
+        // Fetch recent meal logs (last 30 days)
         var today = DateTime.UtcNow;
-        var twoWeeksAgo = today.AddDays(-14);
+        var thirtyDaysAgo = today.AddDays(-30);
         var recentLogs = await _mealLogService.GetByDateRangeAsync(
-            twoWeeksAgo.ToString("yyyy-MM-dd"),
+            thirtyDaysAgo.ToString("yyyy-MM-dd"),
             today.ToString("yyyy-MM-dd"));
         var recentMealNames = recentLogs
             .OrderByDescending(l => l.Date)
@@ -67,6 +67,9 @@ public class SuggestionsFunction
             .Where(n => !string.IsNullOrWhiteSpace(n))
             .Distinct()
             .ToList();
+
+        // Only pass meal history if there are enough entries to be meaningful
+        var mealHistoryForAi = recentMealNames.Count >= 2 ? recentMealNames : null;
 
         // 1. DB recipes first (exclude already-shown)
         var allRecipes = await _recipeService.GetAllAsync();
@@ -94,7 +97,7 @@ public class SuggestionsFunction
             availablePantry,
             mustInclude,
             aiExclude,
-            recentMealNames,
+            mealHistoryForAi,
             knownRecipeNames);
 
         // Deduplicate: remove AI suggestions that match any saved recipe name

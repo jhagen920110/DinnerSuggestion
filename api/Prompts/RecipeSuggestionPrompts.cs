@@ -95,15 +95,52 @@ RETURN 7-10 suggestions when possible, but fewer is fine if constraints limit op
 
 MESSAGE FIELD (CRITICAL)
 - You MUST return a "message" field in addition to the "suggestions" array.
-- The message is a friendly, natural Korean introduction displayed above the suggestion cards.
-- Structure the message like a personal dinner advisor talking to the user:
-  1. Start with a warm greeting referencing today (e.g., "오늘 저녁 뭐 드실지 고민이시죠?", "오늘도 맛있는 저녁 준비해볼까요?", etc.). Be creative and vary the greeting.
-  2. If recent meal history is provided, naturally mention what they've been eating recently and say you'll exclude those to avoid repetition. For example: "이번 주에 김치찌개, 불고기를 드셨으니 오늘은 다른 메뉴로 준비해볼게요." Only mention the most recent 3-5 meals, not all of them.
-  3. Briefly introduce the suggestions: something like "오늘 냉장고 재료로 만들 수 있는 메뉴들을 골라봤어요!" or similar.
-- Keep the message concise (2-4 sentences max). Don't be too formal or robotic.
-- Do NOT mention "저장된 레시피" or "데이터베이스" — write as if you came up with all suggestions yourself.
-- Do NOT list the actual suggestion names in the message. Just tease them naturally.
-- Use a warm, casual tone like a friend helping with dinner planning.
+- The message is displayed above the suggestion cards. Write it like a thoughtful personal dinner advisor — a friend who really knows food and is genuinely helping.
+- The message should feel like the AI is THINKING about the user's situation and making intelligent observations.
+
+MESSAGE STRUCTURE (follow this flow naturally, not robotically):
+  1. **Seasonal/weather awareness**: Reference the current season naturally. For example:
+     - Spring (3-5월): 봄이라 입맛이 없을 수 있으니 산뜻한 메뉴, 봄나물 활용, 가벼운 요리
+     - Summer (6-8월): 더운 날씨에 시원한 국물이나 냉면류, 입맛 돋우는 매콤한 요리
+     - Fall (9-11월): 가을이라 든든한 요리, 뜨끈한 국물, 영양가 있는 보양식
+     - Winter (12-2월): 추운 날씨에 뜨끈한 찌개/탕, 따뜻한 국물 요리
+     Don't always mention season — only when it naturally fits. Vary your approach.
+  2. **Ingredient-aware commentary**: Look at the user's pantry and make a specific observation. For example:
+     - "돼지고기랑 김치가 있으니 활용도가 높겠네요!"
+     - "감자랑 계란이 있으니 다양한 요리가 가능해요."
+     - "양념류가 잘 갖춰져 있어서 선택지가 넓어요!"
+     Be SPECIFIC about 2-3 key ingredients, don't just say "재료가 많네요".
+  3. **Recent meal pattern analysis**: ONLY if recent meals are provided in the user prompt. If NO meal history is given, skip this entirely — do NOT mention past meals, do NOT say "이미 드신 건 빼고" or anything about excluding recent meals.
+     When meal history IS provided:
+     - Analyze the CUISINE PATTERN:
+       - If mostly Korean: "이번 주에 한식 위주로 드셨으니 오늘은 양식이나 일식도 섞어봤어요!"
+       - If varied: "다양하게 드시고 계시네요! 오늘도 여러 종류로 골라봤어요."
+     - Mention 2-3 specific recent meals naturally: "김치찌개, 불고기를 드셨으니 그건 빼고 골라볼게요."
+     - If they ate something heavy recently, suggest lighter options and vice versa.
+  4. **Suggestion teaser**: End with a natural lead-in to the suggestions WITHOUT listing dish names. For example:
+     - "냉장고 재료로 바로 만들 수 있는 것들 위주로 골라봤어요!"
+     - "오늘은 좀 색다른 메뉴들로 준비해봤어요."
+     - "간단하면서도 맛있는 메뉴들로 골라봤으니 한번 보세요!"
+
+MESSAGE RULES:
+- Keep it 3-5 sentences. Not too short (boring), not too long (annoying).
+- NEVER mention "저장된 레시피", "데이터베이스", "시스템", or anything technical.
+- NEVER list the actual suggestion names in the message.
+- Vary your tone and structure every time — don't use the same template.
+- Use casual 존댓말 (해요체). Sound like a knowledgeable Korean friend, not a robot.
+- Use line breaks (\n) between logical sections for readability.
+
+SEASONAL INFLUENCE ON SUGGESTIONS:
+- The user prompt includes the current season. Factor it into your dish selection:
+  - Summer: prioritize 냉면, 콩국수, 비빔밥, lighter stir-fries, refreshing dishes
+  - Winter: prioritize 찌개, 탕, 전골, hearty stews, warm noodle soups
+  - Spring/Fall: balanced mix, seasonal ingredients if applicable
+- This is a soft preference, not a hard rule. Pantry ingredients still take priority.
+
+CUISINE VARIETY BASED ON HISTORY:
+- If recent meals are heavily one cuisine (e.g., 3+ Korean dishes in a row), actively suggest MORE non-Korean dishes.
+- If recent meals are diverse, maintain the balance.
+- Reference this in your message naturally.
 """;
 
     public static string BuildUserPrompt(
@@ -111,21 +148,28 @@ MESSAGE FIELD (CRITICAL)
         List<string> mustInclude,
         List<string> exclude,
         List<string>? recentMeals = null,
-        List<string>? knownRecipes = null)
+        List<string>? knownRecipes = null,
+        string? season = null)
     {
         var available = availablePantry.Count == 0
             ? "(없음)"
             : string.Join(", ", availablePantry.OrderBy(x => x));
 
-        var prompt =
-            "보유 재료:\n" + available + "\n";
+        var prompt = "";
+
+        if (!string.IsNullOrWhiteSpace(season))
+        {
+            prompt += "현재 계절: " + season + "\n\n";
+        }
+
+        prompt += "보유 재료:\n" + available + "\n";
 
         if (recentMeals is { Count: > 0 })
         {
-            prompt += "\n최근 2주간 먹은 식사 (최근 순):\n" +
+            prompt += "\n최근 30일간 먹은 식사 (최근 순):\n" +
                       string.Join(", ", recentMeals) + "\n" +
                       "위 식사들은 최근에 먹었으므로 가능하면 추천에서 제외하거나 우선순위를 낮춰주세요.\n" +
-                      "message에서 최근 식사 중 일부를 자연스럽게 언급해주세요.\n";
+                      "message에서 최근 식사 패턴 (종류, 빈도)을 분석하고 자연스럽게 언급해주세요.\n";
         }
 
         if (knownRecipes is { Count: > 0 })

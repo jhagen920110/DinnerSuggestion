@@ -46,8 +46,9 @@ public class SuggestionService
             var randomSeed = Random.Shared.Next(1, 1001);
             var categoryPool = new[] { "cuisine", "style", "mood", "ingredient", "seasonal", "adventure", "effort", "spice" };
             var shuffled = categoryPool.OrderBy(_ => Random.Shared.Next()).ToArray();
-            var suggestedPair = $"{shuffled[0]}, {shuffled[1]}";
-            userPrompt += $"\n\n(Randomization seed: {randomSeed}. 이번에는 다음 카테고리 조합을 사용해주세요: {suggestedPair}. 질문 문구와 옵션도 매번 다르게 써주세요.)";
+            var questionCount = Random.Shared.Next(2, 4); // 2 or 3
+            var suggestedCategories = string.Join(", ", shuffled.Take(questionCount));
+            userPrompt += $"\n\n(Randomization seed: {randomSeed}. 이번에는 질문 {questionCount}개를 만들고, 다음 카테고리 조합을 사용해주세요: {suggestedCategories}. 질문 문구와 옵션도 매번 다르게 써주세요.)";
 
             var payload = new
             {

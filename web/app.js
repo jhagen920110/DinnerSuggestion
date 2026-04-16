@@ -698,19 +698,27 @@ function showQuestion(question, container) {
     const optionsDiv = document.createElement("div");
     optionsDiv.className = "ai-options";
 
+    let selectedValue = null;
+
     const options = question.options ?? question.Options ?? [];
     options.forEach(opt => {
       const btn = document.createElement("button");
       btn.className = "ai-option-btn";
       btn.textContent = opt;
       btn.addEventListener("click", () => {
-        optionsDiv.querySelectorAll(".ai-option-btn").forEach(b => {
-          b.classList.remove("selected");
-          b.disabled = true;
-        });
-        btn.classList.add("selected");
-        customWrap.hidden = true;
-        setTimeout(() => resolve(opt), 300);
+        if (btn.classList.contains("selected")) {
+          // Deselect
+          btn.classList.remove("selected");
+          selectedValue = null;
+          qDiv.dataset.answer = "";
+        } else {
+          // Select this, deselect others
+          optionsDiv.querySelectorAll(".ai-option-btn").forEach(b => b.classList.remove("selected"));
+          btn.classList.add("selected");
+          selectedValue = opt;
+          qDiv.dataset.answer = opt;
+          customInput.value = "";
+        }
       });
       optionsDiv.appendChild(btn);
     });
@@ -722,25 +730,23 @@ function showQuestion(question, container) {
     const customInput = document.createElement("input");
     customInput.type = "text";
     customInput.placeholder = "직접 입력...";
-    const customBtn = document.createElement("button");
-    customBtn.textContent = "확인";
-    const submitCustom = () => {
-      const val = customInput.value.trim();
-      if (val) {
-        optionsDiv.querySelectorAll(".ai-option-btn").forEach(b => b.disabled = true);
-        customWrap.hidden = true;
-        resolve(val);
+    customInput.addEventListener("input", () => {
+      if (customInput.value.trim()) {
+        optionsDiv.querySelectorAll(".ai-option-btn").forEach(b => b.classList.remove("selected"));
+        selectedValue = null;
+        qDiv.dataset.answer = customInput.value.trim();
+      } else {
+        qDiv.dataset.answer = selectedValue || "";
       }
-    };
-    customBtn.addEventListener("click", submitCustom);
-    customInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") submitCustom();
     });
     customWrap.appendChild(customInput);
-    customWrap.appendChild(customBtn);
     qDiv.appendChild(customWrap);
 
+    qDiv.dataset.answer = "";
     container.appendChild(qDiv);
+
+    // Resolve immediately — the parent will collect answers via dataset
+    resolve(qDiv);
   });
 }
 
@@ -766,7 +772,7 @@ async function suggestDinner() {
 
     const qResult = await fetchQuestions();
 
-    // Show greeting + questions
+    // Show greeting + all questions at once
     suggestionsDiv.innerHTML = "";
 
     const qMsg = qResult.message ?? qResult.Message ?? "";
@@ -777,18 +783,38 @@ async function suggestDinner() {
       suggestionsDiv.appendChild(msgDiv);
     }
 
-    // Phase 2: Show questions one by one
+    // Phase 2: Show all questions together (user can modify answers freely)
     const questions = qResult.questions ?? qResult.Questions ?? [];
-    const answers = [];
+    const questionDivs = [];
     for (const q of questions) {
-      const category = q.category ?? q.Category ?? "";
-      const answer = await showQuestion(q, suggestionsDiv);
-      answers.push({ category, answer });
+      const qDiv = await showQuestion(q, suggestionsDiv);
+      qDiv.dataset.category = q.category ?? q.Category ?? "";
+      questionDivs.push(qDiv);
     }
+
+    // Add submit button
+    const submitBtn = document.createElement("button");
+    submitBtn.className = "primary-btn ai-submit-btn";
+    submitBtn.textContent = "추천 받기 🍽️";
+    suggestionsDiv.appendChild(submitBtn);
+
+    // Wait for user to click submit
+    await new Promise((resolve) => {
+      submitBtn.addEventListener("click", () => resolve());
+    });
+
+    // Collect answers from all question divs
+    const answers = questionDivs
+      .map(qDiv => ({
+        category: qDiv.dataset.category,
+        answer: qDiv.dataset.answer || ""
+      }))
+      .filter(a => a.answer); // skip unanswered
 
     currentAnswers = answers;
 
-    // Phase 3: Fetch suggestions with answers
+    // Remove submit button and show thinking
+    submitBtn.remove();
     const thinkingDiv = document.createElement("div");
     thinkingDiv.className = "ai-message ai-thinking";
     thinkingDiv.innerHTML = `<span class="ai-thinking-dots"></span> 선택하신 조건에 맞는 메뉴를 골라보고 있어요...`;

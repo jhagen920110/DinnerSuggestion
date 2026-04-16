@@ -188,11 +188,28 @@ public class SuggestionsFunction
             .Where(s => !allRecipeNames.Contains(ToComparisonKey(s.Name)))
             .ToList();
 
-        // AI suggestions first (they respect user preferences), then DB recipes as bonus
+        // Mix: limit saved recipes to max 2, interleave with AI results
         // Also filter out any blocked recipes as a safety net
-        var combined = uniqueAi.Concat(dbSuggestions)
+        var limitedDb = dbSuggestions
+            .Where(s => !blockedNames.Contains(ToComparisonKey(s.Name)))
+            .Take(2)
+            .ToList();
+        var filteredAi = uniqueAi
             .Where(s => !blockedNames.Contains(ToComparisonKey(s.Name)))
             .ToList();
+
+        // Interleave: AI, AI, saved, AI, AI, saved, ...
+        var combined = new List<Suggestion>();
+        int aiIdx = 0, dbIdx = 0;
+        while (aiIdx < filteredAi.Count || dbIdx < limitedDb.Count)
+        {
+            // Add 2 AI suggestions
+            for (int i = 0; i < 2 && aiIdx < filteredAi.Count; i++)
+                combined.Add(filteredAi[aiIdx++]);
+            // Add 1 saved recipe
+            if (dbIdx < limitedDb.Count)
+                combined.Add(limitedDb[dbIdx++]);
+        }
 
         var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(new { message = aiMessage, suggestions = combined });

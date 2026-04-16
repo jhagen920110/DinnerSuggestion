@@ -1058,7 +1058,6 @@ function appendSuggestionCards(suggestions, container) {
           </div>
         </div>
         ${source === "ai" ? `<div class="suggestion-card-actions"><button type="button" class="save-to-recipe-btn" title="레시피에 저장">+ 저장</button><button type="button" class="block-recipe-btn" title="이 메뉴 다시 추천하지 않기">🚫</button></div>` : ""}
-        </div>
 
         <div class="suggestion-section">
           <div class="suggestion-label">사용 재료</div>

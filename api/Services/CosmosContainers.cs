@@ -10,6 +10,7 @@ public class CosmosContainers
     public Container Recipes { get; }
     public Container MealLogs { get; }
     public Container Tags { get; }
+    public Container BlockedRecipes { get; }
 
     public CosmosContainers(CosmosClient client, IOptions<CosmosDbOptions> options)
     {
@@ -18,10 +19,12 @@ public class CosmosContainers
 
         database.CreateContainerIfNotExistsAsync("meal-logs", "/userId").GetAwaiter().GetResult();
         database.CreateContainerIfNotExistsAsync("tags", "/userId").GetAwaiter().GetResult();
+        database.CreateContainerIfNotExistsAsync("blocked-recipes", "/userId").GetAwaiter().GetResult();
 
         Ingredients = database.GetContainer(settings.ContainerName);
         Recipes = database.GetContainer("recipes");
         MealLogs = database.GetContainer("meal-logs");
         Tags = database.GetContainer("tags");
+        BlockedRecipes = database.GetContainer("blocked-recipes");
     }
 }

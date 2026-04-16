@@ -970,7 +970,7 @@ function appendSuggestionCards(suggestions, container) {
               ${cookTimeBadge}
             </div>
           </div>
-          ${source === "ai" ? `<button type="button" class="save-to-recipe-btn" title="레시피에 저장">+ 저장</button>` : ""}
+          ${source === "ai" ? `<button type="button" class="save-to-recipe-btn" title="레시피에 저장">+ 저장</button><button type="button" class="block-recipe-btn" title="이 메뉴 다시 추천하지 않기">🚫</button>` : ""}
         </div>
 
         <div class="suggestion-section">
@@ -1014,6 +1014,21 @@ function appendSuggestionCards(suggestions, container) {
     if (source === "ai") {
       card.querySelector(".save-to-recipe-btn").addEventListener("click", () => {
         saveAiSuggestionToRecipe({ name, cuisine, difficulty, cookTime, uses, recipeUrl });
+      });
+      card.querySelector(".block-recipe-btn").addEventListener("click", async () => {
+        if (!confirm(`"${name}" 을(를) 앞으로 추천하지 않을까요?`)) return;
+        try {
+          await apiFetch(`${apiBase}/blocked-recipes`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name }),
+          });
+          card.style.opacity = "0.4";
+          card.querySelector(".block-recipe-btn").disabled = true;
+          card.querySelector(".block-recipe-btn").textContent = "차단됨";
+        } catch (e) {
+          alert("차단에 실패했어요.");
+        }
       });
     }
 
@@ -1334,6 +1349,7 @@ async function init() {
   attachCalendarOverlay();
   byId("accountBtn")?.addEventListener("click", () => switchPage("account"));
   resetForm();
+  attachBlockedEvents();
   loadTags();
   loadIngredients().then(async () => {
     switchPage("suggestions");
@@ -2117,6 +2133,100 @@ function showDayDetail(dateStr) {
     });
 
     container.appendChild(row);
+  }
+}
+
+// ─── Blocked Recipes ───
+
+let blockedRecipes = [];
+
+async function loadBlockedRecipes() {
+  try {
+    const res = await apiFetch(`${apiBase}/blocked-recipes`);
+    if (res.ok) {
+      blockedRecipes = await res.json();
+      renderBlockedList();
+    }
+  } catch (e) {
+    console.error("Failed to load blocked recipes:", e);
+  }
+}
+
+function renderBlockedList() {
+  const container = byId("blockedList");
+  if (!container) return;
+  container.innerHTML = "";
+
+  if (blockedRecipes.length === 0) {
+    container.innerHTML = `<div style="color:var(--muted);font-size:0.85rem;padding:8px 0;">제외된 요리가 없습니다.</div>`;
+    return;
+  }
+
+  blockedRecipes.forEach((item) => {
+    const id = item.id ?? item.Id;
+    const name = item.name ?? item.Name;
+    const row = document.createElement("div");
+    row.className = "blocked-item";
+    row.innerHTML = `
+      <span class="blocked-item-name">${escapeHtml(name)}</span>
+      <button type="button" class="blocked-remove-btn" title="제외 해제">✕</button>
+    `;
+    row.querySelector(".blocked-remove-btn").addEventListener("click", async () => {
+      try {
+        await apiFetch(`${apiBase}/blocked-recipes/${id}`, { method: "DELETE" });
+        blockedRecipes = blockedRecipes.filter(b => (b.id ?? b.Id) !== id);
+        renderBlockedList();
+      } catch (e) {
+        alert("삭제에 실패했어요.");
+      }
+    });
+    container.appendChild(row);
+  });
+}
+
+function attachBlockedEvents() {
+  const toggleBtn = byId("toggleBlockedBtn");
+  const section = byId("blockedSection");
+  const caret = byId("blockedCaret");
+
+  if (toggleBtn && section) {
+    toggleBtn.addEventListener("click", () => {
+      const showing = !section.hidden;
+      section.hidden = showing;
+      if (caret) caret.textContent = showing ? "▸" : "▾";
+      toggleBtn.childNodes[0].textContent = showing ? "펼치기 " : "접기 ";
+      if (!showing) loadBlockedRecipes();
+    });
+  }
+
+  const addBtn = byId("addBlockedBtn");
+  const input = byId("blockedNameInput");
+  if (addBtn && input) {
+    addBtn.addEventListener("click", async () => {
+      const name = input.value.trim();
+      if (!name) return;
+      try {
+        const res = await apiFetch(`${apiBase}/blocked-recipes`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name }),
+        });
+        if (res.status === 409) {
+          alert("이미 제외된 요리예요.");
+          return;
+        }
+        if (res.ok) {
+          input.value = "";
+          await loadBlockedRecipes();
+        }
+      } catch (e) {
+        alert("추가에 실패했어요.");
+      }
+    });
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") addBtn.click();
+    });
   }
 }
 

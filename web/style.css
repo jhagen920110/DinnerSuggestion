@@ -1026,6 +1026,89 @@ select {
   color: var(--primary);
 }
 
+.block-recipe-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 8px;
+  border-radius: 10px;
+  border: 1.5px solid var(--card-border);
+  background: white;
+  color: var(--muted);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.block-recipe-btn:hover {
+  border-color: #dc2626;
+  color: #dc2626;
+  background: #fef2f2;
+}
+
+.block-recipe-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Blocked recipes section */
+.blocked-desc {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 8px 0 12px;
+}
+
+.blocked-add-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.blocked-add-row input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1.5px solid var(--card-border);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+}
+
+.blocked-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.blocked-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+}
+
+.blocked-item-name {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.blocked-remove-btn {
+  background: none;
+  border: none;
+  color: #dc2626;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.blocked-remove-btn:hover {
+  background: #fee2e2;
+}
+
 .suggestion-actions {
   display: flex;
   align-items: center;

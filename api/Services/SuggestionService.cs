@@ -76,7 +76,7 @@ public class SuggestionService
                                             category = new
                                             {
                                                 type = "string",
-                                                @enum = new[] { "cuisine", "style", "mood", "ingredient" }
+                                                @enum = new[] { "cuisine", "style", "mood", "ingredient", "seasonal", "adventure", "effort", "spice" }
                                             },
                                             text = new { type = "string" },
                                             options = new

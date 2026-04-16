@@ -13,13 +13,15 @@ public class SuggestionsFunction
     private readonly RecipeService _recipeService;
     private readonly SuggestionService _suggestionService;
     private readonly MealLogService _mealLogService;
+    private readonly BlockedRecipeService _blockedRecipeService;
 
-    public SuggestionsFunction(PantryService pantryStore, RecipeService recipeService, SuggestionService suggestionService, MealLogService mealLogService)
+    public SuggestionsFunction(PantryService pantryStore, RecipeService recipeService, SuggestionService suggestionService, MealLogService mealLogService, BlockedRecipeService blockedRecipeService)
     {
         _pantryStore = pantryStore;
         _recipeService = recipeService;
         _suggestionService = suggestionService;
         _mealLogService = mealLogService;
+        _blockedRecipeService = blockedRecipeService;
     }
 
     [Function("GetSuggestionQuestions")]
@@ -108,6 +110,15 @@ public class SuggestionsFunction
         // Only pass meal history if there are enough entries to be meaningful
         var mealHistoryForAi = recentMealNames.Count >= 2 ? recentMealNames : null;
 
+        // Fetch blocked recipes
+        var blockedRecipes = await _blockedRecipeService.GetAllAsync();
+        var blockedNames = new HashSet<string>(
+            blockedRecipes.Select(b => ToComparisonKey(b.Name)),
+            StringComparer.OrdinalIgnoreCase);
+
+        // Add blocked recipe names to the exclude list so AI won't suggest them
+        exclude = exclude.Concat(blockedRecipes.Select(b => b.Name)).Distinct().ToList();
+
         // 1. DB recipes first (exclude already-shown)
         var allRecipes = await _recipeService.GetAllAsync();
         var allRecipeNames = new HashSet<string>(
@@ -178,7 +189,10 @@ public class SuggestionsFunction
             .ToList();
 
         // AI suggestions first (they respect user preferences), then DB recipes as bonus
-        var combined = uniqueAi.Concat(dbSuggestions).ToList();
+        // Also filter out any blocked recipes as a safety net
+        var combined = uniqueAi.Concat(dbSuggestions)
+            .Where(s => !blockedNames.Contains(ToComparisonKey(s.Name)))
+            .ToList();
 
         var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(new { message = aiMessage, suggestions = combined });

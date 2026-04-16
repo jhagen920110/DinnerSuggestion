@@ -37,6 +37,7 @@ builder.Services.AddScoped<PantryService>();
 builder.Services.AddScoped<RecipeService>();
 builder.Services.AddScoped<TagService>();
 builder.Services.AddScoped<MealLogService>();
+builder.Services.AddScoped<BlockedRecipeService>();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<SuggestionService>();
 builder.Services.AddSingleton<IngredientClassifierService>();

@@ -1214,12 +1214,6 @@ async function init() {
   attachCalendarEvents();
   attachCalendarOverlay();
   byId("accountBtn")?.addEventListener("click", () => switchPage("account"));
-  byId("logoutBtn")?.addEventListener("click", () => {
-    window.location.href = "/.auth/logout?post_logout_redirect_uri=/";
-  });
-  byId("switchAccountBtn")?.addEventListener("click", () => {
-    window.location.href = "/.auth/logout?post_logout_redirect_uri=/";
-  });
   resetForm();
   loadTags();
   loadIngredients().then(async () => {

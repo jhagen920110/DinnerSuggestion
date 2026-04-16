@@ -690,7 +690,7 @@ async function suggestDinner() {
       <div class="empty-state">추천 메뉴를 불러오는 중...</div>
     `;
 
-    // Show a friendly intermediate message after 5 seconds
+    // Show a friendly intermediate message after 3 seconds
     const thinkingTimeout = setTimeout(() => {
       suggestionsDiv.innerHTML = `
         <div class="ai-message ai-thinking">
@@ -698,7 +698,7 @@ async function suggestDinner() {
           냉장고 재료를 확인하고 메뉴를 고르고 있어요...
         </div>
       `;
-    }, 5000);
+    }, 3000);
 
     const result = await fetchSuggestions();
     clearTimeout(thinkingTimeout);

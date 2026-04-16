@@ -301,7 +301,7 @@ OPTIONS RULES:
         if (answers is null || answers.Count == 0)
             return "";
 
-        var section = "\n사용자가 선택한 선호:\n";
+        var section = "\n\n===== 사용자 선호 (최우선 적용 — 반드시 따르세요) =====\n";
         foreach (var a in answers)
         {
             var label = a.Key switch
@@ -319,8 +319,18 @@ OPTIONS RULES:
             section += $"- {label}: {a.Value}\n";
         }
 
-        section += "위 선호에 맞는 요리만 추천해주세요. 선호와 맞지 않는 요리는 추천하지 마세요.\n";
-        section += "message에서도 사용자의 선택을 자연스럽게 반영해주세요.\n";
+        section += """
+
+위 선호는 사용자가 직접 선택한 것입니다. 반드시 따라야 합니다.
+- "재료 선호"가 있으면: 모든 추천 요리에 해당 재료가 메인 재료로 포함되어야 합니다. 예: "계란/두부" → 계란 또는 두부가 핵심 재료인 요리만 추천.
+- "음식 종류"가 있으면: 해당 cuisine의 요리만 추천.
+- "요리 스타일"이 있으면: 해당 스타일의 요리만 추천.
+- "오늘 기분"이 있으면: 해당 기분에 맞는 요리만 추천.
+- "매운맛 선호"가 있으면: 해당 매운맛 수준에 맞는 요리만 추천.
+선호와 맞지 않는 요리는 절대 포함하지 마세요.
+message에서도 사용자의 선택을 자연스럽게 반영해주세요.
+=====
+""";
         return section;
     }
 }

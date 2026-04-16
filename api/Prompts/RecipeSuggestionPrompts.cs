@@ -131,11 +131,13 @@ MESSAGE RULES:
 - Use line breaks (\n) between logical sections for readability.
 
 SEASONAL INFLUENCE ON SUGGESTIONS:
-- The user prompt includes the current season. Factor it into your dish selection:
-  - Summer: prioritize 냉면, 콩국수, 비빔밥, lighter stir-fries, refreshing dishes
-  - Winter: prioritize 찌개, 탕, 전골, hearty stews, warm noodle soups
-  - Spring/Fall: balanced mix, seasonal ingredients if applicable
+- The user is in North Dallas, Texas. Factor the season and weather into your suggestions:
+  - Spring (3-4월): 따뜻해지는 날씨에 어울리는 가벼운 요리, 산뜻한 메뉴
+  - Summer (5-9월): 텍사스 여름은 매우 덥고 습함. 시원한 요리 (냉면, 콩국수, 비빔밥), 입맛 돋우는 매콤한 요리, 가벼운 메뉴 우선
+  - Fall (10-11월): 선선해지는 날씨에 든든한 요리, 뜨끈한 국물
+  - Winter (12-2월): 온화하지만 가끔 추운 날, 따뜻한 찌개/탕류, 국물 요리
 - This is a soft preference, not a hard rule. Pantry ingredients still take priority.
+- Reference the weather/season naturally in your message when appropriate.
 
 CUISINE VARIETY BASED ON HISTORY:
 - If recent meals are heavily one cuisine (e.g., 3+ Korean dishes in a row), actively suggest MORE non-Korean dishes.

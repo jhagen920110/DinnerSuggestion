@@ -87,14 +87,14 @@ public class SuggestionService
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
         var systemPrompt = RecipeSuggestionPrompts.SystemPrompt;
-        // Determine season from current month
+        // Determine season based on North Dallas, Texas climate
         var month = DateTime.UtcNow.Month;
         var season = month switch
         {
-            >= 3 and <= 5 => "봄 (Spring)",
-            >= 6 and <= 8 => "여름 (Summer)",
-            >= 9 and <= 11 => "가을 (Fall)",
-            _ => "겨울 (Winter)"
+            >= 3 and <= 4 => "봄 (Spring) - 따뜻한 날씨",
+            >= 5 and <= 9 => "여름 (Summer) - 매우 덥고 습한 날씨",
+            >= 10 and <= 11 => "가을 (Fall) - 선선한 날씨",
+            _ => "겨울 (Winter) - 온화하지만 가끔 추운 날씨"
         };
 
         var userPrompt = RecipeSuggestionPrompts.BuildUserPrompt(

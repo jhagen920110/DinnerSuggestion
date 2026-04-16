@@ -1345,9 +1345,20 @@ async function init() {
   loadTags();
   loadIngredients().then(async () => {
     switchPage("suggestions");
-    await suggestDinner();
+    try {
+      await suggestDinner();
+    } catch (e) {
+      console.error("suggestDinner error during init:", e);
+    } finally {
+      dismissSplash();
+    }
+  }).catch((e) => {
+    console.error("loadIngredients error during init:", e);
     dismissSplash();
   });
+
+  // Safety net: dismiss splash after 10s no matter what
+  setTimeout(dismissSplash, 10000);
 }
 
 function dismissSplash() {

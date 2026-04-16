@@ -125,7 +125,10 @@ select {
 }
 .account-actions {
   margin-top: 20px;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
 }
 .logout-btn {
   display: inline-block;
@@ -136,10 +139,27 @@ select {
   font-weight: 600;
   text-decoration: none;
   font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
   transition: background 0.15s;
 }
 .logout-btn:hover {
   background: #dc2626;
+}
+.switch-account-btn {
+  display: inline-block;
+  padding: 8px 24px;
+  border-radius: 8px;
+  background: #4f46e5;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.switch-account-btn:hover {
+  background: #4338ca;
 }
 
 .app-shell {

@@ -1187,6 +1187,13 @@ async function init() {
   attachCalendarEvents();
   attachCalendarOverlay();
   byId("accountBtn")?.addEventListener("click", () => switchPage("account"));
+  byId("logoutBtn")?.addEventListener("click", () => {
+    window.location.href = "/.auth/logout?post_logout_redirect_uri=/";
+  });
+  byId("switchAccountBtn")?.addEventListener("click", () => {
+    // Open in system browser (works in PWA) so Google account picker shows
+    window.open("/.auth/logout?post_logout_redirect_uri=/.auth/login/google%3Fpost_login_redirect_uri%3D%252F", "_blank");
+  });
   resetForm();
   loadTags();
   loadIngredients().then(async () => {

@@ -758,21 +758,13 @@ async function suggestDinner() {
   try {
     setBusy(suggestButton, true, "추천 중...");
     suggestionsDiv.innerHTML = `
-      <div class="empty-state">추천 메뉴를 불러오는 중...</div>
+      <div class="ai-message ai-thinking">
+        <span class="ai-thinking-dots"></span>
+        오늘 저녁 메뉴를 고민하고 있어요...
+      </div>
     `;
 
-    // Phase 1: Get AI questions
-    const thinkingTimeout1 = setTimeout(() => {
-      suggestionsDiv.innerHTML = `
-        <div class="ai-message ai-thinking">
-          <span class="ai-thinking-dots"></span>
-          오늘 저녁 메뉴를 고민하고 있어요...
-        </div>
-      `;
-    }, 3000);
-
     const qResult = await fetchQuestions();
-    clearTimeout(thinkingTimeout1);
 
     // Show greeting + questions
     suggestionsDiv.innerHTML = "";
@@ -1345,20 +1337,13 @@ async function init() {
   loadTags();
   loadIngredients().then(async () => {
     switchPage("suggestions");
-    try {
-      await suggestDinner();
-    } catch (e) {
-      console.error("suggestDinner error during init:", e);
-    } finally {
-      dismissSplash();
-    }
+    suggestDinner(); // runs in background, doesn't block splash
   }).catch((e) => {
     console.error("loadIngredients error during init:", e);
-    dismissSplash();
   });
 
-  // Safety net: dismiss splash after 10s no matter what
-  setTimeout(dismissSplash, 10000);
+  // Always dismiss splash after 3 seconds
+  setTimeout(dismissSplash, 3000);
 }
 
 function dismissSplash() {

@@ -222,17 +222,40 @@ RULES:
 - The last option of each question MUST be a catch-all like "아무거나 좋아요", "상관없어요", "다 좋아요" etc.
 - Questions should cover DIFFERENT aspects of dinner planning.
 - Make questions feel natural, fun, and conversational — not like a survey.
-- VARY your questions every time. Don't always ask the same thing.
+- VARY your questions every time. NEVER repeat the same pair of questions twice.
+- Mix up phrasing, emoji usage, and tone each time.
 
 QUESTION CATEGORIES (assign exactly one per question):
-- "cuisine": Food type/origin (한식, 양식, 중식, 일식, etc.)
-- "style": Cooking style or dish type (국물, 볶음, 구이, 면, 밥, etc.)
-- "mood": Vibe/feeling (매운거, 가벼운거, 든든한거, 시원한거, etc.)
-- "ingredient": Protein or main ingredient preference (고기, 해산물, 야채, etc.)
+Pick 2 DIFFERENT categories from this list. Rotate and vary — do NOT always pick the same pair.
 
-CATEGORY RULES:
-- The FIRST question MUST be category "cuisine".
-- The SECOND question should be one of: "style", "mood", or "ingredient" — vary it each time.
+- "cuisine": Food type/origin (한식, 양식, 중식, 일식, 동남아식 etc.)
+  Example: "오늘 어떤 나라 음식이 끌려요? 🌍"
+- "style": Cooking style or dish type (국물, 볶음, 구이, 면, 밥, 찜 etc.)
+  Example: "어떤 스타일의 요리가 먹고 싶어요?"
+- "mood": Vibe/feeling (매운거, 가벼운거, 든든한거, 시원한거, 따뜻한거 etc.)
+  Example: "오늘 저녁 기분이 어때요? 😊"
+- "ingredient": Protein or main ingredient preference (고기, 해산물, 야채, 계란/두부 etc.)
+  Example: "오늘 메인 재료는 뭘로 할까요? 🥩🥬"
+- "seasonal": Season/weather-driven preference. Ask about seasonal cravings.
+  Example: "봄이라 입맛이 좀 없죠? 어떤 느낌의 저녁이 좋을까요? 🌸"
+  Example: "더운 날이니까 시원한 거 vs 그래도 뜨끈한 거?"
+- "adventure": Familiar comfort food vs trying something new.
+  Example: "오늘은 새로운 걸 도전해볼까요, 아니면 익숙한 메뉴로 갈까요? 🤔"
+  Options like: "새로운 도전!", "익숙한 편안함", "반반 섞어서", "상관없어요"
+- "effort": How much effort/time they want to spend cooking.
+  Example: "오늘 요리할 에너지가 얼마나 있어요? 💪"
+  Options like: "초간단 (15분)", "적당히 (30분)", "제대로 요리!", "상관없어요"
+- "spice": Spice/heat level preference.
+  Example: "오늘 매운맛 레벨은? 🌶️"
+  Options like: "안 매운 거", "살짝 매콤", "매콤하게!", "입에서 불 🔥"
+
+CATEGORY SELECTION RULES:
+- RANDOMIZE which 2 categories you pick each time. Do not always start with "cuisine".
+- Seasonal questions should appear more often when the season is changing or extreme (hot summer, cold winter).
+- "adventure" is great when the user has meal history showing repetitive patterns.
+- "effort" is a good occasional question to mix things up.
+- If the user has very few pantry ingredients, "ingredient" might be less useful — pick something else.
+- Think about what would be MOST HELPFUL for this specific user context, then add variety.
 
 MESSAGE:
 - Write a short friendly greeting (1-2 sentences) as the "message" field.
@@ -245,10 +268,6 @@ OPTIONS RULES:
 - Keep options short (1-3 words each).
 - No explanations in options — just the label.
 - Options should be distinct and meaningful for filtering.
-- For cuisine: use standard labels like 한식, 양식, 중식, 일식, 동남아식
-- For style: use labels like 국물 요리, 볶음/구이, 면 종류, 밥 요리
-- For mood: use labels like 매콤한거, 시원한거, 든든한거, 가벼운거
-- For ingredient: use labels like 고기 위주, 해산물, 야채 위주, 계란/두부
 """;
 
     public static string BuildQuestionUserPrompt(
@@ -291,6 +310,10 @@ OPTIONS RULES:
                 "style" => "요리 스타일",
                 "mood" => "오늘 기분",
                 "ingredient" => "재료 선호",
+                "seasonal" => "계절 취향",
+                "adventure" => "새로운 도전 vs 익숙한 메뉴",
+                "effort" => "요리 난이도/시간",
+                "spice" => "매운맛 선호",
                 _ => a.Key
             };
             section += $"- {label}: {a.Value}\n";

@@ -254,7 +254,7 @@ body.theme-modern {
 }
 
 .app-shell {
-  width: min(920px, calc(100% - 24px));
+  width: min(920px, calc(100% - 32px));
   margin: 0 auto;
   padding: 12px 0 80px;
 }

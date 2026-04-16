@@ -25,7 +25,8 @@ public class SuggestionService
         List<string> mustInclude,
         List<string> exclude,
         List<string>? recentMeals = null,
-        List<string>? knownRecipes = null)
+        List<string>? knownRecipes = null,
+        List<string>? savedSuggestionNames = null)
     {
         if (!IsAiConfigured())
         {
@@ -39,7 +40,8 @@ public class SuggestionService
                 mustInclude,
                 exclude,
                 recentMeals,
-                knownRecipes);
+                knownRecipes,
+                savedSuggestionNames);
 
             var mapped = MapSuggestions(aiSuggestions, availablePantry);
 
@@ -77,7 +79,8 @@ public class SuggestionService
         List<string> mustInclude,
         List<string> exclude,
         List<string>? recentMeals,
-        List<string>? knownRecipes)
+        List<string>? knownRecipes,
+        List<string>? savedSuggestionNames)
     {
         var endpoint = _openAiOptions.Endpoint.TrimEnd('/');
         var url = $"{endpoint}/openai/v1/chat/completions";
@@ -103,7 +106,8 @@ public class SuggestionService
             exclude,
             recentMeals,
             knownRecipes,
-            season);
+            season,
+            savedSuggestionNames);
 
         var temp = exclude.Count > 0 ? 0.8 : mustInclude.Count > 0 ? 0.2 : 0.5;
 

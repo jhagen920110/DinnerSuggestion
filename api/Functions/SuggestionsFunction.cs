@@ -93,12 +93,14 @@ public class SuggestionsFunction
         // 2. AI suggestions (also exclude all saved recipe names)
         var aiExclude = exclude.Concat(allRecipes.Select(r => r.Name)).Distinct().ToList();
         var knownRecipeNames = allRecipes.Select(r => r.Name).Distinct().ToList();
+        var savedSuggestionNames = dbSuggestions.Select(s => s.Name).ToList();
         var (aiMessage, aiSuggestions) = await _suggestionService.GetSuggestionsAsync(
             availablePantry,
             mustInclude,
             aiExclude,
             mealHistoryForAi,
-            knownRecipeNames);
+            knownRecipeNames,
+            savedSuggestionNames);
 
         // Deduplicate: remove AI suggestions that match any saved recipe name
         var uniqueAi = aiSuggestions

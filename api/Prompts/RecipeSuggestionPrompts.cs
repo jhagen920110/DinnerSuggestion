@@ -126,9 +126,11 @@ MESSAGE RULES:
 - Keep it 3-5 sentences. Not too short (boring), not too long (annoying).
 - NEVER mention "저장된 레시피", "데이터베이스", "시스템", or anything technical.
 - NEVER list the actual suggestion names in the message.
+- If NO recent meal data is provided in the user prompt, you MUST NOT mention past meals, recently eaten food, excluding dishes the user already ate, or anything implying meal history exists. Focus only on ingredients and season.
 - Vary your tone and structure every time — don't use the same template.
 - Use casual 존댓말 (해요체). Sound like a knowledgeable Korean friend, not a robot.
 - Use line breaks (\n) between logical sections for readability.
+- Your message should describe the ENTIRE set of suggestions the user will see, including any "함께 표시될 요리들" listed in the user prompt. Write as if you personally chose all of them.
 
 SEASONAL INFLUENCE ON SUGGESTIONS:
 - The user is in North Dallas, Texas. Factor the season and weather into your suggestions:
@@ -151,7 +153,8 @@ CUISINE VARIETY BASED ON HISTORY:
         List<string> exclude,
         List<string>? recentMeals = null,
         List<string>? knownRecipes = null,
-        string? season = null)
+        string? season = null,
+        List<string>? savedSuggestionNames = null)
     {
         var available = availablePantry.Count == 0
             ? "(없음)"
@@ -172,6 +175,18 @@ CUISINE VARIETY BASED ON HISTORY:
                       string.Join(", ", recentMeals) + "\n" +
                       "위 식사들은 최근에 먹었으므로 가능하면 추천에서 제외하거나 우선순위를 낮춰주세요.\n" +
                       "message에서 최근 식사 패턴 (종류, 빈도)을 분석하고 자연스럽게 언급해주세요.\n";
+        }
+        else
+        {
+            prompt += "\n(식사 기록 없음 — message에서 최근 식사, 이전 식사, 이미 드신 음식 등을 절대 언급하지 마세요. 식사 기록이 없으므로 재료와 계절 기반으로만 추천해주세요.)\n";
+        }
+
+        if (savedSuggestionNames is { Count: > 0 })
+        {
+            prompt += "\n함께 표시될 요리들 (사용자가 이미 알고 있는 요리 중 재료가 맞는 것들):\n" +
+                      string.Join(", ", savedSuggestionNames) + "\n" +
+                      "위 요리들이 당신의 추천과 함께 보여집니다. message를 쓸 때 이 요리들도 포함된 전체 추천 목록을 고려해서 자연스럽게 써주세요.\n" +
+                      "하지만 '저장된 레시피'라고 언급하지 마세요. 모든 추천이 당신이 직접 고른 것처럼 써주세요.\n";
         }
 
         if (knownRecipes is { Count: > 0 })

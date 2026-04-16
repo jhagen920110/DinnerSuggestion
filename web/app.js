@@ -10,7 +10,7 @@ async function initAuth() {
       currentUserEmail = data.clientPrincipal.userDetails || "";
     } else {
       // Not authenticated — redirect to Google login
-      window.location.href = "/.auth/login/google?post_login_redirect_uri=/";
+      window.location.href = "/.auth/login/google?post_login_redirect_uri=/&prompt=login";
       return;
     }
   } catch {

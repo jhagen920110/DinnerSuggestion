@@ -13,12 +13,6 @@ async function initAuth() {
     // Local dev - no SWA auth
     currentUserEmail = "";
   }
-
-  const userDisplay = document.getElementById("userEmail");
-  if (userDisplay && currentUserEmail) {
-    userDisplay.textContent = currentUserEmail;
-    userDisplay.hidden = false;
-  }
 }
 
 async function apiFetch(url, options = {}) {

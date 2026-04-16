@@ -1078,6 +1078,42 @@ select {
   white-space: pre-line;
 }
 
+.ai-thinking {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: aiFadeIn 0.4s ease;
+}
+
+.ai-thinking-dots {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.ai-thinking-dots::before,
+.ai-thinking-dots::after,
+.ai-thinking-dots {
+  content: "";
+}
+
+.ai-thinking-dots::before {
+  content: "●●●";
+  letter-spacing: 3px;
+  font-size: 0.7rem;
+  color: #818cf8;
+  animation: aiDotPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes aiDotPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+@keyframes aiFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .section-head-actions {
   display: flex;
   align-items: center;

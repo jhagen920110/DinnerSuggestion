@@ -1057,7 +1057,6 @@ function appendSuggestionCards(suggestions, container) {
             </div>
           </div>
         </div>
-        ${source === "ai" ? `<div class="suggestion-card-actions"><button type="button" class="save-to-recipe-btn" title="레시피에 저장">+ 저장</button><button type="button" class="block-recipe-btn" title="이 메뉴 다시 추천하지 않기">🚫</button></div>` : ""}
 
         <div class="suggestion-section">
           <div class="suggestion-label">사용 재료</div>
@@ -1096,27 +1095,6 @@ function appendSuggestionCards(suggestions, container) {
         </div>
       </div>
     `;
-
-    if (source === "ai") {
-      card.querySelector(".save-to-recipe-btn").addEventListener("click", () => {
-        saveAiSuggestionToRecipe({ name, cuisine, difficulty, cookTime, uses, recipeUrl });
-      });
-      card.querySelector(".block-recipe-btn").addEventListener("click", async () => {
-        if (!confirm(`"${name}" 을(를) 앞으로 추천하지 않을까요?`)) return;
-        try {
-          await apiFetch(`${apiBase}/blocked-recipes`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name }),
-          });
-          card.style.opacity = "0.4";
-          card.querySelector(".block-recipe-btn").disabled = true;
-          card.querySelector(".block-recipe-btn").textContent = "차단됨";
-        } catch (e) {
-          alert("차단에 실패했어요.");
-        }
-      });
-    }
 
     card.querySelector(".log-today-btn").addEventListener("click", async () => {
       const today = new Date().toLocaleDateString("sv-SE"); // YYYY-MM-DD

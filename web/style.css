@@ -543,13 +543,13 @@ body.theme-modern {
 }
 
 .filters-toggle-sm {
-  padding: 12px 10px;
+  padding: 14px 10px;
   font-size: 0.8rem;
   order: 2;
 }
 
 .primary-btn-sm {
-  padding: 12px 14px;
+  padding: 14px 14px;
   font-size: 0.85rem;
   order: 1;
 }
@@ -1459,6 +1459,14 @@ body.theme-modern {
   .secondary-btn,
   .filters-toggle {
     width: 100%;
+  }
+
+  .filters-row .primary-btn,
+  .filters-row .filters-toggle,
+  .blocked-add-row .primary-btn,
+  .blocked-add-row .secondary-btn,
+  .section-head-actions .filters-toggle {
+    width: auto;
   }
 
   .ingredient-row-top {

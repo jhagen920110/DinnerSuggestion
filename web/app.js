@@ -2272,7 +2272,8 @@ document.addEventListener("DOMContentLoaded", init);
 
 function applyFontTheme() {
   const theme = localStorage.getItem("fontTheme") || "clean";
-  document.body.classList.toggle("theme-handwritten", theme === "handwritten");
+  document.body.classList.remove("theme-handwritten", "theme-modern");
+  if (theme !== "clean") document.body.classList.add(`theme-${theme}`);
 }
 
 function attachFontThemePicker() {

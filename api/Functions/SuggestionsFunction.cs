@@ -116,19 +116,36 @@ public class SuggestionsFunction
 
         var dbSuggestions = BuildDbSuggestions(allRecipes, availablePantry, mustInclude);
 
-        // Filter saved recipes by cuisine if user specified a preference
+        // Filter saved recipes by user preferences (all answer categories)
         var preferences = answers?
             .Select(a => new KeyValuePair<string, string>(a.Category, a.Answer))
             .ToList();
 
-        var cuisineAnswer = answers?
-            .FirstOrDefault(a => string.Equals(a.Category, "cuisine", StringComparison.OrdinalIgnoreCase))?.Answer;
-
-        if (!string.IsNullOrWhiteSpace(cuisineAnswer) && !IsCatchAllAnswer(cuisineAnswer))
+        if (answers is { Count: > 0 })
         {
-            dbSuggestions = dbSuggestions
-                .Where(s => IsCuisineMatch(s.Cuisine, cuisineAnswer))
-                .ToList();
+            foreach (var ans in answers)
+            {
+                if (IsCatchAllAnswer(ans.Answer)) continue;
+
+                var category = ans.Category.ToLowerInvariant();
+                var answer = ans.Answer;
+
+                if (category == "cuisine")
+                {
+                    dbSuggestions = dbSuggestions
+                        .Where(s => IsCuisineMatch(s.Cuisine, answer))
+                        .ToList();
+                }
+                else if (category == "style")
+                {
+                    dbSuggestions = dbSuggestions
+                        .Where(s => IsStyleMatch(s.Name, answer))
+                        .ToList();
+                }
+                // Other categories (mood, ingredient, seasonal, adventure, effort, spice)
+                // are too nuanced for simple string matching on DB recipes — let AI handle those.
+                // But we still pass all preferences to the AI prompt.
+            }
         }
 
         if (exclude.Count > 0)
@@ -160,7 +177,8 @@ public class SuggestionsFunction
             .Where(s => !allRecipeNames.Contains(ToComparisonKey(s.Name)))
             .ToList();
 
-        var combined = dbSuggestions.Concat(uniqueAi).ToList();
+        // AI suggestions first (they respect user preferences), then DB recipes as bonus
+        var combined = uniqueAi.Concat(dbSuggestions).ToList();
 
         var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(new { message = aiMessage, suggestions = combined });
@@ -251,6 +269,43 @@ public class SuggestionsFunction
             ("일식", "japanese") or ("japanese", "일식") => true,
             _ => false
         };
+    }
+
+    private static bool IsStyleMatch(string dishName, string styleAnswer)
+    {
+        if (string.IsNullOrWhiteSpace(dishName) || string.IsNullOrWhiteSpace(styleAnswer))
+            return false;
+
+        var name = dishName.Trim().ToLowerInvariant();
+        var style = styleAnswer.Trim().ToLowerInvariant();
+
+        // Map style keywords to dish name patterns
+        var styleKeywords = new Dictionary<string, string[]>
+        {
+            { "국물", new[] { "국", "찌개", "탕", "전골" } },
+            { "볶음", new[] { "볶음", "볶", "구이" } },
+            { "구이", new[] { "구이", "볶음", "전" } },
+            { "면", new[] { "면", "국수", "파스타", "라면", "냉면", "우동", "소바" } },
+            { "밥", new[] { "밥", "덮밥", "볶음밥", "비빔밥", "리조또" } },
+            { "비빔", new[] { "비빔", "무침", "샐러드" } },
+            { "찜", new[] { "찜", "조림" } },
+            { "튀김", new[] { "튀김", "까스", "커틀릿", "프라이" } },
+        };
+
+        // Check direct match
+        if (name.Contains(style))
+            return true;
+
+        // Check mapped keywords
+        foreach (var (key, patterns) in styleKeywords)
+        {
+            if (style.Contains(key))
+            {
+                return patterns.Any(p => name.Contains(p));
+            }
+        }
+
+        return false;
     }
 
     private class SuggestionsRequest

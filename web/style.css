@@ -162,6 +162,47 @@ select {
   background: #4338ca;
 }
 
+/* ─── Login Screen ─── */
+
+.login-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+  padding: 40px 20px;
+}
+.login-icon {
+  font-size: 4rem;
+  margin-bottom: 12px;
+}
+.login-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #1f2937;
+  margin: 0 0 8px;
+}
+.login-sub {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin: 0 0 28px;
+}
+.login-btn {
+  display: inline-block;
+  padding: 12px 32px;
+  border-radius: 10px;
+  background: #4f46e5;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.login-btn:hover {
+  background: #4338ca;
+}
+
 .app-shell {
   width: min(920px, calc(100% - 24px));
   margin: 0 auto;

@@ -9,14 +9,41 @@ async function initAuth() {
     if (data.clientPrincipal) {
       currentUserEmail = data.clientPrincipal.userDetails || "";
     } else {
-      // Not authenticated — redirect to Google login
-      window.location.href = "/.auth/login/google?post_login_redirect_uri=/";
+      showLoginScreen();
       return;
     }
   } catch {
     // Local dev - no SWA auth
     currentUserEmail = "";
   }
+}
+
+function showLoginScreen() {
+  const splash = byId("splashScreen");
+  if (splash) splash.remove();
+
+  byId("topBar").hidden = true;
+  document.querySelector(".tab-bar").hidden = true;
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+
+  const loginPage = byId("page-login");
+  if (loginPage) {
+    loginPage.classList.add("active");
+    return;
+  }
+
+  const page = document.createElement("div");
+  page.id = "page-login";
+  page.className = "page active";
+  page.innerHTML = `
+    <div class="login-screen">
+      <div class="login-icon">🍲</div>
+      <h1 class="login-title">오늘 뭐 먹지?</h1>
+      <p class="login-sub">Google 계정으로 로그인해주세요</p>
+      <a href="/.auth/login/google?post_login_redirect_uri=/" class="login-btn">Google로 로그인</a>
+    </div>
+  `;
+  document.querySelector(".app-shell").appendChild(page);
 }
 
 async function apiFetch(url, options = {}) {
@@ -1191,8 +1218,7 @@ async function init() {
     window.location.href = "/.auth/logout?post_logout_redirect_uri=/";
   });
   byId("switchAccountBtn")?.addEventListener("click", () => {
-    // Open in system browser (works in PWA) so Google account picker shows
-    window.open("/.auth/logout?post_logout_redirect_uri=/.auth/login/google%3Fpost_login_redirect_uri%3D%252F", "_blank");
+    window.location.href = "/.auth/logout?post_logout_redirect_uri=/";
   });
   resetForm();
   loadTags();

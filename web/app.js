@@ -792,11 +792,24 @@ async function suggestDinner() {
       questionDivs.push(qDiv);
     }
 
-    // Add submit button
+    // Add submit button (disabled until an answer is provided)
     const submitBtn = document.createElement("button");
     submitBtn.className = "primary-btn ai-submit-btn";
     submitBtn.textContent = "추천 받기 🍽️";
+    submitBtn.disabled = true;
     suggestionsDiv.appendChild(submitBtn);
+
+    // Enable submit when any question has an answer
+    function checkAnswers() {
+      const hasAnswer = questionDivs.some(qd => qd.dataset.answer && qd.dataset.answer.trim());
+      submitBtn.disabled = !hasAnswer;
+    }
+    suggestionsDiv.addEventListener("click", (e) => {
+      if (e.target.closest(".ai-option-btn")) setTimeout(checkAnswers, 0);
+    });
+    suggestionsDiv.addEventListener("input", (e) => {
+      if (e.target.closest(".ai-custom-input")) checkAnswers();
+    });
 
     // Wait for user to click submit
     await new Promise((resolve) => {

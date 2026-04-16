@@ -1902,6 +1902,9 @@ function openCalendarOverlay() {
   const overlay = byId("calendarOverlay");
   if (!overlay) return;
   overlay.hidden = false;
+  // Force reflow so transition plays
+  void overlay.offsetHeight;
+  overlay.classList.add("visible");
   document.body.style.overflow = "hidden";
   loadCalendarMonth().then(() => {
     renderCalendar();
@@ -1911,8 +1914,13 @@ function openCalendarOverlay() {
 
 function closeCalendarOverlay() {
   const overlay = byId("calendarOverlay");
-  if (overlay) overlay.hidden = true;
+  if (!overlay) return;
+  overlay.classList.remove("visible");
   document.body.style.overflow = "";
+  overlay.addEventListener("transitionend", function handler() {
+    overlay.removeEventListener("transitionend", handler);
+    overlay.hidden = true;
+  });
 }
 
 function attachCalendarEvents() {

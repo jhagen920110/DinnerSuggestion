@@ -180,6 +180,26 @@ function ingredientTypeOf(item) {
   return normalizeType(item.type ?? item.Type ?? "기타");
 }
 
+const TYPE_META = {
+  "야채":       { icon: "🥬", color: "green" },
+  "탄수화물":    { icon: "🍚", color: "amber" },
+  "고기/단백질": { icon: "🥩", color: "rose" },
+  "유제품":     { icon: "🥛", color: "sky" },
+  "과일":       { icon: "🍎", color: "orange" },
+  "소스/조미료": { icon: "🧂", color: "purple" },
+  "냉동식품":    { icon: "🧊", color: "teal" },
+  "기타":       { icon: "📦", color: "slate" },
+};
+
+const CUISINE_META = {
+  "한식": { icon: "🇰🇷", color: "rose" },
+  "양식": { icon: "🍝", color: "amber" },
+  "중식": { icon: "🥡", color: "orange" },
+  "일식": { icon: "🍣", color: "sky" },
+  "분식": { icon: "🍢", color: "purple" },
+  "기타": { icon: "🍽️", color: "slate" },
+};
+
 function typeDisplay(type) {
   return normalizeType(type);
 }
@@ -335,8 +355,10 @@ function renderIngredients() {
     const header = document.createElement("button");
     header.type = "button";
     header.className = "group-header";
+    const meta = TYPE_META[groupName] || TYPE_META["기타"];
+    header.dataset.color = meta.color;
     header.innerHTML = `
-      <span class="group-title">${collapsedSections[groupName] ? "▸" : "▾"} ${groupName}</span>
+      <span class="group-title">${collapsedSections[groupName] ? "▸" : "▾"} ${meta.icon} ${groupName}</span>
       <span class="group-count">${items.length}</span>
     `;
 
@@ -756,7 +778,7 @@ async function suggestDinner() {
   const available = currentIngredients;
   if (available.length === 0) {
     suggestionsDiv.innerHTML = `
-      <div class="empty-state">Pantry에 재료를 먼저 추가해주세요! 🥕</div>
+      <div class="empty-state">식료품에 재료를 먼저 추가해주세요! 🥕</div>
     `;
     return;
   }
@@ -1427,7 +1449,7 @@ function attachTabEvents() {
 
 const PAGE_TITLES = {
   suggestions: "🍽️ 저녁 메뉴 추천",
-  pantry: "🥕 Pantry",
+  pantry: "🥕 식료품",
   meals: "🍳 저장된 레시피",
   account: "👤 계정",
 };
@@ -1789,8 +1811,10 @@ function renderMeals() {
     const header = document.createElement("button");
     header.type = "button";
     header.className = "group-header";
+    const cmeta = CUISINE_META[cuisineName] || CUISINE_META["기타"];
+    header.dataset.color = cmeta.color;
     header.innerHTML = `
-      <span class="group-title">${collapsedMealSections[cuisineName] ? "▸" : "▾"} ${cuisineName}</span>
+      <span class="group-title">${collapsedMealSections[cuisineName] ? "▸" : "▾"} ${cmeta.icon} ${cuisineName}</span>
       <span class="group-count">${items.length}</span>
     `;
 

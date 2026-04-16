@@ -700,6 +700,7 @@ body.theme-modern {
 .group-header {
   width: 100%;
   border: none;
+  border-left: 4px solid #c7d2fe;
   background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
   display: flex;
   justify-content: space-between;
@@ -709,6 +710,15 @@ body.theme-modern {
   font-weight: 800;
   color: #334155;
 }
+
+.group-header[data-color="green"] { border-left-color: #6ee7b7; background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%); }
+.group-header[data-color="amber"] { border-left-color: #fcd34d; background: linear-gradient(180deg, #ffffff 0%, #fffbeb 100%); }
+.group-header[data-color="rose"] { border-left-color: #fda4af; background: linear-gradient(180deg, #ffffff 0%, #fff1f2 100%); }
+.group-header[data-color="sky"] { border-left-color: #7dd3fc; background: linear-gradient(180deg, #ffffff 0%, #f0f9ff 100%); }
+.group-header[data-color="orange"] { border-left-color: #fdba74; background: linear-gradient(180deg, #ffffff 0%, #fff7ed 100%); }
+.group-header[data-color="purple"] { border-left-color: #c4b5fd; background: linear-gradient(180deg, #ffffff 0%, #f5f3ff 100%); }
+.group-header[data-color="slate"] { border-left-color: #94a3b8; background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); }
+.group-header[data-color="teal"] { border-left-color: #5eead4; background: linear-gradient(180deg, #ffffff 0%, #f0fdfa 100%); }
 
 .group-title {
   font-size: 1rem;
@@ -1315,9 +1325,10 @@ body.theme-modern {
 
 .ai-option-btn.selected {
   background: #4338ca;
-  color: white;
+  color: #ffffff;
   border-color: #4338ca;
   opacity: 1;
+  font-weight: 700;
 }
 
 .ai-custom-input {
@@ -1475,7 +1486,7 @@ body.theme-modern {
   justify-content: space-around;
   background: var(--card);
   border-top: 1px solid var(--card-border);
-  padding: 6px 0 calc(6px + env(safe-area-inset-bottom, 0px));
+  padding: 8px 0 calc(10px + env(safe-area-inset-bottom, 0px));
   z-index: 900;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.06);
 }
@@ -1874,7 +1885,7 @@ body.theme-modern {
   border: 1.5px solid var(--card-border);
   font-size: 1.4rem;
   cursor: pointer;
-  padding: 8px 12px;
+  padding: 8px 18px;
   border-radius: var(--radius-md);
   transition: background 0.15s;
   -webkit-tap-highlight-color: transparent;

@@ -76,10 +76,7 @@
     <!-- PAGE: Pantry -->
     <div id="page-pantry" class="page">
       <section class="card pantry-card">
-        <div class="section-head-actions page-actions">
-          <div id="pantryStatus" class="status-text" aria-live="polite"></div>
-          <button id="showIngredientFormBtn" type="button" class="primary-btn">+ 재료 추가</button>
-        </div>
+        <div id="pantryStatus" class="status-text" aria-live="polite" style="margin-bottom:8px;"></div>
 
         <div id="pantryContent">
           <div id="ingredientFormWrap" class="ingredient-form" hidden>
@@ -96,9 +93,12 @@
           </div>
 
           <div class="filters-wrap">
-            <button id="toggleFiltersButton" type="button" class="filters-toggle">
-              Filters <span id="filtersCaret">▸</span>
-            </button>
+            <div class="filters-row">
+              <button id="toggleFiltersButton" type="button" class="filters-toggle filters-toggle-sm">
+                Filters <span id="filtersCaret">▸</span>
+              </button>
+              <button id="showIngredientFormBtn" type="button" class="primary-btn primary-btn-sm">+ 재료 추가</button>
+            </div>
 
             <div id="filtersContent" class="filters-panel" hidden>
               <div class="filter-grid simple-filter-grid">
@@ -141,10 +141,7 @@
     <!-- PAGE: Meals -->
     <div id="page-meals" class="page">
       <section class="card">
-        <div class="section-head-actions page-actions">
-          <div id="mealStatus" class="status-text" aria-live="polite"></div>
-          <button id="showMealFormBtn" type="button" class="primary-btn">+ 레시피 추가</button>
-        </div>
+        <div id="mealStatus" class="status-text" aria-live="polite" style="margin-bottom:8px;"></div>
 
         <div id="mealFormWrap" class="meal-form-wrap" hidden>
           <div class="ingredient-form">
@@ -226,9 +223,12 @@
         </div>
 
         <div id="mealFiltersWrap" class="filters-wrap">
-          <button id="toggleMealFiltersBtn" type="button" class="filters-toggle">
-            Filters <span id="mealFiltersCaret">▸</span>
-          </button>
+          <div class="filters-row">
+            <button id="toggleMealFiltersBtn" type="button" class="filters-toggle filters-toggle-sm">
+              Filters <span id="mealFiltersCaret">▸</span>
+            </button>
+            <button id="showMealFormBtn" type="button" class="primary-btn primary-btn-sm">+ 레시피 추가</button>
+          </div>
 
           <div id="mealFiltersContent" class="filters-panel" hidden>
             <div class="filter-grid simple-filter-grid">
@@ -288,7 +288,7 @@
           <p class="blocked-desc">아래 목록에 있는 요리는 AI 추천에서 제외됩니다.</p>
           <div class="blocked-add-row">
             <input id="blockedNameInput" type="text" placeholder="제외할 요리 이름" autocomplete="off" />
-            <button id="addBlockedBtn" type="button" class="primary-btn" style="padding:8px 16px;white-space:nowrap;">추가</button>
+            <button id="addBlockedBtn" type="button" class="primary-btn" style="padding:8px 12px;white-space:nowrap;flex-shrink:0;font-size:0.85rem;">추가</button>
           </div>
           <div id="blockedList" class="blocked-list"></div>
         </div>

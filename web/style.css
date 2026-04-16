@@ -536,6 +536,22 @@ body.theme-modern {
   margin-bottom: 14px;
 }
 
+.filters-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filters-toggle-sm {
+  padding: 8px 12px;
+  font-size: 0.85rem;
+}
+
+.primary-btn-sm {
+  padding: 8px 14px;
+  font-size: 0.85rem;
+}
+
 .filters-panel {
   margin-top: 10px;
   background: linear-gradient(135deg, #f0f4ff 0%, #f5f3ff 100%);
@@ -625,11 +641,11 @@ body.theme-modern {
   background: #f0f4ff;
   border: 1px solid #c7d2fe;
   color: #4f46e5;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 700;
   cursor: pointer;
-  padding: 5px 10px;
-  border-radius: 10px;
+  padding: 3px 8px;
+  border-radius: 8px;
   transition: background 0.15s, color 0.15s;
 }
 
@@ -1168,18 +1184,20 @@ body.theme-modern {
 .blocked-list {
   display: flex;
   flex-direction: column;
+  align-items: flex-end;
   gap: 6px;
 }
 
 .blocked-item {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
+  gap: 8px;
+  padding: 6px 12px;
   background: #fef2f2;
   border: 1px solid #fecaca;
   border-radius: var(--radius-md);
   font-size: 0.9rem;
+  margin-left: auto;
 }
 
 .blocked-item-name {

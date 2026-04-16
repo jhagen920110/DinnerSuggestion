@@ -12,12 +12,14 @@ public class SuggestionsFunction
     private readonly PantryService _pantryStore;
     private readonly RecipeService _recipeService;
     private readonly SuggestionService _suggestionService;
+    private readonly MealLogService _mealLogService;
 
-    public SuggestionsFunction(PantryService pantryStore, RecipeService recipeService, SuggestionService suggestionService)
+    public SuggestionsFunction(PantryService pantryStore, RecipeService recipeService, SuggestionService suggestionService, MealLogService mealLogService)
     {
         _pantryStore = pantryStore;
         _recipeService = recipeService;
         _suggestionService = suggestionService;
+        _mealLogService = mealLogService;
     }
 
     [Function("GetSuggestions")]
@@ -53,6 +55,19 @@ public class SuggestionsFunction
 
         var availablePantry = await _pantryStore.GetAvailableIngredientNamesAsync();
 
+        // Fetch recent meal logs (last 2 weeks)
+        var today = DateTime.UtcNow;
+        var twoWeeksAgo = today.AddDays(-14);
+        var recentLogs = await _mealLogService.GetByDateRangeAsync(
+            twoWeeksAgo.ToString("yyyy-MM-dd"),
+            today.ToString("yyyy-MM-dd"));
+        var recentMealNames = recentLogs
+            .OrderByDescending(l => l.Date)
+            .Select(l => l.Name)
+            .Where(n => !string.IsNullOrWhiteSpace(n))
+            .Distinct()
+            .ToList();
+
         // 1. DB recipes first (exclude already-shown)
         var allRecipes = await _recipeService.GetAllAsync();
         var allRecipeNames = new HashSet<string>(
@@ -74,10 +89,13 @@ public class SuggestionsFunction
 
         // 2. AI suggestions (also exclude all saved recipe names)
         var aiExclude = exclude.Concat(allRecipes.Select(r => r.Name)).Distinct().ToList();
-        var aiSuggestions = await _suggestionService.GetSuggestionsAsync(
+        var knownRecipeNames = allRecipes.Select(r => r.Name).Distinct().ToList();
+        var (aiMessage, aiSuggestions) = await _suggestionService.GetSuggestionsAsync(
             availablePantry,
             mustInclude,
-            aiExclude);
+            aiExclude,
+            recentMealNames,
+            knownRecipeNames);
 
         // Deduplicate: remove AI suggestions that match any saved recipe name
         var uniqueAi = aiSuggestions
@@ -87,7 +105,7 @@ public class SuggestionsFunction
         var combined = dbSuggestions.Concat(uniqueAi).ToList();
 
         var response = req.CreateResponse(HttpStatusCode.OK);
-        await response.WriteAsJsonAsync(combined);
+        await response.WriteAsJsonAsync(new { message = aiMessage, suggestions = combined });
         return response;
     }
 

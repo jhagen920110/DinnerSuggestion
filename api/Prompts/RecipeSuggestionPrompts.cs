@@ -92,12 +92,26 @@ ORDERING (CRITICAL — this determines the array order)
 - Among equally popular dishes, prefer ones where more pantry ingredients are already available.
 
 RETURN 7-10 suggestions when possible, but fewer is fine if constraints limit options.
+
+MESSAGE FIELD (CRITICAL)
+- You MUST return a "message" field in addition to the "suggestions" array.
+- The message is a friendly, natural Korean introduction displayed above the suggestion cards.
+- Structure the message like a personal dinner advisor talking to the user:
+  1. Start with a warm greeting referencing today (e.g., "오늘 저녁 뭐 드실지 고민이시죠?", "오늘도 맛있는 저녁 준비해볼까요?", etc.). Be creative and vary the greeting.
+  2. If recent meal history is provided, naturally mention what they've been eating recently and say you'll exclude those to avoid repetition. For example: "이번 주에 김치찌개, 불고기를 드셨으니 오늘은 다른 메뉴로 준비해볼게요." Only mention the most recent 3-5 meals, not all of them.
+  3. Briefly introduce the suggestions: something like "오늘 냉장고 재료로 만들 수 있는 메뉴들을 골라봤어요!" or similar.
+- Keep the message concise (2-4 sentences max). Don't be too formal or robotic.
+- Do NOT mention "저장된 레시피" or "데이터베이스" — write as if you came up with all suggestions yourself.
+- Do NOT list the actual suggestion names in the message. Just tease them naturally.
+- Use a warm, casual tone like a friend helping with dinner planning.
 """;
 
     public static string BuildUserPrompt(
         List<string> availablePantry,
         List<string> mustInclude,
-        List<string> exclude)
+        List<string> exclude,
+        List<string>? recentMeals = null,
+        List<string>? knownRecipes = null)
     {
         var available = availablePantry.Count == 0
             ? "(없음)"
@@ -105,6 +119,21 @@ RETURN 7-10 suggestions when possible, but fewer is fine if constraints limit op
 
         var prompt =
             "보유 재료:\n" + available + "\n";
+
+        if (recentMeals is { Count: > 0 })
+        {
+            prompt += "\n최근 2주간 먹은 식사 (최근 순):\n" +
+                      string.Join(", ", recentMeals) + "\n" +
+                      "위 식사들은 최근에 먹었으므로 가능하면 추천에서 제외하거나 우선순위를 낮춰주세요.\n" +
+                      "message에서 최근 식사 중 일부를 자연스럽게 언급해주세요.\n";
+        }
+
+        if (knownRecipes is { Count: > 0 })
+        {
+            prompt += "\n사용자가 알고 있는 요리들:\n" +
+                      string.Join(", ", knownRecipes) + "\n" +
+                      "이 요리들도 추천 후보에 포함할 수 있지만, '저장된 레시피'라고 언급하지 마세요.\n";
+        }
 
         if (mustInclude.Count > 0)
         {

@@ -20,22 +20,26 @@ public class SuggestionService
         _openAiOptions = openAiOptions.Value;
     }
 
-    public async Task<List<Suggestion>> GetSuggestionsAsync(
+    public async Task<(string Message, List<Suggestion> Suggestions)> GetSuggestionsAsync(
         List<string> availablePantry,
         List<string> mustInclude,
-        List<string> exclude)
+        List<string> exclude,
+        List<string>? recentMeals = null,
+        List<string>? knownRecipes = null)
     {
         if (!IsAiConfigured())
         {
-            return BuildFallbackSuggestions(availablePantry);
+            return ("", BuildFallbackSuggestions(availablePantry));
         }
 
         try
         {
-            var aiSuggestions = await GetAiSuggestionsAsync(
+            var (message, aiSuggestions) = await GetAiSuggestionsAsync(
                 availablePantry,
                 mustInclude,
-                exclude);
+                exclude,
+                recentMeals,
+                knownRecipes);
 
             var mapped = MapSuggestions(aiSuggestions, availablePantry);
 
@@ -52,12 +56,12 @@ public class SuggestionService
             }
 
             return mapped.Count > 0
-                ? mapped
-                : BuildFallbackSuggestions(availablePantry);
+                ? (message, mapped)
+                : (message, BuildFallbackSuggestions(availablePantry));
         }
         catch
         {
-            return BuildFallbackSuggestions(availablePantry);
+            return ("", BuildFallbackSuggestions(availablePantry));
         }
     }
 
@@ -68,10 +72,12 @@ public class SuggestionService
             && !string.IsNullOrWhiteSpace(_openAiOptions.DeploymentName);
     }
 
-    private async Task<List<AiRecipeSuggestion>> GetAiSuggestionsAsync(
+    private async Task<(string Message, List<AiRecipeSuggestion> Suggestions)> GetAiSuggestionsAsync(
         List<string> availablePantry,
         List<string> mustInclude,
-        List<string> exclude)
+        List<string> exclude,
+        List<string>? recentMeals,
+        List<string>? knownRecipes)
     {
         var endpoint = _openAiOptions.Endpoint.TrimEnd('/');
         var url = $"{endpoint}/openai/v1/chat/completions";
@@ -84,7 +90,9 @@ public class SuggestionService
         var userPrompt = RecipeSuggestionPrompts.BuildUserPrompt(
             availablePantry,
             mustInclude,
-            exclude);
+            exclude,
+            recentMeals,
+            knownRecipes);
 
         var temp = exclude.Count > 0 ? 0.8 : mustInclude.Count > 0 ? 0.2 : 0.5;
 
@@ -110,6 +118,7 @@ public class SuggestionService
                         type = "object",
                         properties = new
                         {
+                            message = new { type = "string" },
                             suggestions = new
                             {
                                 type = "array",
@@ -146,7 +155,7 @@ public class SuggestionService
                                 }
                             }
                         },
-                        required = new[] { "suggestions" },
+                        required = new[] { "message", "suggestions" },
                         additionalProperties = false
                     }
                 }
@@ -172,7 +181,7 @@ public class SuggestionService
 
         if (string.IsNullOrWhiteSpace(content))
         {
-            return new List<AiRecipeSuggestion>();
+            return ("", new List<AiRecipeSuggestion>());
         }
 
         var structured = JsonSerializer.Deserialize<AiRecipeResponse>(
@@ -182,7 +191,7 @@ public class SuggestionService
                 PropertyNameCaseInsensitive = true
             });
 
-        return structured?.Suggestions ?? new List<AiRecipeSuggestion>();
+        return (structured?.Message ?? "", structured?.Suggestions ?? new List<AiRecipeSuggestion>());
     }
 
     private static List<Suggestion> MapSuggestions(

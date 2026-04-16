@@ -1066,6 +1066,18 @@ select {
   text-align: center;
 }
 
+.ai-message {
+  background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+  border: 1px solid #c7d2fe;
+  border-radius: 16px;
+  padding: 16px 18px;
+  color: #334155;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 12px;
+  white-space: pre-line;
+}
+
 .section-head-actions {
   display: flex;
   align-items: center;

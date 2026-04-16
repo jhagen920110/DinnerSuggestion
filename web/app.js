@@ -626,7 +626,9 @@ async function fetchSuggestions(exclude = []) {
     throw new Error(`Failed to load suggestions: ${response.status}`);
   }
 
-  const suggestions = await response.json();
+  const data = await response.json();
+  const aiMessage = data.message ?? data.Message ?? "";
+  const suggestions = data.suggestions ?? data.Suggestions ?? data;
   const safeSuggestions = Array.isArray(suggestions) ? suggestions : [];
 
   // Priority-based sorting:
@@ -661,11 +663,12 @@ async function fetchSuggestions(exclude = []) {
 
   prioritized.sort((a, b) => a._priority - b._priority || a._origIdx - b._origIdx);
 
-  return [...saved, ...prioritized];
+  return { message: aiMessage, suggestions: [...saved, ...prioritized] };
 }
 
 let allSuggestions = [];
 let shownSuggestionCount = 0;
+let currentAiMessage = "";
 const SUGGESTIONS_PER_PAGE = 3;
 
 async function suggestDinner() {
@@ -687,7 +690,9 @@ async function suggestDinner() {
       <div class="empty-state">추천 메뉴를 불러오는 중...</div>
     `;
 
-    allSuggestions = await fetchSuggestions();
+    const result = await fetchSuggestions();
+    allSuggestions = result.suggestions;
+    currentAiMessage = result.message;
     shownSuggestionCount = 0;
     await renderSuggestions(allSuggestions);
   } catch (error) {
@@ -724,13 +729,13 @@ async function loadMoreSuggestions(btn) {
     btn.disabled = true;
 
     const existingNames = [...suggestionsDiv.querySelectorAll("h3")].map(h => h.textContent.trim());
-    const results = await fetchSuggestions(existingNames);
+    const result = await fetchSuggestions(existingNames);
 
     const existingBtn = suggestionsDiv.querySelector(".more-suggestions-btn");
     if (existingBtn) existingBtn.remove();
 
     const existingNamesLower = new Set(existingNames.map(n => n.toLowerCase()));
-    const newResults = results.filter(s => {
+    const newResults = result.suggestions.filter(s => {
       const name = (s.name ?? s.Name ?? "").trim().toLowerCase();
       return !existingNamesLower.has(name);
     });
@@ -782,6 +787,14 @@ async function renderSuggestions(suggestions) {
   }
 
   await loadTodayLogs();
+
+  // Show AI message if available
+  if (currentAiMessage) {
+    const msgDiv = document.createElement("div");
+    msgDiv.className = "ai-message";
+    msgDiv.textContent = currentAiMessage;
+    suggestionsDiv.appendChild(msgDiv);
+  }
 
   const first = suggestions.slice(0, SUGGESTIONS_PER_PAGE);
   shownSuggestionCount = first.length;

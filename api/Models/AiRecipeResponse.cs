@@ -4,6 +4,9 @@ namespace DinnerSuggestionApi.Models;
 
 public class AiRecipeResponse
 {
+    [JsonPropertyName("message")]
+    public string Message { get; set; } = string.Empty;
+
     [JsonPropertyName("suggestions")]
     public List<AiRecipeSuggestion> Suggestions { get; set; } = new();
 }

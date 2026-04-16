@@ -1,4 +1,4 @@
-const CACHE_NAME = "dinner-v1";
+const CACHE_NAME = "dinner-v2";
 const STATIC_ASSETS = [
   "/index.html",
   "/style.css",
@@ -31,8 +31,17 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
-  // Skip API calls and cross-origin requests
-  if (url.pathname.startsWith("/api") || url.hostname !== location.hostname) {
+  // Skip API calls, auth routes, and cross-origin requests
+  if (url.pathname.startsWith("/api") || url.pathname.startsWith("/.auth") || url.hostname !== location.hostname) {
+    return;
+  }
+
+  // For navigation requests (HTML pages), always go to network
+  // so SWA auth can enforce login redirects
+  if (event.request.mode === "navigate") {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match("/index.html"))
+    );
     return;
   }
 

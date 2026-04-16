@@ -54,6 +54,27 @@ async function apiFetch(url, options = {}) {
   return fetch(url, { ...options, headers });
 }
 
+/**
+ * Ask AI whether a name looks like a real ingredient/recipe.
+ * Returns true if we should proceed, false if user cancelled.
+ */
+async function validateNameWithAi(name, kind) {
+  try {
+    const res = await apiFetch(`${apiBase}/validate-name`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, kind }),
+    });
+    if (!res.ok) return true; // don't block on error
+    const data = await res.json();
+    if (data.valid) return true;
+    const suggestion = data.suggestion ? `\n혹시 "${data.suggestion}" 을(를) 말씀하신 건가요?` : "";
+    return confirm(`"${name}" 이(가) 올바른 이름인지 확인해주세요.${suggestion}\n\n그대로 추가하시겠어요?`);
+  } catch {
+    return true; // don't block on network error
+  }
+}
+
 let currentIngredients = [];
 let classifyTimer = null;
 let editingRowId = null;
@@ -533,6 +554,10 @@ async function saveIngredient() {
   };
 
   try {
+    setBusy(saveButton, true, "확인 중...");
+    const proceed = await validateNameWithAi(name, "ingredient");
+    if (!proceed) { setBusy(saveButton, false); return; }
+
     setBusy(saveButton, true, "추가 중...");
 
     const response = await apiFetch(`${apiBase}/ingredients`, {
@@ -1680,9 +1705,16 @@ async function saveMeal() {
   const saveBtn = byId("saveMealBtn");
 
   try {
+    const isEditing = editingMealId !== null;
+
+    if (!isEditing) {
+      setBusy(saveBtn, true, "확인 중...");
+      const proceed = await validateNameWithAi(name, "recipe");
+      if (!proceed) { setBusy(saveBtn, false); return; }
+    }
+
     setBusy(saveBtn, true, "저장 중...");
 
-    const isEditing = editingMealId !== null;
     const url = isEditing ? `${apiBase}/meals/${editingMealId}` : `${apiBase}/meals`;
     const method = isEditing ? "PUT" : "POST";
 

@@ -181,4 +181,114 @@ Rules:
 
         return "기타";
     }
+
+    /// <summary>
+    /// Uses AI to check if a name is a real ingredient or dish (vs typo/nonsense).
+    /// Returns null if valid, or a suggested correction if it looks like a typo.
+    /// </summary>
+    public async Task<NameValidationResult> ValidateNameAsync(string name, string kind)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return new NameValidationResult { IsValid = false, Suggestion = null };
+
+        if (!IsAiConfigured())
+            return new NameValidationResult { IsValid = true };
+
+        try
+        {
+            var endpoint = _openAiOptions.Endpoint.TrimEnd('/');
+            var url = $"{endpoint}/openai/v1/chat/completions";
+
+            using var request = new HttpRequestMessage(HttpMethod.Post, url);
+            request.Headers.Add("api-key", _openAiOptions.ApiKey);
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            var kindLabel = kind == "recipe" ? "요리/음식 이름" : "식재료 이름";
+
+            var systemPrompt = $"""
+You validate whether a user-typed name is a real, commonly known {kindLabel} (Korean or international).
+- If the name is a real {kindLabel} (even if informal, abbreviated, or brand name), return valid=true.
+- If the name is clearly a typo or nonsense, return valid=false and suggest the most likely correction.
+- Be lenient: accept brand names (스팸, 초코파이), informal names (계란 for 달걀), slang, and regional variants.
+- Only flag things that are genuinely not food items or are obvious misspellings.
+Respond in JSON only.
+""";
+
+            var payload = new
+            {
+                model = _openAiOptions.DeploymentName,
+                messages = new object[]
+                {
+                    new { role = "system", content = systemPrompt },
+                    new { role = "user", content = $"이름: {name.Trim()}" }
+                },
+                max_completion_tokens = 80,
+                temperature = 0.1,
+                response_format = new
+                {
+                    type = "json_schema",
+                    json_schema = new
+                    {
+                        name = "name_validation",
+                        strict = true,
+                        schema = new
+                        {
+                            type = "object",
+                            properties = new
+                            {
+                                valid = new { type = "boolean", description = "true if the name is a real food item" },
+                                suggestion = new
+                                {
+                                    type = new[] { "string", "null" },
+                                    description = "Suggested correction if typo, null otherwise"
+                                }
+                            },
+                            required = new[] { "valid", "suggestion" },
+                            additionalProperties = false
+                        }
+                    }
+                }
+            };
+
+            request.Content = new StringContent(
+                JsonSerializer.Serialize(payload),
+                Encoding.UTF8,
+                "application/json");
+
+            using var response = await _httpClient.SendAsync(request);
+            var responseText = await response.Content.ReadAsStringAsync();
+            response.EnsureSuccessStatusCode();
+
+            using var doc = JsonDocument.Parse(responseText);
+            var content = doc.RootElement
+                .GetProperty("choices")[0]
+                .GetProperty("message")
+                .GetProperty("content")
+                .GetString();
+
+            if (content is not null)
+            {
+                var result = JsonSerializer.Deserialize<NameValidationResult>(content,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                if (result is not null) return result;
+            }
+
+            return new NameValidationResult { IsValid = true };
+        }
+        catch
+        {
+            // If AI fails, don't block the user
+            return new NameValidationResult { IsValid = true };
+        }
+    }
+}
+
+public class NameValidationResult
+{
+    public bool IsValid { get; set; } = true;
+
+    [System.Text.Json.Serialization.JsonPropertyName("valid")]
+    public bool Valid { get => IsValid; set => IsValid = value; }
+
+    public string? Suggestion { get; set; }
 }

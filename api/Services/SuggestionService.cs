@@ -42,6 +42,13 @@ public class SuggestionService
             var userPrompt = RecipeSuggestionPrompts.BuildQuestionUserPrompt(
                 availablePantry, recentMeals, season);
 
+            // Add randomization hint so the model picks different categories each time
+            var randomSeed = Random.Shared.Next(1, 1001);
+            var categoryPool = new[] { "cuisine", "style", "mood", "ingredient", "seasonal", "adventure", "effort", "spice" };
+            var shuffled = categoryPool.OrderBy(_ => Random.Shared.Next()).ToArray();
+            var suggestedPair = $"{shuffled[0]}, {shuffled[1]}";
+            userPrompt += $"\n\n(Randomization seed: {randomSeed}. 이번에는 다음 카테고리 조합을 사용해주세요: {suggestedPair}. 질문 문구와 옵션도 매번 다르게 써주세요.)";
+
             var payload = new
             {
                 model = _openAiOptions.DeploymentName,
@@ -51,7 +58,8 @@ public class SuggestionService
                     new { role = "user", content = userPrompt }
                 },
                 max_completion_tokens = 500,
-                temperature = 0.9,
+                temperature = 1.3,
+                top_p = 0.95,
                 response_format = new
                 {
                     type = "json_schema",

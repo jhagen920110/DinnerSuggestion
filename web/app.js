@@ -8,6 +8,10 @@ async function initAuth() {
     const data = await res.json();
     if (data.clientPrincipal) {
       currentUserEmail = data.clientPrincipal.userDetails || "";
+    } else {
+      // Not authenticated — redirect to Google login
+      window.location.href = "/.auth/login/google?post_login_redirect_uri=/";
+      return;
     }
   } catch {
     // Local dev - no SWA auth

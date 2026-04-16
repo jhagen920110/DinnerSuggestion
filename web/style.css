@@ -545,13 +545,12 @@ body.theme-modern {
 .filters-toggle-sm {
   padding: 14px 10px;
   font-size: 0.8rem;
-  order: 2;
+  margin-left: auto;
 }
 
 .primary-btn-sm {
-  padding: 14px 14px;
-  font-size: 0.85rem;
-  order: 1;
+  padding: 14px 20px;
+  font-size: 0.9rem;
 }
 
 .filters-panel {

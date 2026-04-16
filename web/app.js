@@ -1182,6 +1182,7 @@ async function init() {
   initCalendar();
   attachCalendarEvents();
   attachCalendarOverlay();
+  byId("accountBtn")?.addEventListener("click", () => switchPage("account"));
   resetForm();
   loadTags();
   loadIngredients().then(async () => {
@@ -1217,6 +1218,7 @@ const PAGE_TITLES = {
   suggestions: "🍽️ 저녁 메뉴 추천",
   pantry: "🥕 Pantry",
   meals: "🍳 저장된 레시피",
+  account: "👤 계정",
 };
 
 function switchPage(pageName) {
@@ -1227,6 +1229,11 @@ function switchPage(pageName) {
   document.querySelectorAll(".page").forEach((page) => {
     page.classList.toggle("active", page.id === `page-${pageName}`);
   });
+
+  if (pageName === "account") {
+    const emailEl = byId("accountEmail");
+    if (emailEl) emailEl.textContent = currentUserEmail || "-";
+  }
 
   const titleEl = byId("topBarTitle");
   if (titleEl && PAGE_TITLES[pageName]) titleEl.textContent = PAGE_TITLES[pageName];

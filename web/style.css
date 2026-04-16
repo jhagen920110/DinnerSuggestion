@@ -76,6 +76,72 @@ select {
   letter-spacing: -0.02em;
 }
 
+.account-btn {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: background 0.15s;
+}
+.account-btn svg {
+  width: 22px;
+  height: 22px;
+  stroke: #fff;
+}
+.account-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ─── Account Page ─── */
+
+.account-card {
+  max-width: 480px;
+  margin: 0 auto;
+}
+.account-heading {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0 0 16px;
+}
+.account-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+.account-label {
+  font-weight: 600;
+  color: #374151;
+}
+.account-value {
+  color: #6b7280;
+  word-break: break-all;
+}
+.account-actions {
+  margin-top: 20px;
+  text-align: center;
+}
+.logout-btn {
+  display: inline-block;
+  padding: 8px 24px;
+  border-radius: 8px;
+  background: #ef4444;
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: background 0.15s;
+}
+.logout-btn:hover {
+  background: #dc2626;
+}
+
 .app-shell {
   width: min(920px, calc(100% - 24px));
   margin: 0 auto;

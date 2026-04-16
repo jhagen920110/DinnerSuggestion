@@ -36,6 +36,9 @@
 
   <header id="topBar" class="top-bar">
     <h1 id="topBarTitle" class="top-bar-title">저녁 메뉴 추천</h1>
+    <button id="accountBtn" type="button" class="account-btn" aria-label="계정">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </button>
   </header>
 
   <main class="app-shell">
@@ -274,6 +277,20 @@
         </div>
 
         <div id="suggestions"></div>
+      </section>
+    </div>
+
+    <!-- PAGE: Account -->
+    <div id="page-account" class="page">
+      <section class="card account-card">
+        <h2 class="account-heading">계정 정보</h2>
+        <div class="account-row">
+          <span class="account-label">이메일</span>
+          <span id="accountEmail" class="account-value">-</span>
+        </div>
+        <div class="account-actions">
+          <a id="logoutLink" href="/.auth/logout" class="logout-btn">로그아웃</a>
+        </div>
       </section>
     </div>
   </main>

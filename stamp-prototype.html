@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>집밥 스탬프 프로토타입</title>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Gowun Dodum', sans-serif;
+      background: #f0f2f5;
+      padding: 20px;
+      max-width: 420px;
+      margin: 0 auto;
+    }
+    h2 {
+      font-family: 'Jua', sans-serif;
+      text-align: center;
+      margin-bottom: 16px;
+      font-size: 1.4rem;
+      color: #22304a;
+    }
+    .description {
+      text-align: center;
+      color: #64748b;
+      font-size: 0.85rem;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    /* Calendar header */
+    .calendar-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+    .calendar-header h3 {
+      font-family: 'Jua', sans-serif;
+      font-size: 1.2rem;
+    }
+
+    /* Monthly count badge */
+    .month-stamp-count {
+      text-align: center;
+      margin-bottom: 14px;
+      font-size: 0.85rem;
+      color: #64748b;
+    }
+    .month-stamp-count strong {
+      color: #e74c5e;
+      font-size: 1rem;
+    }
+
+    /* Calendar grid */
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      background: white;
+      border-radius: 16px;
+      padding: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .cal-day-header {
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #94a3b8;
+      padding: 6px 0;
+    }
+    .cal-day {
+      position: relative;
+      min-height: 52px;
+      padding: 4px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .cal-day:hover {
+      background: #f1f5f9;
+    }
+    .cal-day.today {
+      background: #eef2ff;
+      font-weight: 700;
+    }
+
+    /* ─── 집밥 stamp ─── */
+    .cal-day.has-stamp {
+      position: relative;
+    }
+    .cal-day.has-stamp::after {
+      content: '';
+      position: absolute;
+      inset: 3px;
+      border: 2.5px solid #e74c5e;
+      border-radius: 50%;
+      opacity: 0.7;
+      pointer-events: none;
+    }
+    .stamp-label {
+      font-size: 0.5rem;
+      font-weight: 700;
+      color: #e74c5e;
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+
+    .cal-day-num {
+      font-size: 0.85rem;
+      z-index: 1;
+    }
+    .cal-day.has-stamp .cal-day-num {
+      color: #c0392b;
+      font-weight: 700;
+    }
+
+    /* Empty cells */
+    .cal-day.empty {
+      cursor: default;
+      min-height: 0;
+    }
+    .cal-day.empty:hover {
+      background: transparent;
+    }
+
+    /* ─── Account section ─── */
+    .account-card {
+      margin-top: 24px;
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .account-card h3 {
+      font-family: 'Jua', sans-serif;
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+    }
+    .account-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .account-label {
+      color: #64748b;
+      font-size: 0.9rem;
+    }
+    .account-value {
+      font-weight: 700;
+      color: #22304a;
+    }
+    .stamp-total {
+      color: #e74c5e;
+      font-size: 1.1rem;
+    }
+
+    /* Legend */
+    .legend {
+      margin-top: 20px;
+      padding: 14px;
+      background: #fff7f7;
+      border: 1px dashed #fecaca;
+      border-radius: 12px;
+      font-size: 0.82rem;
+      color: #64748b;
+      line-height: 1.6;
+    }
+    .legend strong { color: #22304a; }
+  </style>
+</head>
+<body>
+
+  <h2>🍳 집밥 스탬프 프로토타입</h2>
+  <p class="description">식사를 기록한 날에 빨간 동그라미 스탬프가 표시됩니다.<br>식사를 모두 삭제하면 스탬프가 사라집니다.</p>
+
+  <!-- Calendar -->
+  <div class="calendar-header">
+    <span>◀</span>
+    <h3>2026년 4월</h3>
+    <span>▶</span>
+  </div>
+
+  <div class="month-stamp-count">
+    이번 달 집밥: <strong>8</strong>회
+  </div>
+
+  <div class="calendar-grid" id="grid"></div>
+
+  <!-- Account section -->
+  <div class="account-card">
+    <h3>📊 계정 정보</h3>
+    <div class="account-row">
+      <span class="account-label">이메일</span>
+      <span class="account-value">user@gmail.com</span>
+    </div>
+    <div class="account-row">
+      <span class="account-label">🏠 총 집밥 횟수</span>
+      <span class="account-value stamp-total">42회</span>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <strong>동작 설명:</strong><br>
+    • 식사 기록이 1개 이상 → <span style="color:#e74c5e">빨간 동그라미</span> + "집밥" 표시<br>
+    • 식사를 모두 삭제 (0개) → 스탬프 사라짐<br>
+    • 이번 달 집밥 횟수가 캘린더 위에 표시<br>
+    • 총 집밥 횟수가 계정 설정에 표시
+  </div>
+
+  <script>
+    // Sample data: dates that have meal logs
+    const mealsOnDates = new Set([1, 3, 5, 7, 8, 10, 14, 16]);
+    const dayNames = ["일","월","화","수","목","금","토"];
+    const grid = document.getElementById("grid");
+
+    // Day headers
+    dayNames.forEach(d => {
+      const hdr = document.createElement("div");
+      hdr.className = "cal-day-header";
+      hdr.textContent = d;
+      grid.appendChild(hdr);
+    });
+
+    // April 2026 starts on Wednesday (day 3)
+    const firstDay = 3;
+    const daysInMonth = 30;
+
+    // Blank cells
+    for (let i = 0; i < firstDay; i++) {
+      const blank = document.createElement("div");
+      blank.className = "cal-day empty";
+      grid.appendChild(blank);
+    }
+
+    // Day cells
+    for (let d = 1; d <= daysInMonth; d++) {
+      const cell = document.createElement("div");
+      cell.className = "cal-day";
+
+      if (d === 16) cell.classList.add("today");
+
+      const hasMeal = mealsOnDates.has(d);
+      if (hasMeal) cell.classList.add("has-stamp");
+
+      cell.innerHTML = `
+        <span class="cal-day-num">${d}</span>
+        ${hasMeal ? '<span class="stamp-label">집밥</span>' : ''}
+      `;
+
+      grid.appendChild(cell);
+    }
+  </script>
+
+</body>
+</html>

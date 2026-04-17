@@ -539,13 +539,13 @@ body.theme-modern {
 .filters-row {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
 }
 
 .filters-toggle-sm {
-  padding: 14px 10px;
-  font-size: 0.8rem;
-  margin-left: auto;
+  padding: 14px 26px;
+  font-size: 0.9rem;
 }
 
 .primary-btn-sm {

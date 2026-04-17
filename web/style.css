@@ -2107,7 +2107,8 @@ body.theme-modern {
 }
 
 .cal-day.has-stamp.selected {
-  box-shadow: inset 0 0 0 2.5px #fff;
+  background: #be123c;
+  box-shadow: inset 0 0 0 2.5px #fecdd3;
 }
 
 @keyframes stampIn {
@@ -2131,7 +2132,7 @@ body.theme-modern {
 }
 
 .cal-day.selected .stamp-label {
-  color: rgba(255,255,255,0.8);
+  color: rgba(255,255,255,0.9);
 }
 
 .cal-day.has-stamp.selected .cal-day-num {

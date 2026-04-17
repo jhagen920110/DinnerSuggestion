@@ -1469,6 +1469,7 @@ function switchPage(pageName) {
   if (pageName === "account") {
     const emailEl = byId("accountEmail");
     if (emailEl) emailEl.textContent = currentUserEmail || "-";
+    loadStampTotal();
   }
 
   const titleEl = byId("topBarTitle");
@@ -1932,6 +1933,17 @@ function renderMeals() {
 let calYear, calMonth, calSelectedDate;
 let calMealLogs = {}; // { "YYYY-MM-DD": [...] }
 
+async function loadStampTotal() {
+  const el = byId("accountStampTotal");
+  if (!el) return;
+  try {
+    const res = await apiFetch(`${apiBase}/stamp-count`);
+    if (!res.ok) return;
+    const data = await res.json();
+    el.textContent = `${data.total}일`;
+  } catch { el.textContent = "-"; }
+}
+
 function initCalendar() {
   const now = new Date();
   calYear = now.getFullYear();
@@ -2099,9 +2111,12 @@ function renderCalendar() {
     if (dateStr === calSelectedDate) cell.classList.add("selected");
 
     const meals = calMealLogs[dateStr] || [];
+    const hasStamp = meals.length > 0;
+    if (hasStamp) cell.classList.add("has-stamp");
+
     cell.innerHTML = `
       <span class="cal-day-num">${d}</span>
-      ${meals.length ? `<span class="cal-day-dot">${meals.length > 1 ? meals.length : "●"}</span>` : ""}
+      ${hasStamp ? '<span class="stamp-label">집밥</span>' : ""}
     `;
 
     cell.addEventListener("click", () => {
@@ -2112,6 +2127,11 @@ function renderCalendar() {
 
     grid.appendChild(cell);
   }
+
+  // Update month stamp count
+  const stampCount = Object.keys(calMealLogs).filter(k => calMealLogs[k].length > 0).length;
+  const countEl = byId("calMonthStampCount");
+  if (countEl) countEl.innerHTML = `이번 달 집밥: <strong>${stampCount}</strong>회`;
 }
 
 async function renderCalRecipeList() {

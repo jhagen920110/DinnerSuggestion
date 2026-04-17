@@ -2054,15 +2054,16 @@ body.theme-modern {
 
 .cal-day {
   position: relative;
-  min-height: 48px;
-  padding: 6px;
-  border-radius: var(--radius-md);
+  aspect-ratio: 1;
+  padding: 2px;
+  border-radius: 50%;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  transition: background 0.15s;
+  justify-content: center;
+  gap: 0px;
+  transition: background 0.15s, box-shadow 0.2s;
 }
 
 .cal-day:hover {
@@ -2071,6 +2072,8 @@ body.theme-modern {
 
 .cal-day.empty {
   cursor: default;
+  aspect-ratio: auto;
+  min-height: 0;
 }
 
 .cal-day.empty:hover {
@@ -2089,6 +2092,62 @@ body.theme-modern {
 
 .cal-day.selected .cal-day-dot {
   color: rgba(255, 255, 255, 0.8);
+}
+
+/* ─── 집밥 stamp ─── */
+.cal-day.has-stamp {
+  background: radial-gradient(circle, rgba(231,76,94,0.06) 0%, transparent 70%);
+  box-shadow: inset 0 0 0 2.5px #e74c5e;
+  animation: stampIn 0.3s ease-out;
+}
+
+.cal-day.has-stamp.today {
+  box-shadow: inset 0 0 0 2.5px #e74c5e;
+  background: radial-gradient(circle, rgba(231,76,94,0.08) 0%, rgba(238,242,255,0.5) 70%);
+}
+
+.cal-day.has-stamp.selected {
+  box-shadow: inset 0 0 0 2.5px #fff;
+}
+
+@keyframes stampIn {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  60% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.stamp-label {
+  font-size: 0.45rem;
+  font-weight: 800;
+  color: #e74c5e;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  opacity: 0.85;
+}
+
+.cal-day.has-stamp .cal-day-num {
+  color: #be123c;
+  font-weight: 800;
+}
+
+.cal-day.selected .stamp-label {
+  color: rgba(255,255,255,0.8);
+}
+
+.cal-day.has-stamp.selected .cal-day-num {
+  color: #fff;
+}
+
+.cal-month-stamp-count {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.cal-month-stamp-count strong {
+  color: #e74c5e;
+  font-size: 1rem;
 }
 
 .cal-day-num {

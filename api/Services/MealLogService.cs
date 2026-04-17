@@ -96,4 +96,20 @@ public class MealLogService
             return false;
         }
     }
+
+    public async Task<int> GetTotalStampCountAsync()
+    {
+        var query = new QueryDefinition(
+            "SELECT DISTINCT VALUE c.date FROM c WHERE c.userId = @userId")
+            .WithParameter("@userId", _userContext.UserId);
+
+        var iterator = _container.GetItemQueryIterator<string>(query);
+        var count = 0;
+        while (iterator.HasMoreResults)
+        {
+            var batch = await iterator.ReadNextAsync();
+            count += batch.Count;
+        }
+        return count;
+    }
 }

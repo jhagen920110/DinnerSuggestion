@@ -83,4 +83,14 @@ public class MealLogFunction
         var deleted = await _service.DeleteAsync(id);
         return req.CreateResponse(deleted ? HttpStatusCode.NoContent : HttpStatusCode.NotFound);
     }
+
+    [Function("GetMealLogStampCount")]
+    public async Task<HttpResponseData> GetStampCount(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "stamp-count")] HttpRequestData req)
+    {
+        var count = await _service.GetTotalStampCountAsync();
+        var response = req.CreateResponse(HttpStatusCode.OK);
+        await response.WriteAsJsonAsync(new { total = count });
+        return response;
+    }
 }

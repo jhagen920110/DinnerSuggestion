@@ -150,7 +150,9 @@ function setBusy(button, isBusy, textWhenBusy) {
   button.disabled = isBusy;
 
   if (isBusy) {
-    button.dataset.originalText = button.textContent;
+    if (!button.dataset.originalText) {
+      button.dataset.originalText = button.textContent;
+    }
     button.textContent = textWhenBusy;
   } else if (button.dataset.originalText) {
     button.textContent = button.dataset.originalText;

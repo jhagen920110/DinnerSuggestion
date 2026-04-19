@@ -658,6 +658,13 @@ body.theme-modern {
   color: #4338ca;
 }
 
+.pantry-hint {
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-align: center;
+  margin: 0 0 10px;
+}
+
 .pantry-summary {
   display: flex;
   flex-wrap: wrap;

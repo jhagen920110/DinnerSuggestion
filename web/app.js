@@ -303,6 +303,13 @@ async function loadIngredients() {
     const items = await response.json();
     currentIngredients = Array.isArray(items) ? items : [];
 
+    // Prune selectedIngredients that no longer exist in pantry
+    const currentNames = new Set(currentIngredients.map(i => ingredientNameOf(i)));
+    for (const name of [...selectedIngredients]) {
+      if (!currentNames.has(name)) selectedIngredients.delete(name);
+    }
+    updateSelectedCount();
+
     renderIngredients();
   } catch (error) {
     console.error("loadIngredients failed:", error);

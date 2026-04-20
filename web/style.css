@@ -1136,6 +1136,10 @@ body.theme-modern {
   text-decoration: none;
 }
 
+.meal-card .recipe-link {
+  margin-top: 12px;
+}
+
 .save-to-recipe-btn {
   display: inline-flex;
   align-items: center;

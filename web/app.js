@@ -2,6 +2,20 @@ const apiBase = window.APP_CONFIG.apiBase;
 
 let currentUserEmail = "";
 
+// ─── Prevent browser swipe-back/forward gestures ───
+// CSS `overscroll-behavior-x: none` covers Chrome/Android.
+// iOS Safari edge-swipe needs JS: block touchstart within ~20px of the left/right edge.
+(function preventEdgeSwipe() {
+  const EDGE_PX = 20;
+  document.addEventListener("touchstart", (e) => {
+    if (!e.touches || e.touches.length === 0) return;
+    const x = e.touches[0].pageX;
+    if (x <= EDGE_PX || x >= window.innerWidth - EDGE_PX) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+})();
+
 async function initAuth() {
   try {
     const res = await fetch("/.auth/me");

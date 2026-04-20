@@ -32,16 +32,53 @@
       </div>
       <div class="splash-overlay">
         <h1 class="splash-title">🍲 오늘 뭐 먹지?</h1>
-        <p class="splash-sub"><span class="splash-bounce" style="--i:0">메</span><span class="splash-bounce" style="--i:1">뉴</span><span class="splash-bounce" style="--i:2">&nbsp;</span><span class="splash-bounce" style="--i:3">준</span><span class="splash-bounce" style="--i:4">비</span><span class="splash-bounce" style="--i:5">&nbsp;</span><span class="splash-bounce" style="--i:6">중</span> <span id="splashFoodIcon">🍳</span></p>
+        <p class="splash-sub"><span id="splashMsg" class="splash-msg">메뉴 준비 중...</span> <span id="splashFoodIcon">🍳</span></p>
       </div>
     </div>
   </div>
   <script>
     (function(){
       var icons = ['🍳','🥘','🍜','🍲','🥟','🍣','🍛','🍝','🥩','🍤','🍕','🌮','🍔','🥗','🧆','🫕'];
-      var i = 0;
-      var el = document.getElementById('splashFoodIcon');
-      if (el) setInterval(function(){ i = (i+1) % icons.length; el.textContent = icons[i]; }, 400);
+      var messages = [
+        '감자 싹을 깎는 중...',
+        '당근을 채 써는 중...',
+        '양파를 볶는 중...',
+        '마늘을 다지는 중...',
+        '쌀을 씻는 중...',
+        '김치를 꺼내는 중...',
+        '된장을 풀고 있어요...',
+        '국물 맛을 보는 중...',
+        '간을 맞추는 중...',
+        '냄비를 꺼내는 중...',
+        '앞치마를 두르는 중...',
+        '레시피를 뒤적이는 중...',
+        '냉장고를 살펴보는 중...',
+        '오늘의 메뉴 고민 중...',
+        '참기름 한 방울 똑...',
+        '계란을 풀고 있어요...',
+        '라면 물을 끓이는 중...',
+        '멸치 육수 우리는 중...',
+        '파를 송송 써는 중...',
+        '고추를 다듬는 중...'
+      ];
+      // Shuffle so each load starts differently
+      for (var s = messages.length - 1; s > 0; s--) {
+        var j = Math.floor(Math.random() * (s + 1));
+        var tmp = messages[s]; messages[s] = messages[j]; messages[j] = tmp;
+      }
+      var iconEl = document.getElementById('splashFoodIcon');
+      var msgEl = document.getElementById('splashMsg');
+      var iIcon = 0, iMsg = 0;
+      if (msgEl) msgEl.textContent = messages[0];
+      if (iconEl) setInterval(function(){ iIcon = (iIcon+1) % icons.length; iconEl.textContent = icons[iIcon]; }, 400);
+      if (msgEl) setInterval(function(){
+        msgEl.classList.add('fade-out');
+        setTimeout(function(){
+          iMsg = (iMsg + 1) % messages.length;
+          msgEl.textContent = messages[iMsg];
+          msgEl.classList.remove('fade-out');
+        }, 220);
+      }, 1600);
     })();
   </script>
 

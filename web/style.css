@@ -46,6 +46,10 @@ body {
   color: var(--text);
   background: radial-gradient(circle at top left, #ffffff 0%, #eef3fb 36%, #e4eaf5 100%);
   min-height: 100%;
+  /* Prevent browser swipe-back / forward gestures (iOS Safari, Chrome Android) */
+  overscroll-behavior-x: none;
+  overscroll-behavior-y: auto;
+  touch-action: pan-y;
 }
 
 body {
@@ -332,6 +336,16 @@ body.theme-modern {
   font-size: 1.2rem;
   color: var(--muted);
   margin: 0;
+}
+
+.splash-msg {
+  display: inline-block;
+  opacity: 1;
+  transition: opacity 0.22s ease;
+}
+
+.splash-msg.fade-out {
+  opacity: 0;
 }
 
 .splash-bounce {

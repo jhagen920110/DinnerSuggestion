@@ -1897,6 +1897,16 @@ body.theme-modern {
   font-size: 0.9rem;
 }
 
+.tag-dup-count {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--low-bg);
+  color: var(--low-text);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
 .tag-add-row {
   display: flex;
   gap: 8px;

@@ -1199,12 +1199,28 @@ async function loadTags() {
   }
 }
 
+// Group tags by name (case-insensitive) so duplicate entries collapse into one
+// entry whose `ids` array carries every Cosmos id that shares that name.
+function getDedupedTags() {
+  const map = new Map();
+  for (const tag of availableTags) {
+    const name = (tag.name ?? tag.Name ?? "").trim();
+    if (!name) continue;
+    const id = tag.id ?? tag.Id ?? "";
+    const key = name.toLowerCase();
+    if (!map.has(key)) {
+      map.set(key, { name, ids: [] });
+    }
+    if (id) map.get(key).ids.push(id);
+  }
+  return Array.from(map.values());
+}
+
 function renderTagChips() {
   const wrap = byId("mealTagsChips");
   if (!wrap) return;
   wrap.innerHTML = "";
-  for (const tag of availableTags) {
-    const name = tag.name ?? tag.Name ?? "";
+  for (const { name } of getDedupedTags()) {
     const chip = document.createElement("button");
     chip.type = "button";
     chip.className = `tag-chip${selectedTags.has(name) ? " selected" : ""}`;
@@ -1235,19 +1251,23 @@ function renderTagModalList() {
   const list = byId("tagModalList");
   if (!list) return;
   list.innerHTML = "";
-  for (const tag of availableTags) {
-    const name = tag.name ?? tag.Name ?? "";
-    const id = tag.id ?? tag.Id ?? "";
+  for (const { name, ids } of getDedupedTags()) {
     const row = document.createElement("div");
     row.className = "tag-modal-row";
+    const dupLabel = ids.length > 1 ? ` <span class="tag-dup-count">×${ids.length}</span>` : "";
     row.innerHTML = `
-      <span>${escapeHtml(name)}</span>
+      <span>${escapeHtml(name)}${dupLabel}</span>
       <button type="button" class="icon-button delete" aria-label="삭제">${iconSvg("delete")}</button>
     `;
     row.querySelector(".delete").addEventListener("click", async () => {
-      if (!confirm(`'${name}' 태그를 삭제할까요?`)) return;
+      const msg = ids.length > 1
+        ? `'${name}' 태그 ${ids.length}개(중복)를 모두 삭제할까요?`
+        : `'${name}' 태그를 삭제할까요?`;
+      if (!confirm(msg)) return;
       try {
-        await apiFetch(`${apiBase}/tags/${id}`, { method: "DELETE" });
+        await Promise.all(
+          ids.map((id) => apiFetch(`${apiBase}/tags/${id}`, { method: "DELETE" }))
+        );
         selectedTags.delete(name);
         await loadTags();
         renderTagModalList();

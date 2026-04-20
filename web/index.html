@@ -40,16 +40,12 @@
     (function(){
       var icons = ['🍳','🥘','🍜','🍲','🥟','🍣','🍛','🍝','🥩','🍤','🍕','🌮','🍔','🥗','🧆','🫕'];
       var messages = [
-        '감자 싹을 도려내는 중...',
-        '계란을 이마로 깨는 중...',
         '양파와 눈물의 협상 중...',
         '마늘에게 사과하는 중...',
         '참기름을 고소하는 중...',
         '깨가 쏟아져서 담고 있는 중...',
-        '간이 배 밖으로 나와서 다시 넣는 중...',
         '싱거운 농담에 소금 치는 중...',
         '짠 내 나는 인생에 설탕 추가 중...',
-        '냉장고와 눈싸움 중...',
         '김치한테 허락 받는 중...',
         '된장이 삐졌어요, 달래는 중...',
         '라면 스프 봉지 치열하게 뜯는 중...',
@@ -57,23 +53,19 @@
         '고추장에게 MBTI 묻는 중...',
         '두부를 조심스럽게 모시는 중...',
         '파를 송송, 영혼까지 송송...',
-        '멸치 육수가 인생을 회고하는 중...',
         '레시피북 먼지 터는 중...',
         '불 세기 기싸움 중...',
         '간장 1스푼… 에라 모르겠다 2스푼...',
         '냄비 뚜껑 덜컹덜컹 리듬 타는 중...',
-        '쌀 한 톨 한 톨 이름 부르는 중...',
         '오늘의 메뉴에게 면접 보는 중...',
         '가스불이 수줍어 하는 중...',
         '당근을 설득하는 중...',
         '엄마한테 전화할까 고민하는 중...',
         '배달앱이랑 눈 안 마주치는 중...',
-        '숟가락이 기대에 차 있어요...',
         '김 한 장이 자존심 세우는 중...',
         '깨를 뿌리며 마법 거는 중...',
         '치킨의 유혹을 뿌리치는 중...',
         '두부 멘탈 다잡는 중...',
-        '미역이 미역감는 중...',
         '콩나물 머리 쓰다듬는 중...',
         '비빔밥 재료들 단체사진 찍는 중...',
         '호박이 넝쿨째 굴러오는 중...'
@@ -137,7 +129,7 @@
             <div class="form-grid">
               <div class="field field-name">
                 <label for="ingredientName">재료명</label>
-                <input id="ingredientName" type="text" placeholder="예: 김치, 양파, 계란" autocomplete="off" />
+                <input id="ingredientName" type="text" placeholder="예: 김치, 양파, 계란" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" />
               </div>
             </div>
 
@@ -173,7 +165,7 @@
 
                 <div class="field">
                   <label for="filterSearch">검색</label>
-                  <input id="filterSearch" type="text" placeholder="재료 검색" />
+                  <input id="filterSearch" type="text" placeholder="재료 검색" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" />
                 </div>
               </div>
 
@@ -204,7 +196,7 @@
             <div class="meal-form-grid">
               <div class="field">
                 <label for="mealName">요리 이름</label>
-                <input id="mealName" type="text" placeholder="예: 김치찌개" autocomplete="off" />
+                <input id="mealName" type="text" placeholder="예: 김치찌개" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" />
               </div>
 
               <div class="field">
@@ -242,7 +234,7 @@
 
               <div class="field field-wide">
                 <label for="mealIngredients">재료 (쉼표로 구분)</label>
-                <input id="mealIngredients" type="text" placeholder="예: 김치, 돼지고기, 두부, 대파" />
+                <input id="mealIngredients" type="text" placeholder="예: 김치, 돼지고기, 두부, 대파" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" />
               </div>
 
               <div class="field field-wide">
@@ -303,7 +295,7 @@
 
               <div class="field">
                 <label for="mealSearchInput">검색</label>
-                <input id="mealSearchInput" type="text" placeholder="레시피 검색" autocomplete="off" />
+                <input id="mealSearchInput" type="text" placeholder="레시피 검색" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" />
               </div>
             </div>
 
@@ -325,7 +317,7 @@
             <h3>태그 관리</h3>
             <div id="tagModalList" class="tag-modal-list"></div>
             <div class="tag-add-row">
-              <input id="newTagInput" type="text" placeholder="새 태그 이름" />
+              <input id="newTagInput" type="text" placeholder="새 태그 이름" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" />
               <button id="addTagBtn" type="button" class="primary-btn small">추가</button>
             </div>
             <div class="form-actions">
@@ -343,7 +335,7 @@
         <div id="blockedSection" hidden>
           <p class="blocked-desc">아래 목록에 있는 요리는 AI 추천에서 제외됩니다.</p>
           <div class="blocked-add-row">
-            <input id="blockedNameInput" type="text" placeholder="제외할 요리 이름" autocomplete="off" />
+            <input id="blockedNameInput" type="text" placeholder="제외할 요리 이름" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" />
             <button id="addBlockedBtn" type="button" class="secondary-btn" style="padding:6px 10px;white-space:nowrap;flex:0 0 auto;font-size:0.8rem;">추가</button>
           </div>
           <div id="blockedList" class="blocked-list"></div>
@@ -426,7 +418,7 @@
             <div id="calRecipeList" class="cal-recipe-list"></div>
             <button id="calManualToggle" type="button" class="cal-manual-divider">직접 입력 ▸</button>
             <div id="calManualFields" hidden>
-              <input id="calMealName" type="text" placeholder="요리 이름" autocomplete="off" />
+              <input id="calMealName" type="text" placeholder="요리 이름" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" />
               <input id="calMealImageUrl" type="url" placeholder="이미지 URL (선택)" />
               <div class="form-actions">
                 <button id="calSaveMealBtn" type="button" class="primary-btn small">저장</button>
